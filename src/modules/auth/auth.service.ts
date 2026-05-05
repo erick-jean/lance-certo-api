@@ -1,39 +1,75 @@
 import {
+  ConflictException,
   Injectable,
   UnauthorizedException,
-  ConflictException,
 } from '@nestjs/common';
-import { LoginDto } from './dto/login.dto';
-import { PrismaService } from 'src/database/prisma.service';
-import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
+import { HashService } from 'src/common/hash/hash.service';
+import { PrismaService } from 'src/database/prisma.service';
+import { AuthResponseDto } from './dto/auth-response.dto';
+import { LoginDto } from './dto/login.dto';
+import { RegisterUserDto } from './dto/register-user.dto';
+import { JwtPayload } from './interfaces/jwt-payload.interface';
+import { UserResponseDto } from '../users/dto/user-response.dto';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
+    private readonly hashService: HashService,
   ) {}
 
-  async signIn(login: LoginDto): Promise<{ access_token: string }> {
+  async register(data: RegisterUserDto): Promise<UserResponseDto> {
+    const userExists = await this.prisma.user.findUnique({
+      where: { email: data.email },
+      select: { id: true },
+    });
+
+    if (userExists) {
+      throw new ConflictException('Email already registered');
+    }
+
+    const password = await this.hashService.hash(data.password);
+    const user = await this.prisma.user.create({
+      data: {
+        name: data.name,
+        email: data.email,
+        password,
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        isActive: true,
+        createdAt: true,
+        updatedAt: true,
+        lastLogin: true,
+      },
+    });
+
+    return user;
+  }
+
+  async signIn(login: LoginDto): Promise<AuthResponseDto> {
     const user = await this.prisma.user.findUnique({
       where: { email: login.email },
     });
 
-    // If user is not found or is not active, throw an unauthorized exception
     if (!user || !user.isActive) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    // Compare the provided password with the stored hashed password
-    const passwordMatches = await bcrypt.compare(login.password, user.password);
+    const passwordMatches = await this.hashService.compare(
+      login.password,
+      user.password,
+    );
 
-    // If password does not match, throw an unauthorized exception
     if (!passwordMatches) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    // Update last login time
     await this.prisma.user.update({
       where: { id: user.id },
       data: {
@@ -41,13 +77,14 @@ export class AuthService {
       },
     });
 
-    // Generate a JWT token for the authenticated user
-    const payload = { sub: user.id, email: user.email };
+    const payload: JwtPayload = {
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+    };
 
     return {
-      // 💡 Here the JWT secret key that's used for signing the payload
-      // is the key that was passed in the JwtModule
-      access_token: await this.jwtService.signAsync(payload),
+      accessToken: await this.jwtService.signAsync(payload),
     };
   }
 }

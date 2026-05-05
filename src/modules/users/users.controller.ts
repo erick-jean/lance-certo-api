@@ -1,13 +1,19 @@
-import { Controller, Get, Param } from '@nestjs/common';
-import { RegisterUserDto } from '../auth/dto/register-user.dto';
+import { Controller, Get, Param, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { AuthGuard } from '../auth/auth.guard';
+import { UserResponseDto } from './dto/user-response.dto';
 import { UsersService } from './users.service';
 
+@ApiTags('users')
+@ApiBearerAuth()
+@UseGuards(AuthGuard)
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get(':email')
-  findByEmail(@Param('email') email: string) {
+  @ApiOkResponse({ type: UserResponseDto })
+  findByEmail(@Param('email') email: string): Promise<UserResponseDto> {
     return this.usersService.findOne(email);
   }
 }
