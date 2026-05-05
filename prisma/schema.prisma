@@ -13,12 +13,27 @@ datasource db {
   provider = "postgresql"
 }
 
+enum SubscriptionPlan {
+  free
+  premium
+}
+
+enum SubscriptionPlanStatus {
+  active
+  inactive
+  canceled
+  past_due
+}
+
 model User {
   id                  String               @id @default(uuid())
   name                String               @db.VarChar(255)
   email               String               @unique @db.VarChar(255)
   password            String               @db.VarChar(255)
   role                String               @default("user") @db.VarChar(20)
+  plan                SubscriptionPlan     @default(free)
+  planStatus          SubscriptionPlanStatus @default(inactive)
+  planExpiresAt       DateTime?
   isActive            Boolean              @default(true)
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt

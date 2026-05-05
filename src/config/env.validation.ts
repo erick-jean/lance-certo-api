@@ -8,6 +8,7 @@ const requiredEnvVars = [
   'REFRESH_TOKEN_COOKIE_NAME',
   'REFRESH_TOKEN_COOKIE_SECURE',
   'SWAGGER_ENABLED',
+  'SUBSCRIPTION_WEBHOOK_SECRET',
 ] as const;
 
 /**
