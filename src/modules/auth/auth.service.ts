@@ -1,18 +1,24 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
+import { createHash, randomBytes } from 'crypto';
 import { HashService } from 'src/common/hash/hash.service';
 import { PrismaService } from 'src/database/prisma.service';
 import { AuthResponseDto } from './dto/auth-response.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { LoginDto } from './dto/login.dto';
+import { MessageResponseDto } from './dto/message-response.dto';
 import { RegisterUserDto } from './dto/register-user.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
 import { UserResponseDto } from '../users/dto/user-response.dto';
-import { ForgotPasswordDto } from '../auth/dto/forgot-password.dto';
-import { randomBytes } from 'crypto';
+
+const PASSWORD_RESET_TOKEN_TTL_MINUTES = 15;
 
 @Injectable()
 export class AuthService {
@@ -20,6 +26,7 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
     private readonly hashService: HashService,
+    private readonly configService: ConfigService,
   ) {}
 
   async register(data: RegisterUserDto): Promise<UserResponseDto> {
@@ -90,40 +97,102 @@ export class AuthService {
     };
   }
 
-  async forgotPassword(dto: ForgotPasswordDto) {
+  async forgotPassword(dto: ForgotPasswordDto): Promise<MessageResponseDto> {
+    const response = this.getPasswordResetRequestedResponse();
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email },
+      select: { id: true, email: true },
     });
 
     if (!user) {
-      return {
-        message:
-          'Usuário não econtrado',
-      };
+      return response;
     }
 
+    await this.prisma.passwordResetToken.updateMany({
+      where: {
+        userId: user.id,
+        usedAt: null,
+      },
+      data: {
+        usedAt: new Date(),
+      },
+    });
+
     const token = randomBytes(32).toString('hex');
+    const tokenHash = this.hashPasswordResetToken(token);
+    const expiresAt = new Date(
+      Date.now() + PASSWORD_RESET_TOKEN_TTL_MINUTES * 60 * 1000,
+    );
 
-    const expiresAt = new Date();
-    expiresAt.setMinutes(expiresAt.getMinutes() + 15);
-
-    // Aqui você precisa salvar o token no banco
     await this.prisma.passwordResetToken.create({
       data: {
         userId: user.id,
-        token,
+        token: tokenHash,
         expiresAt,
       },
     });
 
-    // Aqui depois entra envio de email
-    const resetLink = `http://localhost:3000/auth/reset-password?token=${token}`;
+    const resetLink = this.buildPasswordResetLink(token);
 
-    console.log(resetLink);
+    // TODO: substituir por um EmailService quando o envio SMTP/API estiver configurado.
+    console.log(`Password reset link for ${user.email}: ${resetLink}`);
+
+    return response;
+  }
+
+  async resetPassword(dto: ResetPasswordDto): Promise<MessageResponseDto> {
+    const tokenHash = this.hashPasswordResetToken(dto.token);
+    const now = new Date();
+
+    const updatedTokens = await this.prisma.passwordResetToken.updateMany({
+      where: {
+        token: tokenHash,
+        usedAt: null,
+        expiresAt: {
+          gt: now,
+        },
+      },
+      data: {
+        usedAt: now,
+      },
+    });
+
+    if (updatedTokens.count !== 1) {
+      throw new BadRequestException('Token invalido ou expirado');
+    }
+
+    const resetToken = await this.prisma.passwordResetToken.findUniqueOrThrow({
+      where: { token: tokenHash },
+      select: { userId: true },
+    });
+
+    const password = await this.hashService.hash(dto.password);
+
+    await this.prisma.user.update({
+      where: { id: resetToken.userId },
+      data: { password },
+    });
 
     return {
-      message:
-        'Um link',
+      message: 'Senha redefinida com sucesso.',
+    };
+  }
+
+  private hashPasswordResetToken(token: string): string {
+    return createHash('sha256').update(token).digest('hex');
+  }
+
+  private buildPasswordResetLink(token: string): string {
+    const frontendUrl =
+      this.configService.get<string>('APP_FRONTEND_URL') ??
+      'http://localhost:4200';
+
+    return `${frontendUrl.replace(/\/$/, '')}/reset-password?token=${token}`;
+  }
+
+  private getPasswordResetRequestedResponse(): MessageResponseDto {
+    return {
+      message: 'Se o email existir, enviaremos um link de recuperacao.',
     };
   }
 }

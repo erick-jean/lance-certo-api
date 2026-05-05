@@ -7,10 +7,12 @@ import {
 } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { AuthResponseDto } from './dto/auth-response.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { LoginDto } from './dto/login.dto';
+import { MessageResponseDto } from './dto/message-response.dto';
 import { RegisterUserDto } from './dto/register-user.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 import { UserResponseDto } from '../users/dto/user-response.dto';
-import { ForgotPasswordDto } from '../auth/dto/forgot-password.dto'
 
 @ApiTags('auth')
 @Controller('auth')
@@ -32,9 +34,21 @@ export class AuthController {
     return this.authService.signIn(signInDto);
   }
 
+  @HttpCode(HttpStatus.OK)
   @Post('forgot-password')
-  @ApiOperation({ summary: 'Solicitar recuperação de senha' })
-  async forgotPassword(@Body() dto: ForgotPasswordDto) {
+  @ApiOperation({ summary: 'Solicita recuperacao de senha' })
+  @ApiOkResponse({ type: MessageResponseDto })
+  forgotPassword(
+    @Body() dto: ForgotPasswordDto,
+  ): Promise<MessageResponseDto> {
     return this.authService.forgotPassword(dto);
+  }
+
+  @HttpCode(HttpStatus.OK)
+  @Post('reset-password')
+  @ApiOperation({ summary: 'Redefine a senha usando token de recuperacao' })
+  @ApiOkResponse({ type: MessageResponseDto })
+  resetPassword(@Body() dto: ResetPasswordDto): Promise<MessageResponseDto> {
+    return this.authService.resetPassword(dto);
   }
 }
