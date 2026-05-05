@@ -9,6 +9,9 @@ const requiredEnvVars = [
   'REFRESH_TOKEN_COOKIE_SECURE',
 ] as const;
 
+/**
+ * Validates required environment variables during application startup.
+ */
 export function validateEnv(config: Env): Env {
   for (const key of requiredEnvVars) {
     if (!config[key]) {

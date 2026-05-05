@@ -6,6 +6,9 @@ import { UserResponseDto } from './dto/user-response.dto';
 export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
 
+  /**
+   * Finds a user by email and returns only public profile fields.
+   */
   async findOne(email: string): Promise<UserResponseDto> {
     const user = await this.prisma.user.findUnique({
       where: { email },

@@ -11,6 +11,9 @@ import { UsersService } from './users.service';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
+  /**
+   * Returns a user profile by email for authenticated requests.
+   */
   @Get(':email')
   @ApiOkResponse({ type: UserResponseDto })
   findByEmail(@Param('email') email: string): Promise<UserResponseDto> {

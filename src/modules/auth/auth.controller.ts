@@ -38,6 +38,9 @@ export class AuthController {
     private readonly configService: ConfigService,
   ) {}
 
+  /**
+   * Registers a new user and returns the public user representation.
+   */
   @Post('register')
   @ApiOperation({ summary: 'Registra um novo usuario' })
   @ApiCreatedResponse({ type: UserResponseDto })
@@ -45,6 +48,12 @@ export class AuthController {
     return this.authService.register(registerDto);
   }
 
+  /**
+   * Authenticates a user and stores the refresh token in an HttpOnly cookie.
+   *
+   * The JSON response only exposes the access token so browser JavaScript does
+   * not need to handle the refresh token directly.
+   */
   @HttpCode(HttpStatus.OK)
   @Post('login')
   @ApiOperation({
@@ -64,6 +73,10 @@ export class AuthController {
     };
   }
 
+  /**
+   * Rotates the refresh token from the HttpOnly cookie and returns a new access
+   * token.
+   */
   @HttpCode(HttpStatus.OK)
   @Post('refresh')
   @ApiOperation({
@@ -84,6 +97,9 @@ export class AuthController {
     };
   }
 
+  /**
+   * Starts the password recovery flow for the submitted email.
+   */
   @HttpCode(HttpStatus.OK)
   @Post('forgot-password')
   @ApiOperation({ summary: 'Solicita recuperacao de senha' })
@@ -92,6 +108,10 @@ export class AuthController {
     return this.authService.forgotPassword(dto);
   }
 
+  /**
+   * Completes password recovery by validating the reset token and saving the
+   * new password hash.
+   */
   @HttpCode(HttpStatus.OK)
   @Post('reset-password')
   @ApiOperation({ summary: 'Redefine a senha usando token de recuperacao' })
@@ -100,6 +120,9 @@ export class AuthController {
     return this.authService.resetPassword(dto);
   }
 
+  /**
+   * Returns the profile associated with the bearer access token.
+   */
   @Get('me')
   @UseGuards(AuthGuard)
   @ApiBearerAuth()
@@ -109,6 +132,10 @@ export class AuthController {
     return this.authService.me(req.user.sub);
   }
 
+  /**
+   * Revokes the refresh token stored in the HttpOnly cookie and clears it from
+   * the browser.
+   */
   @HttpCode(HttpStatus.OK)
   @Post('logout')
   @ApiOperation({
@@ -127,6 +154,9 @@ export class AuthController {
     return result;
   }
 
+  /**
+   * Reads the refresh token cookie or rejects the request when it is missing.
+   */
   private getRefreshTokenFromCookie(request: Request): string {
     const refreshToken = this.getOptionalRefreshTokenFromCookie(request);
 
@@ -137,6 +167,10 @@ export class AuthController {
     return refreshToken;
   }
 
+  /**
+   * Parses the raw Cookie header and returns the configured refresh token
+   * cookie value when present.
+   */
   private getOptionalRefreshTokenFromCookie(
     request: Request,
   ): string | undefined {
@@ -154,6 +188,9 @@ export class AuthController {
     return value ? decodeURIComponent(value) : undefined;
   }
 
+  /**
+   * Writes the refresh token using secure cookie options.
+   */
   private setRefreshTokenCookie(
     response: Response,
     refreshToken: string,
@@ -165,6 +202,10 @@ export class AuthController {
     );
   }
 
+  /**
+   * Clears the refresh token cookie using the same path/security settings used
+   * when it was created.
+   */
   private clearRefreshTokenCookie(response: Response): void {
     response.clearCookie(
       this.getRefreshTokenCookieName(),
@@ -172,6 +213,9 @@ export class AuthController {
     );
   }
 
+  /**
+   * Returns the configured refresh token cookie name.
+   */
   private getRefreshTokenCookieName(): string {
     return (
       this.configService.get<string>('REFRESH_TOKEN_COOKIE_NAME') ??
@@ -179,6 +223,9 @@ export class AuthController {
     );
   }
 
+  /**
+   * Builds the cookie options used for refresh token storage.
+   */
   private getRefreshTokenCookieOptions(): CookieOptions {
     return {
       httpOnly: true,
@@ -189,12 +236,19 @@ export class AuthController {
     };
   }
 
+  /**
+   * Enables the Secure cookie flag when the environment requires HTTPS.
+   */
   private isRefreshTokenCookieSecure(): boolean {
     return (
       this.configService.get<string>('REFRESH_TOKEN_COOKIE_SECURE') === 'true'
     );
   }
 
+  /**
+   * Converts refresh token expiration from days to cookie `maxAge`
+   * milliseconds.
+   */
   private getRefreshTokenCookieMaxAge(): number {
     const expiresDays = Number(
       this.configService.get('JWT_REFRESH_EXPIRES_DAYS'),

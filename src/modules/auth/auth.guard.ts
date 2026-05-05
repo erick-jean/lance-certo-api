@@ -13,6 +13,10 @@ import { JwtPayload } from './interfaces/jwt-payload.interface';
 export class AuthGuard implements CanActivate {
   constructor(private readonly jwtService: JwtService) {}
 
+  /**
+   * Validates the bearer access token and attaches its decoded payload to the
+   * request object.
+   */
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<Request>();
     const token = this.extractTokenFromHeader(request);
@@ -32,6 +36,9 @@ export class AuthGuard implements CanActivate {
     return true;
   }
 
+  /**
+   * Extracts the bearer token from the Authorization header.
+   */
   private extractTokenFromHeader(request: Request): string | undefined {
     const [type, token] = request.headers.authorization?.split(' ') ?? [];
     return type === 'Bearer' ? token : undefined;
