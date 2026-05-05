@@ -16,12 +16,7 @@ async function bootstrap() {
       'Sistema para gestão de leilões de veículos, avaliação de custos e controle de arremates.',
     )
     .setVersion('1.0.0')
-    .addBearerAuth() // JWT
-    .addTag('auth', 'Autenticação')
-    .addTag('users', 'Usuários')
-    .addTag('auctions', 'Leilões')
-    .addTag('vehicles', 'Veículos')
-    .addTag('financial', 'Controle financeiro')
+    .addBearerAuth() // JWT 
     .build();
   const documentFactory = () => SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, documentFactory);
