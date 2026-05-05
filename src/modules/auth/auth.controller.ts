@@ -10,6 +10,7 @@ import { AuthResponseDto } from './dto/auth-response.dto';
 import { LoginDto } from './dto/login.dto';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { UserResponseDto } from '../users/dto/user-response.dto';
+import { ForgotPasswordDto } from '../auth/dto/forgot-password.dto'
 
 @ApiTags('auth')
 @Controller('auth')
@@ -29,5 +30,11 @@ export class AuthController {
   @ApiOkResponse({ type: AuthResponseDto })
   signIn(@Body() signInDto: LoginDto): Promise<AuthResponseDto> {
     return this.authService.signIn(signInDto);
+  }
+
+  @Post('forgot-password')
+  @ApiOperation({ summary: 'Solicitar recuperação de senha' })
+  async forgotPassword(@Body() dto: ForgotPasswordDto) {
+    return this.authService.forgotPassword(dto);
   }
 }
