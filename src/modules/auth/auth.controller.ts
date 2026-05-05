@@ -18,6 +18,7 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import type { CookieOptions, Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { AuthResponseDto } from './dto/auth-response.dto';
@@ -56,6 +57,7 @@ export class AuthController {
    */
   @HttpCode(HttpStatus.OK)
   @Post('login')
+  @Throttle({ default: { limit: 5, ttl: 60_000, blockDuration: 60_000 } })
   @ApiOperation({
     summary: 'Autentica um usuario e grava refresh token em cookie HttpOnly',
   })
@@ -79,6 +81,7 @@ export class AuthController {
    */
   @HttpCode(HttpStatus.OK)
   @Post('refresh')
+  @Throttle({ default: { limit: 20, ttl: 60_000, blockDuration: 60_000 } })
   @ApiOperation({
     summary: 'Gera novo access token usando refresh token em cookie HttpOnly',
   })
@@ -102,6 +105,7 @@ export class AuthController {
    */
   @HttpCode(HttpStatus.OK)
   @Post('forgot-password')
+  @Throttle({ default: { limit: 3, ttl: 60_000, blockDuration: 300_000 } })
   @ApiOperation({ summary: 'Solicita recuperacao de senha' })
   @ApiOkResponse({ type: MessageResponseDto })
   forgotPassword(@Body() dto: ForgotPasswordDto): Promise<MessageResponseDto> {
@@ -114,6 +118,7 @@ export class AuthController {
    */
   @HttpCode(HttpStatus.OK)
   @Post('reset-password')
+  @Throttle({ default: { limit: 5, ttl: 60_000, blockDuration: 300_000 } })
   @ApiOperation({ summary: 'Redefine a senha usando token de recuperacao' })
   @ApiOkResponse({ type: MessageResponseDto })
   resetPassword(@Body() dto: ResetPasswordDto): Promise<MessageResponseDto> {

@@ -1,17 +1,29 @@
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { json, urlencoded } from 'express';
 import type { Request, Response } from 'express';
+import helmet from 'helmet';
 import { AppModule } from './app.module';
 
 /**
  * Bootstraps the Nest application, global validation, CORS and Swagger docs.
  */
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
   const configService = app.get(ConfigService);
 
+  app.getHttpAdapter().getInstance().disable('x-powered-by');
+  app.getHttpAdapter().getInstance().set('trust proxy', 1);
+  app.use(
+    helmet({
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
+    }),
+  );
+  app.use(json({ limit: '100kb' }));
+  app.use(urlencoded({ extended: true, limit: '100kb' }));
   app.enableCors({
     origin: configService.get<string>('APP_FRONTEND_URL'),
     credentials: true,
@@ -25,21 +37,29 @@ async function bootstrap() {
     }),
   );
 
-  app.getHttpAdapter().get('/', (_req: Request, res: Response) => {
-    res.redirect('/api');
-  });
+  app
+    .getHttpAdapter()
+    .getInstance()
+    .get('/', (_req: Request, res: Response) => {
+      res.redirect('/api');
+    });
 
-  const config = new DocumentBuilder()
-    .setTitle('Lance Certo API')
-    .setDescription(
-      'Sistema para gestao de leiloes de veiculos, avaliacao de custos e controle de arremates.',
-    )
-    .setVersion('1.0.0')
-    .addBearerAuth()
-    .build();
+  const swaggerEnabled =
+    configService.get<string>('SWAGGER_ENABLED') === 'true';
 
-  const documentFactory = () => SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, documentFactory);
+  if (swaggerEnabled) {
+    const config = new DocumentBuilder()
+      .setTitle('Lance Certo API')
+      .setDescription(
+        'Sistema para gestao de leiloes de veiculos, avaliacao de custos e controle de arremates.',
+      )
+      .setVersion('1.0.0')
+      .addBearerAuth()
+      .build();
+
+    const documentFactory = () => SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('api', app, documentFactory);
+  }
 
   await app.listen(configService.get<number>('PORT') ?? 3000);
 }

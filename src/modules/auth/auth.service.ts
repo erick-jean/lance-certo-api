@@ -38,8 +38,9 @@ export class AuthService {
    * intentionally excludes sensitive fields such as `password`.
    */
   async register(data: RegisterUserDto): Promise<UserResponseDto> {
+    const email = this.normalizeEmail(data.email);
     const userExists = await this.prisma.user.findUnique({
-      where: { email: data.email },
+      where: { email },
       select: { id: true },
     });
 
@@ -51,7 +52,7 @@ export class AuthService {
     const user = await this.prisma.user.create({
       data: {
         name: data.name,
-        email: data.email,
+        email,
         password,
       },
       select: {
@@ -77,8 +78,9 @@ export class AuthService {
    * HttpOnly cookie. Only the hashed version is persisted in the database.
    */
   async signIn(login: LoginDto): Promise<AuthTokens> {
+    const email = this.normalizeEmail(login.email);
     const user = await this.prisma.user.findUnique({
-      where: { email: login.email },
+      where: { email },
     });
 
     if (!user || !user.isActive) {
@@ -119,8 +121,9 @@ export class AuthService {
    */
   async forgotPassword(dto: ForgotPasswordDto): Promise<MessageResponseDto> {
     const response = this.getPasswordResetRequestedResponse();
+    const email = this.normalizeEmail(dto.email);
     const user = await this.prisma.user.findUnique({
-      where: { email: dto.email },
+      where: { email },
       select: { id: true, email: true },
     });
 
@@ -212,6 +215,16 @@ export class AuthService {
       await tx.user.update({
         where: { id: resetToken.userId },
         data: { password },
+      });
+
+      await tx.refreshToken.updateMany({
+        where: {
+          userId: resetToken.userId,
+          revokedAt: null,
+        },
+        data: {
+          revokedAt: now,
+        },
       });
     });
 
@@ -347,6 +360,13 @@ export class AuthService {
    */
   private hashPasswordResetToken(token: string): string {
     return this.hashToken(token);
+  }
+
+  /**
+   * Normalizes email addresses before persistence or lookup.
+   */
+  private normalizeEmail(email: string): string {
+    return email.trim().toLowerCase();
   }
 
   /**

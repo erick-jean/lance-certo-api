@@ -1,5 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, MaxLength, MinLength } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsString,
+  IsStrongPassword,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 
 export class ResetPasswordDto {
   @ApiProperty({
@@ -7,11 +13,19 @@ export class ResetPasswordDto {
   })
   @IsString()
   @IsNotEmpty()
+  @MaxLength(128)
   token!: string;
 
-  @ApiProperty({ example: 'newStrongPassword123' })
+  @ApiProperty({ example: 'NewStrongPass123' })
   @IsString()
-  @MinLength(6)
+  @MinLength(8)
   @MaxLength(255)
+  @IsStrongPassword({
+    minLength: 8,
+    minLowercase: 1,
+    minUppercase: 1,
+    minNumbers: 1,
+    minSymbols: 0,
+  })
   password!: string;
 }
