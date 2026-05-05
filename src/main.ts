@@ -2,6 +2,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import type { Request, Response } from 'express';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
@@ -18,7 +19,7 @@ async function bootstrap() {
     }),
   );
 
-  app.getHttpAdapter().get('/', (req, res) => {
+  app.getHttpAdapter().get('/', (_req: Request, res: Response) => {
     res.redirect('/api');
   });
 
