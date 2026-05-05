@@ -144,7 +144,7 @@ export class AuthService {
     const tokenHash = this.hashPasswordResetToken(dto.token);
     const now = new Date();
 
-    const updatedTokens = await this.prisma.passwordResetToken.updateMany({
+    const resetToken = await this.prisma.passwordResetToken.findFirst({
       where: {
         token: tokenHash,
         usedAt: null,
@@ -152,25 +152,40 @@ export class AuthService {
           gt: now,
         },
       },
-      data: {
-        usedAt: now,
+      select: {
+        id: true,
+        userId: true,
       },
     });
 
-    if (updatedTokens.count !== 1) {
+    if (!resetToken) {
       throw new BadRequestException('Token invalido ou expirado');
     }
 
-    const resetToken = await this.prisma.passwordResetToken.findUniqueOrThrow({
-      where: { token: tokenHash },
-      select: { userId: true },
-    });
-
     const password = await this.hashService.hash(dto.password);
 
-    await this.prisma.user.update({
-      where: { id: resetToken.userId },
-      data: { password },
+    await this.prisma.$transaction(async (tx) => {
+      const updatedTokens = await tx.passwordResetToken.updateMany({
+        where: {
+          id: resetToken.id,
+          usedAt: null,
+          expiresAt: {
+            gt: now,
+          },
+        },
+        data: {
+          usedAt: now,
+        },
+      });
+
+      if (updatedTokens.count !== 1) {
+        throw new BadRequestException('Token invalido ou expirado');
+      }
+
+      await tx.user.update({
+        where: { id: resetToken.userId },
+        data: { password },
+      });
     });
 
     return {

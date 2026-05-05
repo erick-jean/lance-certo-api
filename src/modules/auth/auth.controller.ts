@@ -38,9 +38,7 @@ export class AuthController {
   @Post('forgot-password')
   @ApiOperation({ summary: 'Solicita recuperacao de senha' })
   @ApiOkResponse({ type: MessageResponseDto })
-  forgotPassword(
-    @Body() dto: ForgotPasswordDto,
-  ): Promise<MessageResponseDto> {
+  forgotPassword(@Body() dto: ForgotPasswordDto): Promise<MessageResponseDto> {
     return this.authService.forgotPassword(dto);
   }
 
