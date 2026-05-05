@@ -1,5 +1,15 @@
-import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import {
+  Body,
+  Controller,
+  HttpCode,
+  HttpStatus,
+  Post,
+  Get,
+  UseGuards,
+  Req,
+} from '@nestjs/common';
+import {
+  ApiBearerAuth,
   ApiCreatedResponse,
   ApiOkResponse,
   ApiOperation,
@@ -13,6 +23,8 @@ import { MessageResponseDto } from './dto/message-response.dto';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { UserResponseDto } from '../users/dto/user-response.dto';
+import { AuthGuard } from './auth.guard';
+import { AuthenticatedRequest } from './interfaces/authenticated-request.interface';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -48,5 +60,14 @@ export class AuthController {
   @ApiOkResponse({ type: MessageResponseDto })
   resetPassword(@Body() dto: ResetPasswordDto): Promise<MessageResponseDto> {
     return this.authService.resetPassword(dto);
+  }
+
+  @Get('me')
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Retorna o usuario autenticado' })
+  @ApiOkResponse({ type: UserResponseDto })
+  me(@Req() req: AuthenticatedRequest): Promise<UserResponseDto> {
+    return this.authService.me(req.user.sub);
   }
 }
