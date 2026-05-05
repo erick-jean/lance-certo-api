@@ -54,6 +54,7 @@ export class AuthService {
         name: data.name,
         email,
         password,
+        role: 'user',
       },
       select: {
         id: true,
