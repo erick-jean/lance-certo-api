@@ -1,16 +1,17 @@
 import {
   Body,
   Controller,
+  DefaultValuePipe,
   Delete,
   Get,
   Param,
+  ParseEnumPipe,
+  ParseIntPipe,
   Patch,
   Post,
   Query,
   Req,
   UseGuards,
-  DefaultValuePipe,
-  ParseIntPipe,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -22,6 +23,7 @@ import {
 } from '@nestjs/swagger';
 import { AuthGuard } from '../auth/auth.guard';
 import { AuthenticatedRequest } from '../auth/interfaces/authenticated-request.interface';
+import { VehicleStatus } from '../../../generated/prisma/enums';
 import { CreateVehicleDto } from './dto/create-vehicle.dto';
 import { FindVehiclesQueryDto } from './dto/find-vehicles-query.dto';
 import { PaginatedVeichleResponseDto } from './dto/paginated-vehicles-response.dto';
@@ -44,11 +46,11 @@ export class VehiclesController {
    * Lists vehicles owned by the authenticated user with pagination and filters.
    */
   @ApiOperation({
-    summary: 'List users',
+    summary: 'Lista veiculos',
     description: 'Lista veiculos do usuario autenticado',
   })
   @ApiOkResponse({
-    description: 'Paginated list of users returned successfully',
+    description: 'Lista paginada de veiculos retornada com sucesso',
     type: PaginatedVeichleResponseDto,
   })
   @ApiQuery({
@@ -63,18 +65,51 @@ export class VehiclesController {
     example: 10,
     description: 'Number of items per page (max 100)',
   })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    enum: ['ANALYZING', 'REJECTED', 'PURCHASED', 'SOLD'],
+  })
+  @ApiQuery({
+    name: 'brand',
+    required: false,
+    example: 'Honda',
+  })
+  @ApiQuery({
+    name: 'model',
+    required: false,
+    example: 'Civic',
+  })
+  @ApiQuery({
+    name: 'plate',
+    required: false,
+    example: 'QWE1A23',
+  })
   @ApiBadRequestResponse({
     description: 'Invalid pagination parameters',
   })
   @Get()
   @ApiOkResponse({ type: PaginatedVeichleResponseDto })
   findAll(
+    @Req() req: AuthenticatedRequest,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
-    @Req() req: AuthenticatedRequest,
-    @Query() query: FindVehiclesQueryDto,
+    @Query('status', new ParseEnumPipe(VehicleStatus, { optional: true }))
+    status?: VehicleStatus,
+    @Query('brand') brand?: string,
+    @Query('model') model?: string,
+    @Query('plate') plate?: string,
   ): Promise<PaginatedVeichleResponseDto> {
-    return this.vehiclesService.findAll(page, limit, req.user.sub, query);
+    const query: FindVehiclesQueryDto = {
+      page,
+      limit,
+      status,
+      brand,
+      model,
+      plate,
+    };
+
+    return this.vehiclesService.findAll(req.user.sub, query);
   }
 
   @Get(':id')

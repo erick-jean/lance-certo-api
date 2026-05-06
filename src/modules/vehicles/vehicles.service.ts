@@ -1,11 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { PrismaService } from 'src/database/prisma.service';
 import { Prisma } from '../../../generated/prisma/client';
 import { CreateVehicleDto } from './dto/create-vehicle.dto';
 import { FindVehiclesQueryDto } from './dto/find-vehicles-query.dto';
 import { PaginatedVeichleResponseDto } from './dto/paginated-vehicles-response.dto';
 import { ResponseVehicleDto } from './dto/response-vehicle.dto';
 import { UpdateVehicleDto } from './dto/update-vehicle.dto';
-import { PrismaService } from 'src/database/prisma.service';
 
 const vehiclesListSelect = {
   id: true,
@@ -38,11 +38,6 @@ const vehiclesListSelect = {
   updatedAt: true,
 } satisfies Prisma.VehicleSelect;
 
-// Constantes para paginação
-const DEFAULT_PAGE = 1;
-const DEFAULT_LIMIT = 10;
-const MAX_LIMIT = 100;
-
 type VehicleListItem = Prisma.VehicleGetPayload<{
   select: typeof vehiclesListSelect;
 }>;
@@ -63,29 +58,20 @@ export class VehiclesService {
    * vehicles that belong to another account.
    */
   async findAll(
-    page: number,
-    limit: number,
     userId: string,
     query: FindVehiclesQueryDto,
   ): Promise<PaginatedVeichleResponseDto> {
-    const vehicles = await this.prisma.vehicle.findMany({
-      where: { userId: userId },
-      select: query,
-    });
+    const page = query.page;
+    const limit = query.limit;
+    const skip = (page - 1) * limit;
+    const where = this.buildFindAllWhere(userId, query);
 
-    if (!vehicles) {
-      return new NotFoundException('Vehicles not found');
-    }
-
-    const sanitizedPage = Math.max(DEFAULT_PAGE, page);
-    const sanitizedLimit = Math.min(Math.max(DEFAULT_LIMIT, limit), MAX_LIMIT);
-    const skip = (sanitizedPage - 1) * sanitizedLimit;
-
-    const [totalItems, users] = await this.prisma.$transaction([
-      this.prisma.user.count(),
-      this.prisma.user.findMany({
+    const [totalItems, vehicles] = await this.prisma.$transaction([
+      this.prisma.vehicle.count({ where }),
+      this.prisma.vehicle.findMany({
+        where,
         skip,
-        take: sanitizedLimit,
+        take: limit,
         select: vehiclesListSelect,
         orderBy: {
           createdAt: 'desc',
@@ -93,17 +79,17 @@ export class VehiclesService {
       }),
     ]);
 
-    const totalPages = Math.ceil(totalItems / sanitizedLimit);
+    const totalPages = Math.ceil(totalItems / limit);
 
     return {
-      data: users.map((user) => this.toResponse(user)),
+      data: vehicles.map((vehicle) => this.toResponse(vehicle)),
       meta: {
-        page: sanitizedPage,
-        limit: sanitizedLimit,
+        page,
+        limit,
         totalItems,
         totalPages,
-        hasNextPage: sanitizedPage < totalPages,
-        hasPreviousPage: sanitizedPage > 1,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1,
       },
     };
   }
@@ -122,35 +108,25 @@ export class VehiclesService {
   }
 
   private toResponse(vehicle: VehicleListItem): ResponseVehicleDto {
+    return new ResponseVehicleDto(vehicle);
+  }
+
+  private buildFindAllWhere(
+    userId: string,
+    query: FindVehiclesQueryDto,
+  ): Prisma.VehicleWhereInput {
     return {
-      id: vehicle.id,
-      userId: vehicle.userId,
-      plate: vehicle.plate,
-      brand: vehicle.brand,
-      model: vehicle.model,
-      version: vehicle.version,
-      yearManufacture: vehicle.yearManufacture,
-      yearModel: vehicle.yearModel,
-      color: vehicle.color,
-      fuelType: vehicle.fuelType,
-      transmission: vehicle.transmission,
-      mileage: vehicle.mileage,
-      fipeCode: vehicle.fipeCode,
-      fipeValue: vehicle.fipeValue,
-      marketValue: vehicle.marketValue,
-      auctioneer: vehicle.auctioneer,
-      auctionType: vehicle.auctionType,
-      sourceUrl: vehicle.sourceUrl,
-      eventDate: vehicle.eventDate,
-      city: vehicle.city,
-      state: vehicle.state,
-      yardAddress: vehicle.yardAddress,
-      auctionInitialBid: vehicle.auctionInitialBid,
-      auctionCurrentBid: vehicle.auctionCurrentBid,
-      status: vehicle.status,
-      notes: vehicle.notes,
-      createdAt: vehicle.createdAt,
-      updatedAt: vehicle.updatedAt,
+      userId,
+      ...(query.status ? { status: query.status } : {}),
+      ...(query.brand
+        ? { brand: { contains: query.brand, mode: 'insensitive' } }
+        : {}),
+      ...(query.model
+        ? { model: { contains: query.model, mode: 'insensitive' } }
+        : {}),
+      ...(query.plate
+        ? { plate: { contains: query.plate.trim().toUpperCase() } }
+        : {}),
     };
   }
 }
