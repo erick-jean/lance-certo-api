@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/database/prisma.service';
 import { Prisma } from '../../../generated/prisma/client';
 import { CreateVehicleDto } from './dto/create-vehicle.dto';
@@ -50,6 +50,24 @@ export class VehiclesService {
     userId: string,
     createVehicleDto: CreateVehicleDto,
   ): Promise<ResponseVehicleDto> {
+    /**
+     * Checks if a vehicle with the same plate
+     * already exists for the user.
+     */
+    // if (createVehicleDto.plate) {
+    //   const vehicleAlreadyExists = await this.prisma.vehicle.findFirst({
+    //     where: {
+    //       userId,
+    //       plate: createVehicleDto.plate,
+    //     },
+    //   });
+
+    //   if (vehicleAlreadyExists) {
+    //      throw new ConflictException(
+    //       'Já existe um veículo cadastrado com esta placa.',
+    //     );
+    //   }
+    // }
     const vehicle = await this.prisma.vehicle.create({
       data: { ...createVehicleDto, userId },
     });
