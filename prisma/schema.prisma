@@ -102,9 +102,7 @@ enum AuctionType {
 }
 
 enum VehicleStatus {
-  PENDING
   ANALYZING
-  APPROVED
   REJECTED
   PURCHASED
   SOLD
@@ -154,7 +152,7 @@ model Vehicle {
   auctionCurrentBid Decimal? @db.Decimal(12, 2)
 
   // Controle
-  status VehicleStatus @default(PENDING)
+  status VehicleStatus @default(ANALYZING)
 
   notes String? @db.Text
 
