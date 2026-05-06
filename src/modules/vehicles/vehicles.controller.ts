@@ -9,18 +9,22 @@ import {
   Query,
   Req,
   UseGuards,
+  DefaultValuePipe,
+  ParseIntPipe,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiOkResponse,
   ApiOperation,
   ApiTags,
+  ApiQuery,
+  ApiBadRequestResponse,
 } from '@nestjs/swagger';
 import { AuthGuard } from '../auth/auth.guard';
 import { AuthenticatedRequest } from '../auth/interfaces/authenticated-request.interface';
 import { CreateVehicleDto } from './dto/create-vehicle.dto';
 import { FindVehiclesQueryDto } from './dto/find-vehicles-query.dto';
-import { PaginatedVehiclesResponseDto } from './dto/paginated-vehicles-response.dto';
+import { PaginatedVeichleResponseDto } from './dto/paginated-vehicles-response.dto';
 import { UpdateVehicleDto } from './dto/update-vehicle.dto';
 import { VehiclesService } from './vehicles.service';
 
@@ -39,14 +43,38 @@ export class VehiclesController {
   /**
    * Lists vehicles owned by the authenticated user with pagination and filters.
    */
+  @ApiOperation({
+    summary: 'List users',
+    description: 'Lista veiculos do usuario autenticado',
+  })
+  @ApiOkResponse({
+    description: 'Paginated list of users returned successfully',
+    type: PaginatedVeichleResponseDto,
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    example: 1,
+    description: 'Page number',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    example: 10,
+    description: 'Number of items per page (max 100)',
+  })
+  @ApiBadRequestResponse({
+    description: 'Invalid pagination parameters',
+  })
   @Get()
-  @ApiOperation({ summary: 'Lista veiculos do usuario autenticado' })
-  @ApiOkResponse({ type: PaginatedVehiclesResponseDto })
+  @ApiOkResponse({ type: PaginatedVeichleResponseDto })
   findAll(
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
     @Req() req: AuthenticatedRequest,
     @Query() query: FindVehiclesQueryDto,
-  ): Promise<PaginatedVehiclesResponseDto> {
-    return this.vehiclesService.findAll(req.user.sub, query);
+  ): Promise<PaginatedVeichleResponseDto> {
+    return this.vehiclesService.findAll(page, limit, req.user.sub, query);
   }
 
   @Get(':id')
