@@ -26,20 +26,21 @@ enum SubscriptionPlanStatus {
 }
 
 model User {
-  id                  String               @id @default(uuid())
-  name                String               @db.VarChar(255)
-  email               String               @unique @db.VarChar(255)
-  password            String               @db.VarChar(255)
-  role                String               @default("user") @db.VarChar(20)
-  plan                SubscriptionPlan     @default(free)
+  id                  String                 @id @default(uuid())
+  name                String                 @db.VarChar(255)
+  email               String                 @unique @db.VarChar(255)
+  password            String                 @db.VarChar(255)
+  role                String                 @default("user") @db.VarChar(20)
+  plan                SubscriptionPlan       @default(free)
   planStatus          SubscriptionPlanStatus @default(inactive)
   planExpiresAt       DateTime?
-  isActive            Boolean              @default(true)
-  createdAt           DateTime             @default(now())
-  updatedAt           DateTime             @updatedAt
+  isActive            Boolean                @default(true)
+  createdAt           DateTime               @default(now())
+  updatedAt           DateTime               @updatedAt
   lastLogin           DateTime?
   passwordResetTokens PasswordResetToken[]
   refreshTokens       RefreshToken[]
+  vehicles            Vehicle[]
 
   @@map("users")
 }
@@ -72,4 +73,92 @@ model RefreshToken {
   @@index([userId])
   @@index([expiresAt])
   @@map("refresh_tokens")
+}
+
+enum FuelType {
+  GASOLINE
+  ETHANOL
+  FLEX
+  DIESEL
+  ELECTRIC
+  HYBRID
+  GNV
+}
+
+enum TransmissionType {
+  MANUAL
+  AUTOMATIC
+  CVT
+  AUTOMATED
+}
+
+enum AuctionType {
+  JUDICIAL
+  EXTRAJUDICIAL
+  BANK
+  INSURANCE
+  DEALERSHIP
+  OTHER
+}
+
+enum VehicleStatus {
+  PENDING
+  ANALYZING
+  APPROVED
+  REJECTED
+  PURCHASED
+  SOLD
+}
+
+model Vehicle {
+  id     String @id @default(uuid())
+  // Relacionamento
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Dados do veículo
+  plate   String  @db.VarChar(10)
+  brand   String  @db.VarChar(100)
+  model   String  @db.VarChar(100)
+  version String? @db.VarChar(150)
+
+  yearManufacture Int
+  yearModel       Int
+
+  color        String?           @db.VarChar(50)
+  fuelType     FuelType?
+  transmission TransmissionType?
+
+  mileage Int?
+
+  // Valores de mercado
+  fipeCode    String?  @db.VarChar(20)
+  fipeValue   Decimal? @db.Decimal(12, 2)
+  marketValue Decimal? @db.Decimal(12, 2)
+
+  // Informações do leilão
+  auctioneer  String?      @db.VarChar(150)
+  auctionType AuctionType?
+
+  sourceUrl String? @db.Text
+
+  eventDate DateTime?
+
+  city  String? @db.VarChar(100)
+  state String? @db.VarChar(2)
+
+  yardAddress String? @db.Text
+
+  auctionInitialBid Decimal? @db.Decimal(12, 2)
+  auctionCurrentBid Decimal? @db.Decimal(12, 2)
+
+  // Controle
+  status VehicleStatus @default(PENDING)
+
+  notes String? @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("vehicles")
 }
