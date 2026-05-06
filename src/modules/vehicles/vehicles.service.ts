@@ -1,16 +1,26 @@
 import { Injectable } from '@nestjs/common';
 import { CreateVehicleDto } from './dto/create-vehicle.dto';
 import { UpdateVehicleDto } from './dto/update-vehicle.dto';
+import { PrismaService } from 'src/database/prisma.service';
+import { ResponseVehicleDto } from './dto/response-vehicle.dto';
 
 @Injectable()
 export class VehiclesService {
+  constructor(private readonly prisma: PrismaService) {}
+
   create(createVehicleDto: CreateVehicleDto) {
     void createVehicleDto;
     return 'This action adds a new vehicle';
   }
 
-  findAll() {
-    return `This action returns all vehicles`;
+  async findAll(userId: string): Promise<ResponseVehicleDto[]> {
+    const vehicles = await this.prisma.vehicle.findMany({
+      where: {
+        userId,
+      },
+    });
+
+    return vehicles.map((vehicle) => new ResponseVehicleDto(vehicle));
   }
 
   findOne(id: number) {

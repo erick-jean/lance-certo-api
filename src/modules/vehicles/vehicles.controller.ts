@@ -6,10 +6,23 @@ import {
   Patch,
   Param,
   Delete,
+  UseGuards,
+  Req,
 } from '@nestjs/common';
 import { VehiclesService } from './vehicles.service';
 import { CreateVehicleDto } from './dto/create-vehicle.dto';
 import { UpdateVehicleDto } from './dto/update-vehicle.dto';
+import { AuthGuard } from '../auth/auth.guard';
+
+import {
+  ApiBearerAuth,
+  ApiCreatedResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
+import { ResponseVehicleDto } from './dto/response-vehicle.dto';
+import { AuthenticatedRequest } from '../auth/interfaces/authenticated-request.interface';
 
 @Controller('vehicles')
 export class VehiclesController {
@@ -20,9 +33,11 @@ export class VehiclesController {
     return this.vehiclesService.create(createVehicleDto);
   }
 
+  @UseGuards(AuthGuard)
+  @ApiOperation({ summary: 'Lista veículos do usuário.' })
   @Get()
-  findAll() {
-    return this.vehiclesService.findAll();
+  findAll(@Req() req: AuthenticatedRequest): Promise<ResponseVehicleDto[]> {
+    return this.vehiclesService.findAll(req.user.sub);
   }
 
   @Get(':id')

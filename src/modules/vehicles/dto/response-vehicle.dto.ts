@@ -5,7 +5,7 @@ import {
   VehicleStatus,
 } from '../../../../generated/prisma/enums';
 
-export class VehicleResponseDto {
+export class ResponseVehicleDto {
   id!: string;
 
   userId!: string;
@@ -66,7 +66,8 @@ export class VehicleResponseDto {
 
   updatedAt!: Date;
 
-constructor(vehicle: Partial<VehicleResponseDto>) {
+constructor(vehicle: Partial<ResponseVehicleDto>) {
+    
   /**
    * Copia automaticamente todas as propriedades
    * do objeto "vehicle" para esta instância da classe.
