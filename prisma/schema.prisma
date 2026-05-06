@@ -111,7 +111,8 @@ enum VehicleStatus {
 }
 
 model Vehicle {
-  id     String @id @default(uuid())
+  id String @id @default(uuid())
+
   // Relacionamento
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
