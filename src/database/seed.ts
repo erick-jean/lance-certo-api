@@ -1,9 +1,8 @@
-//npx tsx src/database/seed.ts 
+//npx tsx src/database/seed.ts
 
 import 'dotenv/config';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../../generated/prisma/client';
-import { HashService } from 'src/common/hash/hash.service';
 
 const adapter = new PrismaPg({
   connectionString: process.env.DATABASE_URL!,
@@ -11,11 +10,9 @@ const adapter = new PrismaPg({
 
 const prisma = new PrismaClient({ adapter });
 
-const hashService = new HashService();
-
 async function main() {
   // const count = await prisma.user.count();
-  const countvehicle = await prisma.vehicle.count()
+  const countvehicle = await prisma.vehicle.count();
 
   if (countvehicle > 0) {
     console.log('Seed ignorado: já existem usuários');
@@ -96,7 +93,7 @@ async function main() {
         yardAddress: 'Rua Projetada A',
         auctionInitialBid: 72000,
         auctionCurrentBid: 81000,
-        status: 'PENDING',
+        status: 'ANALYZING',
         notes: 'Veículo aparentemente íntegro.',
       },
 
@@ -124,7 +121,7 @@ async function main() {
         yardAddress: 'Rodovia Anhanguera KM 25',
         auctionInitialBid: 65000,
         auctionCurrentBid: 70000,
-        status: 'APPROVED',
+        status: 'ANALYZING',
         notes: 'Necessário troca dos pneus.',
       },
 

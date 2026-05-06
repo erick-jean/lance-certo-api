@@ -7,6 +7,7 @@ import { UsersModule } from './modules/users/users.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { SubscriptionModule } from './modules/subscription/subscription.module';
 import { validateEnv } from './config/env.validation';
+import { VehiclesModule } from './modules/vehicles/vehicles.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { validateEnv } from './config/env.validation';
     UsersModule,
     AuthModule,
     SubscriptionModule,
+    VehiclesModule,
   ],
   providers: [
     {
