@@ -3,6 +3,7 @@
 import 'dotenv/config';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../../generated/prisma/client';
+import { HashService } from 'src/common/hash/hash.service';
 
 const adapter = new PrismaPg({
   connectionString: process.env.DATABASE_URL!,
@@ -10,17 +11,19 @@ const adapter = new PrismaPg({
 
 const prisma = new PrismaClient({ adapter });
 
+const hashService = new HashService();
+
 async function main() {
-  // const count = await prisma.user.count();
-  const countvehicle = await prisma.vehicle.count();
+  const count = await prisma.user.count();
+  // const countvehicle = await prisma.vehicle.count();
 
-  if (countvehicle > 0) {
-    console.log('Seed ignorado: já existem usuários');
-    return;
-  }
+  // if (countvehicle > 0) {
+  //   console.log('Seed ignorado: já existem usuários');
+  //   return;
+  // }
 
-  // const adminPassword = await hashService.hash('123456');
-  // const userPassword = await hashService.hash('123456');
+  const adminPassword = await hashService.hash('123456');
+  const userPassword = await hashService.hash('123456');
 
   // await prisma.user.createMany({
   //   data: [
@@ -42,7 +45,7 @@ async function main() {
   await prisma.vehicle.createMany({
     data: [
       {
-        userId: '00fc2d32-3075-4880-9dca-790704d6c3da',
+        userId: 'c8cfe0c5-db13-47f6-8f98-552cf0a7de85',
         plate: 'QWE1A23',
         brand: 'Honda',
         model: 'Civic',
@@ -70,7 +73,7 @@ async function main() {
       },
 
       {
-        userId: '00fc2d32-3075-4880-9dca-790704d6c3da',
+        userId: 'c8cfe0c5-db13-47f6-8f98-552cf0a7de85',
         plate: 'BRA2B45',
         brand: 'Toyota',
         model: 'Corolla',
@@ -98,7 +101,7 @@ async function main() {
       },
 
       {
-        userId: '00fc2d32-3075-4880-9dca-790704d6c3da',
+        userId: 'c8cfe0c5-db13-47f6-8f98-552cf0a7de85',
         plate: 'TES3C67',
         brand: 'Volkswagen',
         model: 'Golf GTI',
@@ -126,7 +129,7 @@ async function main() {
       },
 
       {
-        userId: '00fc2d32-3075-4880-9dca-790704d6c3da',
+        userId: 'c8cfe0c5-db13-47f6-8f98-552cf0a7de85',
         plate: 'FOX4D89',
         brand: 'Ford',
         model: 'Ranger',
@@ -154,7 +157,7 @@ async function main() {
       },
 
       {
-        userId: '00fc2d32-3075-4880-9dca-790704d6c3da',
+        userId: 'c8cfe0c5-db13-47f6-8f98-552cf0a7de85',
         plate: 'BMW5E12',
         brand: 'BMW',
         model: '320i',

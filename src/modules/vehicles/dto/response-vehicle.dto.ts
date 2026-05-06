@@ -66,19 +66,38 @@ export class VehicleResponseDto {
 
   updatedAt!: Date;
 
-  constructor(vehicle: Partial<VehicleResponseDto>) {
-    Object.assign(this, vehicle);
+constructor(vehicle: Partial<VehicleResponseDto>) {
+  /**
+   * Copia automaticamente todas as propriedades
+   * do objeto "vehicle" para esta instância da classe.
+   *
+   * Exemplo:
+   * vehicle.id -> this.id
+   * vehicle.brand -> this.brand
+   */
+  Object.assign(this, vehicle);
 
-    this.fipeValue = vehicle.fipeValue ? Number(vehicle.fipeValue) : null;
+  /**
+   * Prisma retorna campos Decimal como objeto Decimal.
+   * Aqui convertemos para number para a API retornar
+   * valores numéricos normais em JSON.
+   *
+   * Se o valor for null/undefined, retorna null.
+   */
+  this.fipeValue = vehicle.fipeValue
+    ? Number(vehicle.fipeValue)
+    : null;
 
-    this.marketValue = vehicle.marketValue ? Number(vehicle.marketValue) : null;
+  this.marketValue = vehicle.marketValue
+    ? Number(vehicle.marketValue)
+    : null;
 
-    this.auctionInitialBid = vehicle.auctionInitialBid
-      ? Number(vehicle.auctionInitialBid)
-      : null;
+  this.auctionInitialBid = vehicle.auctionInitialBid
+    ? Number(vehicle.auctionInitialBid)
+    : null;
 
-    this.auctionCurrentBid = vehicle.auctionCurrentBid
-      ? Number(vehicle.auctionCurrentBid)
-      : null;
-  }
+  this.auctionCurrentBid = vehicle.auctionCurrentBid
+    ? Number(vehicle.auctionCurrentBid)
+    : null;
+}
 }
