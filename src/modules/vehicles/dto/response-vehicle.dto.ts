@@ -5,6 +5,18 @@ import {
   VehicleStatus,
 } from '../../../../generated/prisma/enums';
 
+type DecimalLike = number | { toString(): string } | null | undefined;
+
+type ResponseVehicleInput = Omit<
+  Partial<ResponseVehicleDto>,
+  'fipeValue' | 'marketValue' | 'auctionInitialBid' | 'auctionCurrentBid'
+> & {
+  fipeValue?: DecimalLike;
+  marketValue?: DecimalLike;
+  auctionInitialBid?: DecimalLike;
+  auctionCurrentBid?: DecimalLike;
+};
+
 export class ResponseVehicleDto {
   id!: string;
 
@@ -66,39 +78,34 @@ export class ResponseVehicleDto {
 
   updatedAt!: Date;
 
-constructor(vehicle: Partial<ResponseVehicleDto>) {
-    
-  /**
-   * Copia automaticamente todas as propriedades
-   * do objeto "vehicle" para esta instância da classe.
-   *
-   * Exemplo:
-   * vehicle.id -> this.id
-   * vehicle.brand -> this.brand
-   */
-  Object.assign(this, vehicle);
+  constructor(vehicle: ResponseVehicleInput) {
+    /**
+     * Copia automaticamente todas as propriedades
+     * do objeto "vehicle" para esta instância da classe.
+     *
+     * Exemplo:
+     * vehicle.id -> this.id
+     * vehicle.brand -> this.brand
+     */
+    Object.assign(this, vehicle);
 
-  /**
-   * Prisma retorna campos Decimal como objeto Decimal.
-   * Aqui convertemos para number para a API retornar
-   * valores numéricos normais em JSON.
-   *
-   * Se o valor for null/undefined, retorna null.
-   */
-  this.fipeValue = vehicle.fipeValue
-    ? Number(vehicle.fipeValue)
-    : null;
+    /**
+     * Prisma retorna campos Decimal como objeto Decimal.
+     * Aqui convertemos para number para a API retornar
+     * valores numéricos normais em JSON.
+     *
+     * Se o valor for null/undefined, retorna null.
+     */
+    this.fipeValue = this.toNullableNumber(vehicle.fipeValue);
 
-  this.marketValue = vehicle.marketValue
-    ? Number(vehicle.marketValue)
-    : null;
+    this.marketValue = this.toNullableNumber(vehicle.marketValue);
 
-  this.auctionInitialBid = vehicle.auctionInitialBid
-    ? Number(vehicle.auctionInitialBid)
-    : null;
+    this.auctionInitialBid = this.toNullableNumber(vehicle.auctionInitialBid);
 
-  this.auctionCurrentBid = vehicle.auctionCurrentBid
-    ? Number(vehicle.auctionCurrentBid)
-    : null;
-}
+    this.auctionCurrentBid = this.toNullableNumber(vehicle.auctionCurrentBid);
+  }
+
+  private toNullableNumber(value: DecimalLike): number | null {
+    return value === null || value === undefined ? null : Number(value);
+  }
 }

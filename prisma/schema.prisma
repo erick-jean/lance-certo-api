@@ -159,5 +159,8 @@ model Vehicle {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@index([userId])
+  @@index([userId, status])
+  @@index([userId, createdAt])
   @@map("vehicles")
 }

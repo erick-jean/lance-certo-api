@@ -3,7 +3,6 @@
 import 'dotenv/config';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../../generated/prisma/client';
-import { HashService } from 'src/common/hash/hash.service';
 
 const adapter = new PrismaPg({
   connectionString: process.env.DATABASE_URL!,
@@ -11,19 +10,13 @@ const adapter = new PrismaPg({
 
 const prisma = new PrismaClient({ adapter });
 
-const hashService = new HashService();
-
 async function main() {
-  const count = await prisma.user.count();
   // const countvehicle = await prisma.vehicle.count();
 
   // if (countvehicle > 0) {
   //   console.log('Seed ignorado: já existem usuários');
   //   return;
   // }
-
-  const adminPassword = await hashService.hash('123456');
-  const userPassword = await hashService.hash('123456');
 
   // await prisma.user.createMany({
   //   data: [
