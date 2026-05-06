@@ -1,17 +1,30 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsIn, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
+import {
+  IsIn,
+  IsInt,
+  IsOptional,
+  IsString,
+  Max,
+  Min,
+  IsEnum,
+} from 'class-validator';
 import { VehicleStatus } from '../../../../generated/prisma/enums';
 
 export class FindVehiclesQueryDto {
-  @ApiPropertyOptional({ example: 1, minimum: 1 })
+  @ApiPropertyOptional({ example: 1, minimum: 1, description: 'Page number' })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1)
   page = 1;
 
-  @ApiPropertyOptional({ example: 20, minimum: 1, maximum: 100 })
+  @ApiPropertyOptional({
+    example: 20,
+    minimum: 1,
+    maximum: 100,
+    description: 'Number of items per page (max 100)',
+  })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
@@ -20,11 +33,11 @@ export class FindVehiclesQueryDto {
   limit = 20;
 
   @ApiPropertyOptional({
-    example: 'ANALYZING',
-    enum: ['ANALYZING', 'REJECTED', 'PURCHASED', 'SOLD'],
+    enum: VehicleStatus,
+    example: VehicleStatus.ANALYZING,
   })
   @IsOptional()
-  @IsIn(Object.values(VehicleStatus))
+  @IsEnum(VehicleStatus)
   status?: VehicleStatus;
 
   @ApiPropertyOptional({ example: 'Honda' })

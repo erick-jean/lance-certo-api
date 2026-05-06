@@ -37,11 +37,6 @@ import { VehiclesService } from './vehicles.service';
 export class VehiclesController {
   constructor(private readonly vehiclesService: VehiclesService) {}
 
-  @Post()
-  create(@Body() createVehicleDto: CreateVehicleDto) {
-    return this.vehiclesService.create(createVehicleDto);
-  }
-
   /**
    * Lists vehicles owned by the authenticated user with pagination and filters.
    */
@@ -110,6 +105,11 @@ export class VehiclesController {
     };
 
     return this.vehiclesService.findAll(req.user.sub, query);
+  }
+
+  @Post()
+  create(@Body() createVehicleDto: CreateVehicleDto) {
+    return this.vehiclesService.create(createVehicleDto);
   }
 
   @Get(':id')
