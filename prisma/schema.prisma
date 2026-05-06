@@ -116,13 +116,13 @@ model Vehicle {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // Dados do veículo
-  plate   String  @db.VarChar(10)
-  brand   String  @db.VarChar(100)
-  model   String  @db.VarChar(100)
+  plate   String?  @db.VarChar(10)
+  brand   String?  @db.VarChar(100)
+  model   String?  @db.VarChar(100)
   version String? @db.VarChar(150)
 
-  yearManufacture Int
-  yearModel       Int
+  yearManufacture Int?
+  yearModel       Int?
 
   color        String?           @db.VarChar(50)
   fuelType     FuelType?

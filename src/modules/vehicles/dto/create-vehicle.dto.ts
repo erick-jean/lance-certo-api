@@ -1,83 +1,179 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { AuctionType, FuelType, TransmissionType, VehicleStatus } from 'generated/prisma/enums';
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+import {
+  IsDateString,
+  IsEnum,
+  IsInt,
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsUrl,
+  MaxLength,
+  Min,
+} from 'class-validator';
+import {
+  AuctionType,
+  FuelType,
+  TransmissionType,
+  VehicleStatus,
+} from '../../../../generated/prisma/enums';
 
 export class CreateVehicleDto {
-  @ApiProperty({ example: 'c1a2b3d4-uuid' })
-  userId!: string;
+  @ApiPropertyOptional({ example: 'QWE1A23' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(10)
+  plate?: string | null;
 
-  // Dados do veículo
-  @ApiProperty({ example: 'QWE1A23' })
-  plate?: string;
+  @ApiPropertyOptional({ example: 'Honda' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  brand?: string | null;
 
-  @ApiProperty({ example: 'Honda' })
-  brand?: string;
+  @ApiPropertyOptional({ example: 'Civic' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  model?: string | null;
 
-  @ApiProperty({ example: 'Civic' })
-  model?: string;
-
-  @ApiProperty({ example: 'Touring 1.5 Turbo' })
+  @ApiPropertyOptional({ example: 'Touring 1.5 Turbo' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(150)
   version?: string | null;
 
-  @ApiProperty({ example: 2021 })
-  yearManufacture?: number;
+  @ApiPropertyOptional({ example: 2021 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1900)
+  yearManufacture?: number | null;
 
-  @ApiProperty({ example: 2022 })
-  yearModel?: number;
+  @ApiPropertyOptional({ example: 2022 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1900)
+  yearModel?: number | null;
 
-  @ApiProperty({ example: 'Preto' })
+  @ApiPropertyOptional({ example: 'Preto' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(50)
   color?: string | null;
 
-  @ApiProperty({ example: FuelType })
-  fuelType!: FuelType | null;
+  @ApiPropertyOptional({
+    enum: FuelType,
+    example: FuelType.FLEX,
+    nullable: true,
+  })
+  @IsOptional()
+  @IsEnum(FuelType)
+  fuelType?: FuelType | null;
 
-  @ApiProperty({ example: TransmissionType })
-  transmission!: TransmissionType | null;
+  @ApiPropertyOptional({
+    enum: TransmissionType,
+    example: TransmissionType.AUTOMATIC,
+    nullable: true,
+  })
+  @IsOptional()
+  @IsEnum(TransmissionType)
+  transmission?: TransmissionType | null;
 
-  @ApiProperty({ example: 45200 })
+  @ApiPropertyOptional({ example: 45200 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
   mileage?: number | null;
 
-  // Valores de mercado
-  @ApiProperty({ example: '014082-0' })
+  @ApiPropertyOptional({ example: '014082-0' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
   fipeCode?: string | null;
 
-  @ApiProperty({ example: 145000.0 })
-  fipeValue!: number | null;
+  @ApiPropertyOptional({ example: 145000.0 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  fipeValue?: number | null;
 
-  @ApiProperty({ example: 138000.0 })
-  marketValue!: number | null;
+  @ApiPropertyOptional({ example: 138000.0 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  marketValue?: number | null;
 
-  @ApiProperty({ example: 'Copart' })
-  // Informações do leilão
+  @ApiPropertyOptional({ example: 'Copart' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(150)
   auctioneer?: string | null;
 
-  @ApiProperty({ example: AuctionType })
-  auctionType!: AuctionType | null;
+  @ApiPropertyOptional({
+    enum: AuctionType,
+    example: AuctionType.EXTRAJUDICIAL,
+    nullable: true,
+  })
+  @IsOptional()
+  @IsEnum(AuctionType)
+  auctionType?: AuctionType | null;
 
-  @ApiProperty({ example: 'https://copart.com/lote/123' })
+  @ApiPropertyOptional({ example: 'https://copart.com/lote/123' })
+  @IsOptional()
+  @IsUrl()
   sourceUrl?: string | null;
 
-  @ApiProperty({ example: '2026-05-06 17:32:44.757' })
-  eventDate?: Date | null;
+  @ApiPropertyOptional({ example: '2026-05-06T17:32:44.757Z' })
+  @IsOptional()
+  @IsDateString()
+  eventDate?: string | null;
 
-  @ApiProperty({ example: 'Campo Grande' })
+  @ApiPropertyOptional({ example: 'Campo Grande' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
   city?: string | null;
 
-  @ApiProperty({ example: 'MS' })
+  @ApiPropertyOptional({ example: 'MS' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(2)
   state?: string | null;
 
-  @ApiProperty({ example: 'Av. Gury Marques, 5500' })
+  @ApiPropertyOptional({ example: 'Av. Gury Marques, 5500' })
+  @IsOptional()
+  @IsString()
   yardAddress?: string | null;
 
-  @ApiProperty({ example: 85000.0 })
-  auctionInitialBid!: number | null;
+  @ApiPropertyOptional({ example: 85000.0 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  auctionInitialBid?: number | null;
 
-  @ApiProperty({ example: 92000.0 })
-  auctionCurrentBid!: number | null;
+  @ApiPropertyOptional({ example: 92000.0 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  auctionCurrentBid?: number | null;
 
-  @ApiProperty({ example: VehicleStatus })
-  // Controle
-  status!: VehicleStatus;
+  @ApiPropertyOptional({
+    enum: VehicleStatus,
+    example: VehicleStatus.ANALYZING,
+  })
+  @IsOptional()
+  @IsEnum(VehicleStatus)
+  status?: VehicleStatus;
 
-  @ApiProperty({ example: 'Pequenos riscos no para-choque.' })
+  @ApiPropertyOptional({ example: 'Pequenos riscos no para-choque.' })
+  @IsOptional()
+  @IsString()
   notes?: string | null;
 }

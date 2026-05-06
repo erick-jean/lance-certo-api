@@ -8,14 +8,35 @@ import {
 
 type DecimalLike = number | { toString(): string } | null | undefined;
 
-type ResponseVehicleInput = Omit<
-  Partial<ResponseVehicleDto>,
-  'fipeValue' | 'marketValue' | 'auctionInitialBid' | 'auctionCurrentBid'
-> & {
+type ResponseVehicleInput = {
+  id?: string | null;
+  userId?: string | null;
+  plate?: string | null;
+  brand?: string | null;
+  model?: string | null;
+  version?: string | null;
+  yearManufacture?: number | null;
+  yearModel?: number | null;
+  color?: string | null;
+  fuelType?: FuelType | null;
+  transmission?: TransmissionType | null;
+  mileage?: number | null;
+  fipeCode?: string | null;
   fipeValue?: DecimalLike;
   marketValue?: DecimalLike;
+  auctioneer?: string | null;
+  auctionType?: AuctionType | null;
+  sourceUrl?: string | null;
+  eventDate?: Date | null;
+  city?: string | null;
+  state?: string | null;
+  yardAddress?: string | null;
   auctionInitialBid?: DecimalLike;
   auctionCurrentBid?: DecimalLike;
+  status?: VehicleStatus | null;
+  notes?: string | null;
+  createdAt?: Date | null;
+  updatedAt?: Date | null;
 };
 
 export class ResponseVehicleDto {
@@ -27,30 +48,38 @@ export class ResponseVehicleDto {
 
   // Dados do veículo
   @ApiProperty({ example: 'QWE1A23' })
-  plate?: string;
+  plate?: string | null;
 
   @ApiProperty({ example: 'Honda' })
-  brand?: string;
+  brand?: string | null;
 
   @ApiProperty({ example: 'Civic' })
-  model?: string;
+  model?: string | null;
 
   @ApiProperty({ example: 'Touring 1.5 Turbo' })
   version?: string | null;
 
   @ApiProperty({ example: 2021 })
-  yearManufacture?: number;
+  yearManufacture?: number | null;
 
   @ApiProperty({ example: 2022 })
-  yearModel?: number;
+  yearModel?: number | null;
 
   @ApiProperty({ example: 'Preto' })
   color?: string | null;
 
-  @ApiProperty({ example: FuelType })
+  @ApiProperty({
+    enum: FuelType,
+    example: FuelType.FLEX,
+    nullable: true,
+  })
   fuelType!: FuelType | null;
 
-  @ApiProperty({ example: TransmissionType })
+  @ApiProperty({
+    enum: TransmissionType,
+    example: TransmissionType.AUTOMATIC,
+    nullable: true,
+  })
   transmission!: TransmissionType | null;
 
   @ApiProperty({ example: 45200 })
@@ -70,7 +99,11 @@ export class ResponseVehicleDto {
   // Informações do leilão
   auctioneer?: string | null;
 
-  @ApiProperty({ example: AuctionType })
+  @ApiProperty({
+    enum: AuctionType,
+    example: AuctionType.EXTRAJUDICIAL,
+    nullable: true,
+  })
   auctionType!: AuctionType | null;
 
   @ApiProperty({ example: 'https://copart.com/lote/123' })
@@ -94,18 +127,20 @@ export class ResponseVehicleDto {
   @ApiProperty({ example: 92000.0 })
   auctionCurrentBid!: number | null;
 
-  @ApiProperty({ example: VehicleStatus })
-  // Controle
-  status!: VehicleStatus;
+  @ApiProperty({
+    enum: VehicleStatus,
+    example: VehicleStatus.ANALYZING,
+  })
+  status!: VehicleStatus | null;
 
   @ApiProperty({ example: 'Pequenos riscos no para-choque.' })
   notes?: string | null;
 
   @ApiProperty({ example: '2026-05-06 17:32:44.778' })
-  createdAt!: Date;
+  createdAt!: Date | null;
 
   @ApiProperty({ example: '2026-05-06 17:32:44.778' })
-  updatedAt!: Date;
+  updatedAt!: Date | null;
 
   constructor(vehicle: ResponseVehicleInput) {
     /**

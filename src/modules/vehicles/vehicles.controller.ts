@@ -112,7 +112,7 @@ export class VehiclesController {
     @Body() createVehicleDto: CreateVehicleDto,
     @Req() req: AuthenticatedRequest,
   ) {
-    return this.vehiclesService.create(createVehicleDto);
+    return this.vehiclesService.create(req.user.sub, createVehicleDto);
   }
 
   @Get(':id')

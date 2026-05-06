@@ -46,9 +46,14 @@ type VehicleListItem = Prisma.VehicleGetPayload<{
 export class VehiclesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  create(createVehicleDto: CreateVehicleDto) {
-    void createVehicleDto;
-    return 'This action adds a new vehicle';
+  async create(
+    userId: string,
+    createVehicleDto: CreateVehicleDto,
+  ): Promise<ResponseVehicleDto> {
+    const vehicle = await this.prisma.vehicle.create({
+      data: { ...createVehicleDto, userId },
+    });
+    return new ResponseVehicleDto(vehicle);
   }
 
   /**
