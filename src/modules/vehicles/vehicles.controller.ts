@@ -108,7 +108,10 @@ export class VehiclesController {
   }
 
   @Post()
-  create(@Body() createVehicleDto: CreateVehicleDto) {
+  create(
+    @Body() createVehicleDto: CreateVehicleDto,
+    @Req() req: AuthenticatedRequest,
+  ) {
     return this.vehiclesService.create(createVehicleDto);
   }
 
