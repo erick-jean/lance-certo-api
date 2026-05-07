@@ -27,6 +27,11 @@ export class AuthGuard implements CanActivate {
 
     try {
       const payload = await this.jwtService.verifyAsync<JwtPayload>(token);
+
+      if (!this.isJwtPayload(payload)) {
+        throw new UnauthorizedException();
+      }
+
       const authenticatedRequest = request as AuthenticatedRequest;
       authenticatedRequest.user = payload;
     } catch {
@@ -42,5 +47,25 @@ export class AuthGuard implements CanActivate {
   private extractTokenFromHeader(request: Request): string | undefined {
     const [type, token] = request.headers.authorization?.split(' ') ?? [];
     return type === 'Bearer' ? token : undefined;
+  }
+
+  /**
+   * Performs runtime validation of the JWT payload shape before trusting it.
+   */
+  private isJwtPayload(payload: unknown): payload is JwtPayload {
+    if (!payload || typeof payload !== 'object') {
+      return false;
+    }
+
+    const candidate = payload as Record<string, unknown>;
+
+    return (
+      typeof candidate.sub === 'string' &&
+      candidate.sub.length > 0 &&
+      typeof candidate.email === 'string' &&
+      candidate.email.length > 0 &&
+      typeof candidate.role === 'string' &&
+      candidate.role.length > 0
+    );
   }
 }

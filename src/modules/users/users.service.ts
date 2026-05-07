@@ -1,5 +1,10 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from 'src/database/prisma.service';
+import { JwtPayload } from '../auth/interfaces/jwt-payload.interface';
 import { UserResponseDto } from './dto/user-response.dto';
 
 @Injectable()
@@ -9,9 +14,21 @@ export class UsersService {
   /**
    * Finds a user by email and returns only public profile fields.
    */
-  async findOne(email: string): Promise<UserResponseDto> {
+  async findOne(
+    email: string,
+    requester: JwtPayload,
+  ): Promise<UserResponseDto> {
+    const normalizedEmail = email.trim().toLowerCase();
+
+    if (
+      requester.role !== 'admin' &&
+      requester.email.trim().toLowerCase() !== normalizedEmail
+    ) {
+      throw new ForbiddenException('Cannot access another user profile');
+    }
+
     const user = await this.prisma.user.findUnique({
-      where: { email },
+      where: { email: normalizedEmail },
       select: {
         id: true,
         name: true,

@@ -48,32 +48,40 @@ export class AuthService {
       throw new ConflictException('Email already registered');
     }
 
-    const password = await this.hashService.hash(data.password);
-    const user = await this.prisma.user.create({
-      data: {
-        name: data.name,
-        email,
-        password,
-        role: 'user',
-        plan: 'free',
-        planStatus: 'inactive',
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        plan: true,
-        planStatus: true,
-        planExpiresAt: true,
-        isActive: true,
-        createdAt: true,
-        updatedAt: true,
-        lastLogin: true,
-      },
-    });
+    try {
+      const password = await this.hashService.hash(data.password);
+      const user = await this.prisma.user.create({
+        data: {
+          name: data.name,
+          email,
+          password,
+          role: 'user',
+          plan: 'free',
+          planStatus: 'inactive',
+        },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          plan: true,
+          planStatus: true,
+          planExpiresAt: true,
+          isActive: true,
+          createdAt: true,
+          updatedAt: true,
+          lastLogin: true,
+        },
+      });
 
-    return user;
+      return user;
+    } catch (error) {
+      if (this.isUniqueConstraintError(error)) {
+        throw new ConflictException('Email already registered');
+      }
+
+      throw error;
+    }
   }
 
   /**
@@ -450,5 +458,12 @@ export class AuthService {
     return {
       message: 'Se o email existir, enviaremos um link de recuperacao.',
     };
+  }
+
+  private isUniqueConstraintError(error: unknown): boolean {
+    return (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === 'P2002'
+    );
   }
 }

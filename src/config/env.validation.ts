@@ -3,6 +3,7 @@ type Env = Record<string, string | undefined>;
 const requiredEnvVars = [
   'DATABASE_URL',
   'JWT_SECRET',
+  'JWT_EXPIRES_IN',
   'JWT_REFRESH_EXPIRES_DAYS',
   'APP_FRONTEND_URL',
   'REFRESH_TOKEN_COOKIE_NAME',
@@ -27,6 +28,14 @@ export function validateEnv(config: Env): Env {
 
   if (!Number.isFinite(Number(config.JWT_REFRESH_EXPIRES_DAYS))) {
     throw new Error('JWT_REFRESH_EXPIRES_DAYS must be a valid number');
+  }
+
+  if (Number(config.JWT_REFRESH_EXPIRES_DAYS) <= 0) {
+    throw new Error('JWT_REFRESH_EXPIRES_DAYS must be greater than zero');
+  }
+
+  if (!/^\d+[smhd]$/.test(config.JWT_EXPIRES_IN ?? '')) {
+    throw new Error('JWT_EXPIRES_IN must use a duration like 15m, 1h or 1d');
   }
 
   if (!['true', 'false'].includes(config.REFRESH_TOKEN_COOKIE_SECURE ?? '')) {

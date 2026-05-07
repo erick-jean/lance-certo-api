@@ -18,6 +18,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
+import { timingSafeEqual } from 'crypto';
 import { AuthGuard } from '../auth/auth.guard';
 import { MessageResponseDto } from '../auth/dto/message-response.dto';
 import { AuthenticatedRequest } from '../auth/interfaces/authenticated-request.interface';
@@ -95,8 +96,22 @@ export class SubscriptionController {
       'SUBSCRIPTION_WEBHOOK_SECRET',
     );
 
-    if (!webhookSecret || webhookSecret !== expectedSecret) {
+    if (!this.secureEquals(webhookSecret, expectedSecret)) {
       throw new UnauthorizedException('Invalid webhook secret');
     }
+  }
+
+  private secureEquals(value: string | undefined, expected: string): boolean {
+    if (!value) {
+      return false;
+    }
+
+    const valueBuffer = Buffer.from(value);
+    const expectedBuffer = Buffer.from(expected);
+
+    return (
+      valueBuffer.length === expectedBuffer.length &&
+      timingSafeEqual(valueBuffer, expectedBuffer)
+    );
   }
 }
