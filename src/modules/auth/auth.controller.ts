@@ -13,10 +13,14 @@ import {
 import { ConfigService } from '@nestjs/config';
 import {
   ApiBearerAuth,
+  ApiBadRequestResponse,
+  ApiConflictResponse,
   ApiCreatedResponse,
   ApiOkResponse,
   ApiOperation,
   ApiTags,
+  ApiTooManyRequestsResponse,
+  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import type { CookieOptions, Request, Response } from 'express';
@@ -32,6 +36,8 @@ import { AuthenticatedRequest } from './interfaces/authenticated-request.interfa
 import { UserResponseDto } from '../users/dto/user-response.dto';
 
 @ApiTags('auth')
+@ApiBadRequestResponse({ description: 'Invalid request payload' })
+@ApiTooManyRequestsResponse({ description: 'Too many requests' })
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -43,8 +49,10 @@ export class AuthController {
    * Registers a new user and returns the public user representation.
    */
   @Post('register')
+  @Throttle({ default: { limit: 10, ttl: 60_000, blockDuration: 60_000 } })
   @ApiOperation({ summary: 'Registra um novo usuario' })
   @ApiCreatedResponse({ type: UserResponseDto })
+  @ApiConflictResponse({ description: 'Email already registered' })
   register(@Body() registerDto: RegisterUserDto): Promise<UserResponseDto> {
     return this.authService.register(registerDto);
   }
@@ -62,6 +70,7 @@ export class AuthController {
     summary: 'Autentica um usuario e grava refresh token em cookie HttpOnly',
   })
   @ApiOkResponse({ type: AuthResponseDto })
+  @ApiUnauthorizedResponse({ description: 'Invalid credentials' })
   async signIn(
     @Body() signInDto: LoginDto,
     @Res({ passthrough: true }) response: Response,
@@ -86,6 +95,7 @@ export class AuthController {
     summary: 'Gera novo access token usando refresh token em cookie HttpOnly',
   })
   @ApiOkResponse({ type: AuthResponseDto })
+  @ApiUnauthorizedResponse({ description: 'Invalid or missing refresh token' })
   async refresh(
     @Req() request: Request,
     @Res({ passthrough: true }) response: Response,
@@ -121,6 +131,7 @@ export class AuthController {
   @Throttle({ default: { limit: 5, ttl: 60_000, blockDuration: 300_000 } })
   @ApiOperation({ summary: 'Redefine a senha usando token de recuperacao' })
   @ApiOkResponse({ type: MessageResponseDto })
+  @ApiBadRequestResponse({ description: 'Invalid or expired reset token' })
   resetPassword(@Body() dto: ResetPasswordDto): Promise<MessageResponseDto> {
     return this.authService.resetPassword(dto);
   }
@@ -133,6 +144,7 @@ export class AuthController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Retorna o usuario autenticado' })
   @ApiOkResponse({ type: UserResponseDto })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   me(@Req() req: AuthenticatedRequest): Promise<UserResponseDto> {
     return this.authService.me(req.user.sub);
   }
@@ -143,10 +155,12 @@ export class AuthController {
    */
   @HttpCode(HttpStatus.OK)
   @Post('logout')
+  @Throttle({ default: { limit: 20, ttl: 60_000, blockDuration: 60_000 } })
   @ApiOperation({
     summary: 'Revoga refresh token em cookie HttpOnly e encerra sessao',
   })
   @ApiOkResponse({ type: MessageResponseDto })
+  @ApiUnauthorizedResponse({ description: 'Invalid or missing refresh token' })
   async logout(
     @Req() request: Request,
     @Res({ passthrough: true }) response: Response,

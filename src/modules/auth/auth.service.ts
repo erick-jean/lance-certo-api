@@ -95,6 +95,13 @@ export class AuthService {
     const email = this.normalizeEmail(login.email);
     const user = await this.prisma.user.findUnique({
       where: { email },
+      select: {
+        id: true,
+        email: true,
+        password: true,
+        role: true,
+        isActive: true,
+      },
     });
 
     if (!user || !user.isActive) {
@@ -169,10 +176,7 @@ export class AuthService {
       },
     });
 
-    const resetLink = this.buildPasswordResetLink(token);
-
-    // TODO: substituir por um EmailService quando o envio SMTP/API estiver configurado.
-    console.log(`Password reset link for ${user.email}: ${resetLink}`);
+    this.sendPasswordResetLink(user.email, token);
 
     return response;
   }
@@ -253,7 +257,7 @@ export class AuthService {
    * The user id comes from the JWT `sub` claim, and the query excludes the
    * password hash from the response.
    */
-  async me(userId: string) {
+  async me(userId: string): Promise<UserResponseDto> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       select: {
@@ -347,7 +351,7 @@ export class AuthService {
    * A missing, expired or already revoked token is treated as an unauthorized
    * request, which prevents logout from succeeding for unauthenticated clients.
    */
-  async logout(refreshToken: string) {
+  async logout(refreshToken: string): Promise<MessageResponseDto> {
     const tokenHash = this.hashToken(refreshToken);
 
     const revokedTokens = await this.prisma.refreshToken.updateMany({
@@ -448,6 +452,15 @@ export class AuthService {
       'http://localhost:4200';
 
     return `${frontendUrl.replace(/\/$/, '')}/reset-password?token=${token}`;
+  }
+
+  private sendPasswordResetLink(email: string, token: string): void {
+    const resetLink = this.buildPasswordResetLink(token);
+
+    // TODO: substituir por um EmailService quando o envio SMTP/API estiver configurado.
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`Password reset link for ${email}: ${resetLink}`);
+    }
   }
 
   /**
