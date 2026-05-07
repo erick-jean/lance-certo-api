@@ -1,4 +1,8 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from 'src/database/prisma.service';
 import { Prisma } from '../../../generated/prisma/client';
 import { CreateVehicleDto } from './dto/create-vehicle.dto';
@@ -117,17 +121,60 @@ export class VehiclesService {
     };
   }
 
-  findOne(id: string) {
-    return `This action returns a #${id} vehicle`;
+  async findOne(
+    userId: string,
+    vehicleId: string,
+  ): Promise<ResponseVehicleDto> {
+    const vehicle = await this.prisma.vehicle.findUnique({
+      where: { userId, id: vehicleId },
+    });
+
+    if (!vehicle) {
+      throw new NotFoundException('Vehicle not found.');
+    }
+    return new ResponseVehicleDto(vehicle);
   }
 
-  update(id: string, updateVehicleDto: UpdateVehicleDto) {
-    void updateVehicleDto;
-    return `This action updates a #${id} vehicle`;
+  async update(
+    userId: string,
+    vehicleId: string,
+    updateVehicleDto: UpdateVehicleDto,
+  ): Promise<ResponseVehicleDto> {
+    /**
+     * Checks if vehicle exists
+     * and belongs to authenticated user.
+     */
+    const vehicle = await this.prisma.vehicle.findUnique({
+      where: { userId, id: vehicleId },
+    });
+
+    if (!vehicle) {
+      throw new NotFoundException('Vehicle not found.');
+    }
+
+    const updatedVehicle = await this.prisma.vehicle.update({
+      where: {
+        id: vehicleId,
+      },
+
+      data: {
+        ...updateVehicleDto,
+      },
+    });
+    return new ResponseVehicleDto(updatedVehicle);
   }
 
-  remove(id: string) {
-    return `This action removes a #${id} vehicle`;
+  async remove(userId: string, vehicleId: string): Promise<void> {
+    const result = await this.prisma.vehicle.deleteMany({
+      where: {
+        id: vehicleId,
+        userId,
+      },
+    });
+
+    if (result.count === 0) {
+      throw new NotFoundException('Vehicle not found.');
+    }
   }
 
   private toResponse(vehicle: VehicleListItem): ResponseVehicleDto {

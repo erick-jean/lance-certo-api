@@ -4,9 +4,12 @@ import {
   DefaultValuePipe,
   Delete,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   ParseEnumPipe,
   ParseIntPipe,
+  ParseUUIDPipe,
   Patch,
   Post,
   Query,
@@ -29,6 +32,7 @@ import { FindVehiclesQueryDto } from './dto/find-vehicles-query.dto';
 import { PaginatedVeichleResponseDto } from './dto/paginated-vehicles-response.dto';
 import { UpdateVehicleDto } from './dto/update-vehicle.dto';
 import { VehiclesService } from './vehicles.service';
+import { Throttle } from '@nestjs/throttler';
 
 @ApiTags('vehicles')
 @ApiBearerAuth()
@@ -40,10 +44,7 @@ export class VehiclesController {
   /**
    * Lists vehicles owned by the authenticated user with pagination and filters.
    */
-  @ApiOperation({
-    summary: 'Lista veiculos',
-    description: 'Lista veiculos do usuario autenticado',
-  })
+  @ApiOperation({ summary: 'Lista veiculos do usuario autenticado' })
   @ApiOkResponse({
     description: 'Lista paginada de veiculos retornada com sucesso',
     type: PaginatedVeichleResponseDto,
@@ -83,6 +84,7 @@ export class VehiclesController {
   @ApiBadRequestResponse({
     description: 'Invalid pagination parameters',
   })
+  @Throttle({ default: { limit: 30, ttl: 60_000, blockDuration: 60_000 } })
   @Get()
   @ApiOkResponse({ type: PaginatedVeichleResponseDto })
   findAll(
@@ -107,7 +109,15 @@ export class VehiclesController {
     return this.vehiclesService.findAll(req.user.sub, query);
   }
 
+  /**
+   * Creates a new vehicle for the authenticated user.
+   *
+   * This endpoint allows the authenticated user to register
+   * a new vehicle in the system.
+   */
+  @ApiOperation({ summary: 'Cadastra novo veículo.' })
   @Post()
+  @Throttle({ default: { limit: 30, ttl: 60_000, blockDuration: 60_000 } })
   create(
     @Body() createVehicleDto: CreateVehicleDto,
     @Req() req: AuthenticatedRequest,
@@ -115,18 +125,42 @@ export class VehiclesController {
     return this.vehiclesService.create(req.user.sub, createVehicleDto);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.vehiclesService.findOne(id);
+  /**
+   * Busca um veículo específico pelo ID, garantindo que o usuário autenticado tenha acesso a ele.
+   */
+  @ApiOperation({ summary: 'Busca veículo específico.' })
+  @Get(':vehicleId')
+  @Throttle({ default: { limit: 30, ttl: 60_000, blockDuration: 60_000 } })
+  findOne(
+    @Param('vehicleId', new ParseUUIDPipe()) vehicleId: string,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    return this.vehiclesService.findOne(req.user.sub, vehicleId);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateVehicleDto: UpdateVehicleDto) {
-    return this.vehiclesService.update(id, updateVehicleDto);
+  @ApiOperation({ summary: 'Atualiza veículo.' })
+  @Throttle({ default: { limit: 30, ttl: 60_000, blockDuration: 60_000 } })
+  @Patch(':vehicleId')
+  update(
+    @Param('vehicleId', new ParseUUIDPipe()) vehicleId: string,
+    @Body() updateVehicleDto: UpdateVehicleDto,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    return this.vehiclesService.update(
+      req.user.sub,
+      vehicleId,
+      updateVehicleDto,
+    );
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.vehiclesService.remove(id);
+  @ApiOperation({ summary: 'Remove veículo.' })
+  @Delete(':vehicleId')
+  @Throttle({ default: { limit: 30, ttl: 60_000, blockDuration: 60_000 } })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  remove(
+    @Req() req: AuthenticatedRequest,
+    @Param('vehicleId', new ParseUUIDPipe()) id: string,
+  ): Promise<void> {
+    return this.vehiclesService.remove(req.user.sub, id);
   }
 }
