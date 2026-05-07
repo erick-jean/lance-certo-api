@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from 'src/database/prisma.service';
 import { Prisma } from '../../../generated/prisma/client';
 import { CreateVehicleDto } from './dto/create-vehicle.dto';
@@ -6,8 +11,18 @@ import { FindVehiclesQueryDto } from './dto/find-vehicles-query.dto';
 import { PaginatedVehicleResponseDto } from './dto/paginated-vehicles-response.dto';
 import { ResponseVehicleDto } from './dto/response-vehicle.dto';
 import { UpdateVehicleDto } from './dto/update-vehicle.dto';
-import type { Multer } from 'multer';
-import { VehicleImageResponseDto } from './dto/responde-vehicle-image.dto';
+import { VehicleImageResponseDto } from './dto/response-vehicle-image.dto';
+import { randomUUID } from 'crypto';
+import { mkdir, unlink, writeFile } from 'fs/promises';
+import { join } from 'path';
+
+const VEHICLE_IMAGE_UPLOAD_DIR = join(process.cwd(), 'uploads', 'vehicles');
+const VEHICLE_IMAGE_PUBLIC_PATH = '/uploads/vehicles';
+const vehicleImageExtensionsByMimeType = {
+  'image/jpeg': '.jpg',
+  'image/png': '.png',
+  'image/webp': '.webp',
+} as const;
 
 const vehiclesListSelect = {
   id: true,
@@ -178,19 +193,121 @@ export class VehiclesService {
       throw new NotFoundException('Vehicle not found.');
     }
 
-    const images = await this.prisma.vehicleImage.createManyAndReturn({
-      data: files.map((file) => ({
-        vehicleId,
-        url: `/uploads/vehicles/${file.filename}`,
-        filename: file.filename,
-        mimetype: file.mimetype,
-        size: file.size,
-      })),
-    });
-    return images.map((image) => new VehicleImageResponseDto(image));
+    const imageFiles = files.map((file) => this.prepareVehicleImage(file));
+    const writtenFilePaths: string[] = [];
+
+    try {
+      await mkdir(VEHICLE_IMAGE_UPLOAD_DIR, { recursive: true });
+
+      for (const imageFile of imageFiles) {
+        await writeFile(imageFile.path, imageFile.buffer, { flag: 'wx' });
+        writtenFilePaths.push(imageFile.path);
+      }
+
+      const images = await this.prisma.vehicleImage.createManyAndReturn({
+        data: imageFiles.map((file) => ({
+          vehicleId,
+          url: file.url,
+          filename: file.filename,
+          mimetype: file.mimetype,
+          size: file.size,
+        })),
+      });
+
+      return images.map((image) => new VehicleImageResponseDto(image));
+    } catch (error) {
+      await Promise.allSettled(writtenFilePaths.map((path) => unlink(path)));
+
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+
+      throw new InternalServerErrorException('Could not save images.');
+    }
+  }
+
+  private prepareVehicleImage(file: Express.Multer.File): {
+    buffer: Buffer;
+    filename: string;
+    mimetype: keyof typeof vehicleImageExtensionsByMimeType;
+    path: string;
+    size: number;
+    url: string;
+  } {
+    if (!file.buffer || file.buffer.length === 0) {
+      throw new BadRequestException('Invalid image file.');
+    }
+
+    if (!this.isAllowedVehicleImageMimeType(file.mimetype)) {
+      throw new BadRequestException(
+        'Only JPEG, PNG and WEBP images are allowed.',
+      );
+    }
+
+    if (!this.hasValidImageSignature(file.buffer, file.mimetype)) {
+      throw new BadRequestException('Invalid image content.');
+    }
+
+    const filename = `${randomUUID()}${
+      vehicleImageExtensionsByMimeType[file.mimetype]
+    }`;
+
+    return {
+      buffer: file.buffer,
+      filename,
+      mimetype: file.mimetype,
+      path: join(VEHICLE_IMAGE_UPLOAD_DIR, filename),
+      size: file.size,
+      url: `${VEHICLE_IMAGE_PUBLIC_PATH}/${filename}`,
+    };
+  }
+
+  private isAllowedVehicleImageMimeType(
+    mimetype: string,
+  ): mimetype is keyof typeof vehicleImageExtensionsByMimeType {
+    return mimetype in vehicleImageExtensionsByMimeType;
+  }
+
+  private hasValidImageSignature(
+    buffer: Buffer,
+    mimetype: keyof typeof vehicleImageExtensionsByMimeType,
+  ): boolean {
+    if (mimetype === 'image/jpeg') {
+      return buffer.length > 3 && buffer[0] === 0xff && buffer[1] === 0xd8;
+    }
+
+    if (mimetype === 'image/png') {
+      return buffer
+        .subarray(0, 8)
+        .equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
+    }
+
+    return (
+      buffer.length > 12 &&
+      buffer.subarray(0, 4).toString('ascii') === 'RIFF' &&
+      buffer.subarray(8, 12).toString('ascii') === 'WEBP'
+    );
   }
 
   async remove(userId: string, vehicleId: string): Promise<void> {
+    const vehicle = await this.prisma.vehicle.findFirst({
+      where: {
+        id: vehicleId,
+        userId,
+      },
+      select: {
+        images: {
+          select: {
+            filename: true,
+          },
+        },
+      },
+    });
+
+    if (!vehicle) {
+      throw new NotFoundException('Vehicle not found.');
+    }
+
     const result = await this.prisma.vehicle.deleteMany({
       where: {
         id: vehicleId,
@@ -201,6 +318,12 @@ export class VehiclesService {
     if (result.count === 0) {
       throw new NotFoundException('Vehicle not found.');
     }
+
+    await Promise.allSettled(
+      vehicle.images.map((image) =>
+        unlink(join(VEHICLE_IMAGE_UPLOAD_DIR, image.filename)),
+      ),
+    );
   }
 
   private toResponse(vehicle: VehicleListItem): ResponseVehicleDto {

@@ -40,8 +40,8 @@ import { UpdateVehicleDto } from './dto/update-vehicle.dto';
 import { VehiclesService } from './vehicles.service';
 import { Throttle } from '@nestjs/throttler';
 import { FilesInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
-import { extname } from 'path';
+import { memoryStorage } from 'multer';
+import { VehicleImageResponseDto } from './dto/response-vehicle-image.dto';
 
 @ApiTags('vehicles')
 @ApiBearerAuth()
@@ -155,6 +155,9 @@ export class VehiclesController {
     },
   })
   @Post(':vehicleId/images')
+  @ApiCreatedResponse({ type: VehicleImageResponseDto, isArray: true })
+  @ApiBadRequestResponse({ description: 'Invalid image upload' })
+  @ApiNotFoundResponse({ description: 'Vehicle not found' })
   @Throttle({ default: { limit: 30, ttl: 60_000, blockDuration: 60_000 } })
   @UseInterceptors(
     /**
@@ -166,27 +169,7 @@ export class VehiclesController {
      * - Maximum files allowed: 6
      */
     FilesInterceptor('images', 6, {
-      storage: diskStorage({
-        /**
-         * Defines the local upload directory.
-         */
-        destination: './uploads/vehicles',
-
-        /**
-         * Generates a unique filename
-         * to avoid file name collisions.
-         *
-         * Example:
-         * 1715000000000-123456789.png
-         */
-        filename: (req, file, callback) => {
-          const uniqueName = `${Date.now()}-${Math.round(
-            Math.random() * 1e9,
-          )}${extname(file.originalname)}`;
-
-          callback(null, uniqueName);
-        },
-      }),
+      storage: memoryStorage(),
 
       /**
        * Validates uploaded file types.
@@ -225,7 +208,7 @@ export class VehiclesController {
     @Param('vehicleId', new ParseUUIDPipe()) vehicleId: string,
     @UploadedFiles()
     files: Express.Multer.File[],
-  ) {
+  ): Promise<VehicleImageResponseDto[]> {
     if (!files || files.length === 0) {
       throw new BadRequestException('At least one image is required.');
     }
