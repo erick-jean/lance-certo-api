@@ -6,6 +6,8 @@ import { FindVehiclesQueryDto } from './dto/find-vehicles-query.dto';
 import { PaginatedVehicleResponseDto } from './dto/paginated-vehicles-response.dto';
 import { ResponseVehicleDto } from './dto/response-vehicle.dto';
 import { UpdateVehicleDto } from './dto/update-vehicle.dto';
+import type { Multer } from 'multer';
+import { VehicleImageResponseDto } from './dto/responde-vehicle-image.dto';
 
 const vehiclesListSelect = {
   id: true,
@@ -161,6 +163,31 @@ export class VehiclesService {
 
       throw error;
     }
+  }
+
+  async addImages(
+    userId: string,
+    vehicleId: string,
+    files: Express.Multer.File[],
+  ): Promise<VehicleImageResponseDto[]> {
+    const vehicle = await this.prisma.vehicle.findFirst({
+      where: { userId, id: vehicleId },
+    });
+
+    if (!vehicle) {
+      throw new NotFoundException('Vehicle not found.');
+    }
+
+    const images = await this.prisma.vehicleImage.createManyAndReturn({
+      data: files.map((file) => ({
+        vehicleId,
+        url: `/uploads/vehicles/${file.filename}`,
+        filename: file.filename,
+        mimetype: file.mimetype,
+        size: file.size,
+      })),
+    });
+    return images.map((image) => new VehicleImageResponseDto(image));
   }
 
   async remove(userId: string, vehicleId: string): Promise<void> {

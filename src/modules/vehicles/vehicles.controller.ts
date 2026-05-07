@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -11,7 +12,9 @@ import {
   Post,
   Query,
   Req,
+  UploadedFiles,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -24,6 +27,8 @@ import {
   ApiNotFoundResponse,
   ApiTooManyRequestsResponse,
   ApiUnauthorizedResponse,
+  ApiConsumes,
+  ApiBody,
 } from '@nestjs/swagger';
 import { AuthGuard } from '../auth/auth.guard';
 import { AuthenticatedRequest } from '../auth/interfaces/authenticated-request.interface';
@@ -34,6 +39,9 @@ import { ResponseVehicleDto } from './dto/response-vehicle.dto';
 import { UpdateVehicleDto } from './dto/update-vehicle.dto';
 import { VehiclesService } from './vehicles.service';
 import { Throttle } from '@nestjs/throttler';
+import { FilesInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname } from 'path';
 
 @ApiTags('vehicles')
 @ApiBearerAuth()
@@ -123,8 +131,104 @@ export class VehiclesController {
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(
     @Req() req: AuthenticatedRequest,
-    @Param('vehicleId', new ParseUUIDPipe()) id: string,
+    @Param('vehicleId', new ParseUUIDPipe()) vehicleId: string,
   ): Promise<void> {
-    return this.vehiclesService.remove(req.user.sub, id);
+    return this.vehiclesService.remove(req.user.sub, vehicleId);
+  }
+
+  @ApiOperation({ summary: 'Adiciona imagens do veículo.' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+
+      properties: {
+        images: {
+          type: 'array',
+
+          items: {
+            type: 'string',
+            format: 'binary',
+          },
+        },
+      },
+    },
+  })
+  @Post(':vehicleId/images')
+  @Throttle({ default: { limit: 30, ttl: 60_000, blockDuration: 60_000 } })
+  @UseInterceptors(
+    /**
+     * Intercepts multipart/form-data requests
+     * and processes uploaded image files.
+     *
+     * Configuration:
+     * - Field name: "images"
+     * - Maximum files allowed: 6
+     */
+    FilesInterceptor('images', 6, {
+      storage: diskStorage({
+        /**
+         * Defines the local upload directory.
+         */
+        destination: './uploads/vehicles',
+
+        /**
+         * Generates a unique filename
+         * to avoid file name collisions.
+         *
+         * Example:
+         * 1715000000000-123456789.png
+         */
+        filename: (req, file, callback) => {
+          const uniqueName = `${Date.now()}-${Math.round(
+            Math.random() * 1e9,
+          )}${extname(file.originalname)}`;
+
+          callback(null, uniqueName);
+        },
+      }),
+
+      /**
+       * Validates uploaded file types.
+       *
+       * Only allows:
+       * - image/jpeg
+       * - image/png
+       * - image/webp
+       */
+      fileFilter: (req, file, callback) => {
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+
+        if (!allowedTypes.includes(file.mimetype)) {
+          return callback(
+            new BadRequestException(
+              'Only JPEG, PNG and WEBP images are allowed.',
+            ),
+            false,
+          );
+        }
+
+        callback(null, true);
+      },
+
+      /**
+       * Maximum allowed file size:
+       * 5 MB per file.
+       */
+      limits: {
+        fileSize: 5 * 1024 * 1024,
+      },
+    }),
+  )
+  addImages(
+    @Req() req: AuthenticatedRequest,
+    @Param('vehicleId', new ParseUUIDPipe()) vehicleId: string,
+    @UploadedFiles()
+    files: Express.Multer.File[],
+  ) {
+    if (!files || files.length === 0) {
+      throw new BadRequestException('At least one image is required.');
+    }
+    return this.vehiclesService.addImages(req.user.sub, vehicleId, files);
   }
 }

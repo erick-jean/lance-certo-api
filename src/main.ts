@@ -7,12 +7,18 @@ import { json, urlencoded } from 'express';
 import type { Request, Response } from 'express';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
+import { join } from 'path';
 
 /**
  * Bootstraps the Nest application, global validation, CORS and Swagger docs.
  */
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+  app.useStaticAssets(join(process.cwd(), 'uploads'), {
+    prefix: '/uploads',
+  });
+
   const configService = app.get(ConfigService);
 
   app.getHttpAdapter().getInstance().disable('x-powered-by');
