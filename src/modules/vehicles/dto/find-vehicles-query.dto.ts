@@ -1,7 +1,21 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
-import { IsInt, IsOptional, IsString, Max, Min, IsEnum } from 'class-validator';
+import { Transform, Type } from 'class-transformer';
+import {
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsString,
+  Max,
+  MaxLength,
+  Min,
+} from 'class-validator';
 import { VehicleStatus } from '../../../../generated/prisma/enums';
+
+const trimString = (value: unknown): unknown =>
+  typeof value === 'string' ? value.trim() : value;
+
+const trimUppercaseString = (value: unknown): unknown =>
+  typeof value === 'string' ? value.trim().toUpperCase() : value;
 
 export class FindVehiclesQueryDto {
   @ApiPropertyOptional({ example: 1, minimum: 1, description: 'Page number' })
@@ -12,7 +26,7 @@ export class FindVehiclesQueryDto {
   page = 1;
 
   @ApiPropertyOptional({
-    example: 20,
+    example: 10,
     minimum: 1,
     maximum: 100,
     description: 'Number of items per page (max 100)',
@@ -22,7 +36,7 @@ export class FindVehiclesQueryDto {
   @IsInt()
   @Min(1)
   @Max(100)
-  limit = 20;
+  limit = 10;
 
   @ApiPropertyOptional({
     enum: VehicleStatus,
@@ -34,16 +48,22 @@ export class FindVehiclesQueryDto {
 
   @ApiPropertyOptional({ example: 'Honda' })
   @IsOptional()
+  @Transform(({ value }: { value: unknown }) => trimString(value))
   @IsString()
+  @MaxLength(100)
   brand?: string;
 
   @ApiPropertyOptional({ example: 'Civic' })
   @IsOptional()
+  @Transform(({ value }: { value: unknown }) => trimString(value))
   @IsString()
+  @MaxLength(100)
   model?: string;
 
   @ApiPropertyOptional({ example: 'QWE1A23' })
   @IsOptional()
+  @Transform(({ value }: { value: unknown }) => trimUppercaseString(value))
   @IsString()
+  @MaxLength(10)
   plate?: string;
 }

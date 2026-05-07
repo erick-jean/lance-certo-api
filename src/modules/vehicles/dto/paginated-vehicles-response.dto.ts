@@ -21,7 +21,7 @@ class PaginationMetaDto {
   hasPreviousPage!: boolean;
 }
 
-export class PaginatedVeichleResponseDto {
+export class PaginatedVehicleResponseDto {
   @ApiProperty({ type: ResponseVehicleDto, isArray: true })
   data!: ResponseVehicleDto[];
 

@@ -1,13 +1,9 @@
-import {
-  ConflictException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/database/prisma.service';
 import { Prisma } from '../../../generated/prisma/client';
 import { CreateVehicleDto } from './dto/create-vehicle.dto';
 import { FindVehiclesQueryDto } from './dto/find-vehicles-query.dto';
-import { PaginatedVeichleResponseDto } from './dto/paginated-vehicles-response.dto';
+import { PaginatedVehicleResponseDto } from './dto/paginated-vehicles-response.dto';
 import { ResponseVehicleDto } from './dto/response-vehicle.dto';
 import { UpdateVehicleDto } from './dto/update-vehicle.dto';
 
@@ -46,6 +42,11 @@ type VehicleListItem = Prisma.VehicleGetPayload<{
   select: typeof vehiclesListSelect;
 }>;
 
+type VehicleWritableData = Omit<
+  Prisma.VehicleUncheckedCreateInput,
+  'id' | 'userId' | 'createdAt' | 'updatedAt'
+>;
+
 @Injectable()
 export class VehiclesService {
   constructor(private readonly prisma: PrismaService) {}
@@ -73,7 +74,10 @@ export class VehiclesService {
     //   }
     // }
     const vehicle = await this.prisma.vehicle.create({
-      data: { ...createVehicleDto, userId },
+      data: {
+        ...this.toVehicleWritableData(createVehicleDto),
+        userId,
+      },
     });
     return new ResponseVehicleDto(vehicle);
   }
@@ -87,7 +91,7 @@ export class VehiclesService {
   async findAll(
     userId: string,
     query: FindVehiclesQueryDto,
-  ): Promise<PaginatedVeichleResponseDto> {
+  ): Promise<PaginatedVehicleResponseDto> {
     const page = query.page;
     const limit = query.limit;
     const skip = (page - 1) * limit;
@@ -125,7 +129,7 @@ export class VehiclesService {
     userId: string,
     vehicleId: string,
   ): Promise<ResponseVehicleDto> {
-    const vehicle = await this.prisma.vehicle.findUnique({
+    const vehicle = await this.prisma.vehicle.findFirst({
       where: { userId, id: vehicleId },
     });
 
@@ -140,28 +144,23 @@ export class VehiclesService {
     vehicleId: string,
     updateVehicleDto: UpdateVehicleDto,
   ): Promise<ResponseVehicleDto> {
-    /**
-     * Checks if vehicle exists
-     * and belongs to authenticated user.
-     */
-    const vehicle = await this.prisma.vehicle.findUnique({
-      where: { userId, id: vehicleId },
-    });
+    try {
+      const updatedVehicle = await this.prisma.vehicle.update({
+        where: {
+          id: vehicleId,
+          userId,
+        },
+        data: this.toVehicleWritableData(updateVehicleDto),
+      });
 
-    if (!vehicle) {
-      throw new NotFoundException('Vehicle not found.');
+      return new ResponseVehicleDto(updatedVehicle);
+    } catch (error) {
+      if (this.isRecordNotFoundError(error)) {
+        throw new NotFoundException('Vehicle not found.');
+      }
+
+      throw error;
     }
-
-    const updatedVehicle = await this.prisma.vehicle.update({
-      where: {
-        id: vehicleId,
-      },
-
-      data: {
-        ...updateVehicleDto,
-      },
-    });
-    return new ResponseVehicleDto(updatedVehicle);
   }
 
   async remove(userId: string, vehicleId: string): Promise<void> {
@@ -194,9 +193,45 @@ export class VehiclesService {
       ...(query.model
         ? { model: { contains: query.model, mode: 'insensitive' } }
         : {}),
-      ...(query.plate
-        ? { plate: { contains: query.plate.trim().toUpperCase() } }
-        : {}),
+      ...(query.plate ? { plate: { contains: query.plate } } : {}),
     };
+  }
+
+  private toVehicleWritableData(
+    dto: CreateVehicleDto | UpdateVehicleDto,
+  ): VehicleWritableData {
+    return {
+      plate: dto.plate,
+      brand: dto.brand,
+      model: dto.model,
+      version: dto.version,
+      yearManufacture: dto.yearManufacture,
+      yearModel: dto.yearModel,
+      color: dto.color,
+      fuelType: dto.fuelType,
+      transmission: dto.transmission,
+      mileage: dto.mileage,
+      fipeCode: dto.fipeCode,
+      fipeValue: dto.fipeValue,
+      marketValue: dto.marketValue,
+      auctioneer: dto.auctioneer,
+      auctionType: dto.auctionType,
+      sourceUrl: dto.sourceUrl,
+      eventDate: dto.eventDate,
+      city: dto.city,
+      state: dto.state,
+      yardAddress: dto.yardAddress,
+      auctionInitialBid: dto.auctionInitialBid,
+      auctionCurrentBid: dto.auctionCurrentBid,
+      status: dto.status,
+      notes: dto.notes,
+    };
+  }
+
+  private isRecordNotFoundError(error: unknown): boolean {
+    return (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === 'P2025'
+    );
   }
 }
