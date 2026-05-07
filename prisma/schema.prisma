@@ -116,9 +116,9 @@ model Vehicle {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // Dados do veículo
-  plate   String?  @db.VarChar(10)
-  brand   String?  @db.VarChar(100)
-  model   String?  @db.VarChar(100)
+  plate   String? @db.VarChar(10)
+  brand   String? @db.VarChar(100)
+  model   String? @db.VarChar(100)
   version String? @db.VarChar(150)
 
   yearManufacture Int?
@@ -129,6 +129,8 @@ model Vehicle {
   transmission TransmissionType?
 
   mileage Int?
+
+  images VehicleImage[]
 
   // Valores de mercado
   fipeCode    String?  @db.VarChar(20)
@@ -163,4 +165,21 @@ model Vehicle {
   @@index([userId, status])
   @@index([userId, createdAt])
   @@map("vehicles")
+}
+
+model VehicleImage {
+  id String @id @default(uuid())
+
+  vehicleId String
+  vehicle   Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  url      String @db.Text
+  filename String @db.VarChar(255)
+  mimetype String @db.VarChar(100)
+  size     Int
+
+  createdAt DateTime @default(now())
+
+  @@index([vehicleId])
+  @@map("vehicle_images")
 }
