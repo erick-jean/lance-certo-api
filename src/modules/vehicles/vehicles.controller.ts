@@ -136,7 +136,33 @@ export class VehiclesController {
     return this.vehiclesService.remove(req.user.sub, vehicleId);
   }
 
-  @ApiOperation({ summary: 'Adiciona imagens do veículo.' })
+  @ApiOperation({ summary: 'Lista imagens do veiculo.' })
+  @ApiOkResponse({ type: VehicleImageResponseDto, isArray: true })
+  @ApiNotFoundResponse({ description: 'Vehicle not found' })
+  @Get(':vehicleId/images')
+  @Throttle({ default: { limit: 30, ttl: 60_000, blockDuration: 60_000 } })
+  findImages(
+    @Req() req: AuthenticatedRequest,
+    @Param('vehicleId', new ParseUUIDPipe()) vehicleId: string,
+  ): Promise<VehicleImageResponseDto[]> {
+    return this.vehiclesService.findImages(req.user.sub, vehicleId);
+  }
+
+  @ApiOperation({ summary: 'Remove imagem do veiculo.' })
+  @ApiNoContentResponse({ description: 'Vehicle image removed successfully' })
+  @ApiNotFoundResponse({ description: 'Vehicle image not found' })
+  @Delete(':vehicleId/images/:imageId')
+  @Throttle({ default: { limit: 30, ttl: 60_000, blockDuration: 60_000 } })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  removeImage(
+    @Req() req: AuthenticatedRequest,
+    @Param('vehicleId', new ParseUUIDPipe()) vehicleId: string,
+    @Param('imageId', new ParseUUIDPipe()) imageId: string,
+  ): Promise<void> {
+    return this.vehiclesService.removeImage(req.user.sub, vehicleId, imageId);
+  }
+
+  @ApiOperation({ summary: 'Adiciona imagens do veiculo.' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {

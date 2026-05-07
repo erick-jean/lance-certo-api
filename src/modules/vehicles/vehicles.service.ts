@@ -18,6 +18,7 @@ import { join } from 'path';
 
 const VEHICLE_IMAGE_UPLOAD_DIR = join(process.cwd(), 'uploads', 'vehicles');
 const VEHICLE_IMAGE_PUBLIC_PATH = '/uploads/vehicles';
+const MAX_VEHICLE_IMAGES = 10;
 const vehicleImageExtensionsByMimeType = {
   'image/jpeg': '.jpg',
   'image/png': '.png',
@@ -187,10 +188,23 @@ export class VehiclesService {
   ): Promise<VehicleImageResponseDto[]> {
     const vehicle = await this.prisma.vehicle.findFirst({
       where: { userId, id: vehicleId },
+      select: {
+        _count: {
+          select: {
+            images: true,
+          },
+        },
+      },
     });
 
     if (!vehicle) {
       throw new NotFoundException('Vehicle not found.');
+    }
+
+    if (vehicle._count.images + files.length > MAX_VEHICLE_IMAGES) {
+      throw new BadRequestException(
+        `A vehicle can have at most ${MAX_VEHICLE_IMAGES} images.`,
+      );
     }
 
     const imageFiles = files.map((file) => this.prepareVehicleImage(file));
@@ -224,6 +238,62 @@ export class VehiclesService {
 
       throw new InternalServerErrorException('Could not save images.');
     }
+  }
+
+  async findImages(
+    userId: string,
+    vehicleId: string,
+  ): Promise<VehicleImageResponseDto[]> {
+    const vehicle = await this.prisma.vehicle.findFirst({
+      where: { userId, id: vehicleId },
+      select: {
+        images: {
+          orderBy: {
+            createdAt: 'desc',
+          },
+        },
+      },
+    });
+
+    if (!vehicle) {
+      throw new NotFoundException('Vehicle not found.');
+    }
+
+    return vehicle.images.map((image) => new VehicleImageResponseDto(image));
+  }
+
+  async removeImage(
+    userId: string,
+    vehicleId: string,
+    imageId: string,
+  ): Promise<void> {
+    const image = await this.prisma.vehicleImage.findFirst({
+      where: {
+        id: imageId,
+        vehicleId,
+        vehicle: {
+          userId,
+        },
+      },
+      select: {
+        id: true,
+        filename: true,
+      },
+    });
+
+    if (!image) {
+      throw new NotFoundException('Vehicle image not found.');
+    }
+
+    await this.prisma.vehicleImage.delete({
+      where: {
+        id: image.id,
+      },
+    });
+
+    await Promise.allSettled([
+      unlink(join(VEHICLE_IMAGE_UPLOAD_DIR, image.filename)),
+    ]);
   }
 
   private prepareVehicleImage(file: Express.Multer.File): {
