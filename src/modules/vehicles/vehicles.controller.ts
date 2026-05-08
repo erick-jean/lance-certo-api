@@ -43,7 +43,7 @@ import { FilesInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { VehicleImageResponseDto } from './dto/response-vehicle-image.dto';
 
-@ApiTags('vehicles')
+@ApiTags('Vehicles / Veículos')
 @ApiBearerAuth()
 @ApiUnauthorizedResponse({ description: 'Unauthorized' })
 @ApiTooManyRequestsResponse({ description: 'Too many requests' })

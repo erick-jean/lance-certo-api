@@ -137,6 +137,8 @@ model Vehicle {
   fipeValue   Decimal? @db.Decimal(12, 2)
   marketValue Decimal? @db.Decimal(12, 2)
 
+  evaluation VehicleEvaluation?
+
   // Informações do leilão
   auctioneer  String?      @db.VarChar(150)
   auctionType AuctionType?
@@ -182,4 +184,54 @@ model VehicleImage {
 
   @@index([vehicleId])
   @@map("vehicle_images")
+}
+
+enum EvaluationRiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum EvaluationRecommendation {
+  RECOMMENDED
+  CAUTION
+  NOT_RECOMMENDED
+}
+
+model VehicleEvaluation {
+  id String @id @default(uuid())
+
+  vehicleId String  @unique
+  vehicle   Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  // Custos estimados
+  estimatedRepairCost Decimal? @db.Decimal(12, 2) // Custo estimado do reparo
+  auctionFees         Decimal? @db.Decimal(12, 2) // Taxas de leilão
+  documentationCost   Decimal? @db.Decimal(12, 2) // Custo estimado da documentação
+  transportCost       Decimal? @db.Decimal(12, 2) // Custo de trasporte
+  inspectionCost      Decimal? @db.Decimal(12, 2) // Custo de inspeção
+
+  // Margens
+  desiredProfitMargin Decimal? @db.Decimal(12, 2) // Margem de lucro desejada
+  safetyMargin        Decimal? @db.Decimal(12, 2) // Margem de segurança
+
+  // Resultados calculados
+  maxRecommendedBid  Decimal? @db.Decimal(12, 2) // Lance máximo recomendado
+  estimatedFinalCost Decimal? @db.Decimal(12, 2) // Custo final estimado
+  estimatedProfit    Decimal? @db.Decimal(12, 2) // Lucro estimado
+
+  // Classificação
+  riskLevel      EvaluationRiskLevel? // Nível de risco
+  recommendation EvaluationRecommendation? // Recomendação
+
+  isComplete       Boolean   @default(false)
+  lastCalculatedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([vehicleId])
+  @@index([riskLevel])
+  @@index([recommendation])
+  @@map("vehicle_evaluations")
 }

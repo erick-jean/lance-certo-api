@@ -27,7 +27,7 @@ import { SubscriptionResponseDto } from './dto/subscription-response.dto';
 import { SubscriptionWebhookDto } from './dto/subscription-webhook.dto';
 import { SubscriptionService } from './subscription.service';
 
-@ApiTags('subscription')
+@ApiTags('Subscription / Assinatura')
 @Controller('subscription')
 export class SubscriptionController {
   constructor(

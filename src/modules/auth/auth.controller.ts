@@ -35,7 +35,7 @@ import { AuthGuard } from './auth.guard';
 import { AuthenticatedRequest } from './interfaces/authenticated-request.interface';
 import { UserResponseDto } from '../users/dto/user-response.dto';
 
-@ApiTags('auth')
+@ApiTags('Auth')
 @ApiBadRequestResponse({ description: 'Invalid request payload' })
 @ApiTooManyRequestsResponse({ description: 'Too many requests' })
 @Controller('auth')
