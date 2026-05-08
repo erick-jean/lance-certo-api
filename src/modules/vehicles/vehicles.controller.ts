@@ -64,7 +64,7 @@ export class VehiclesController {
   @ApiBadRequestResponse({
     description: 'Invalid pagination parameters',
   })
-  @Throttle({ default: { limit: 30, ttl: 60_000, blockDuration: 60_000 } })
+  @Throttle({ default: { limit: 60, ttl: 60_000, blockDuration: 60_000 } })
   @Get()
   findAll(
     @Req() req: AuthenticatedRequest,
@@ -83,7 +83,7 @@ export class VehiclesController {
   @ApiCreatedResponse({ type: ResponseVehicleDto })
   @ApiBadRequestResponse({ description: 'Invalid vehicle payload' })
   @Post()
-  @Throttle({ default: { limit: 30, ttl: 60_000, blockDuration: 60_000 } })
+  @Throttle({ default: { limit: 20, ttl: 60_000, blockDuration: 120_000 } })
   create(
     @Body() createVehicleDto: CreateVehicleDto,
     @Req() req: AuthenticatedRequest,
@@ -98,7 +98,7 @@ export class VehiclesController {
   @ApiOkResponse({ type: ResponseVehicleDto })
   @ApiNotFoundResponse({ description: 'Vehicle not found' })
   @Get(':vehicleId')
-  @Throttle({ default: { limit: 30, ttl: 60_000, blockDuration: 60_000 } })
+  @Throttle({ default: { limit: 60, ttl: 60_000, blockDuration: 60_000 } })
   @UseGuards(VehicleOwnerGuard)
   findOne(
     @Param('vehicleId', new ParseUUIDPipe()) vehicleId: string,
@@ -111,7 +111,7 @@ export class VehiclesController {
   @ApiOkResponse({ type: ResponseVehicleDto })
   @ApiBadRequestResponse({ description: 'Invalid vehicle payload' })
   @ApiNotFoundResponse({ description: 'Vehicle not found' })
-  @Throttle({ default: { limit: 30, ttl: 60_000, blockDuration: 60_000 } })
+  @Throttle({ default: { limit: 30, ttl: 60_000, blockDuration: 120_000 } })
   @Patch(':vehicleId')
   @UseGuards(VehicleOwnerGuard)
   update(
@@ -130,7 +130,7 @@ export class VehiclesController {
   @ApiNoContentResponse({ description: 'Vehicle removed successfully' })
   @ApiNotFoundResponse({ description: 'Vehicle not found' })
   @Delete(':vehicleId')
-  @Throttle({ default: { limit: 30, ttl: 60_000, blockDuration: 60_000 } })
+  @Throttle({ default: { limit: 10, ttl: 60_000, blockDuration: 300_000 } })
   @UseGuards(VehicleOwnerGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(
@@ -144,7 +144,7 @@ export class VehiclesController {
   @ApiOkResponse({ type: VehicleImageResponseDto, isArray: true })
   @ApiNotFoundResponse({ description: 'Vehicle not found' })
   @Get(':vehicleId/images')
-  @Throttle({ default: { limit: 30, ttl: 60_000, blockDuration: 60_000 } })
+  @Throttle({ default: { limit: 60, ttl: 60_000, blockDuration: 60_000 } })
   @UseGuards(VehicleOwnerGuard)
   findImages(
     @Req() req: AuthenticatedRequest,
@@ -157,7 +157,7 @@ export class VehiclesController {
   @ApiNoContentResponse({ description: 'Vehicle image removed successfully' })
   @ApiNotFoundResponse({ description: 'Vehicle image not found' })
   @Delete(':vehicleId/images/:imageId')
-  @Throttle({ default: { limit: 30, ttl: 60_000, blockDuration: 60_000 } })
+  @Throttle({ default: { limit: 20, ttl: 60_000, blockDuration: 120_000 } })
   @UseGuards(VehicleOwnerGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   removeImage(
@@ -190,7 +190,7 @@ export class VehiclesController {
   @ApiCreatedResponse({ type: VehicleImageResponseDto, isArray: true })
   @ApiBadRequestResponse({ description: 'Invalid image upload' })
   @ApiNotFoundResponse({ description: 'Vehicle not found' })
-  @Throttle({ default: { limit: 30, ttl: 60_000, blockDuration: 60_000 } })
+  @Throttle({ default: { limit: 10, ttl: 60_000, blockDuration: 120_000 } })
   @UseGuards(VehicleOwnerGuard)
   @UseInterceptors(
     /**

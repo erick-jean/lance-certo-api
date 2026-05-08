@@ -49,7 +49,7 @@ export class AuthController {
    * Registers a new user and returns the public user representation.
    */
   @Post('register')
-  @Throttle({ default: { limit: 10, ttl: 60_000, blockDuration: 60_000 } })
+  @Throttle({ default: { limit: 5, ttl: 60_000, blockDuration: 300_000 } })
   @ApiOperation({ summary: 'Registra um novo usuario' })
   @ApiCreatedResponse({ type: UserResponseDto })
   @ApiConflictResponse({ description: 'Email already registered' })
@@ -65,7 +65,7 @@ export class AuthController {
    */
   @HttpCode(HttpStatus.OK)
   @Post('login')
-  @Throttle({ default: { limit: 5, ttl: 60_000, blockDuration: 60_000 } })
+  @Throttle({ default: { limit: 5, ttl: 60_000, blockDuration: 300_000 } })
   @ApiOperation({
     summary: 'Autentica um usuario e grava refresh token em cookie HttpOnly',
   })
@@ -90,7 +90,7 @@ export class AuthController {
    */
   @HttpCode(HttpStatus.OK)
   @Post('refresh')
-  @Throttle({ default: { limit: 20, ttl: 60_000, blockDuration: 60_000 } })
+  @Throttle({ default: { limit: 30, ttl: 60_000, blockDuration: 60_000 } })
   @ApiOperation({
     summary: 'Gera novo access token usando refresh token em cookie HttpOnly',
   })
@@ -115,7 +115,7 @@ export class AuthController {
    */
   @HttpCode(HttpStatus.OK)
   @Post('forgot-password')
-  @Throttle({ default: { limit: 3, ttl: 60_000, blockDuration: 300_000 } })
+  @Throttle({ default: { limit: 3, ttl: 300_000, blockDuration: 900_000 } })
   @ApiOperation({ summary: 'Solicita recuperacao de senha' })
   @ApiOkResponse({ type: MessageResponseDto })
   forgotPassword(@Body() dto: ForgotPasswordDto): Promise<MessageResponseDto> {
@@ -128,7 +128,7 @@ export class AuthController {
    */
   @HttpCode(HttpStatus.OK)
   @Post('reset-password')
-  @Throttle({ default: { limit: 5, ttl: 60_000, blockDuration: 300_000 } })
+  @Throttle({ default: { limit: 5, ttl: 300_000, blockDuration: 900_000 } })
   @ApiOperation({ summary: 'Redefine a senha usando token de recuperacao' })
   @ApiOkResponse({ type: MessageResponseDto })
   @ApiBadRequestResponse({ description: 'Invalid or expired reset token' })
@@ -140,6 +140,7 @@ export class AuthController {
    * Returns the profile associated with the bearer access token.
    */
   @Get('me')
+  @Throttle({ default: { limit: 60, ttl: 60_000, blockDuration: 60_000 } })
   @UseGuards(AuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Retorna o usuario autenticado' })
@@ -155,7 +156,7 @@ export class AuthController {
    */
   @HttpCode(HttpStatus.OK)
   @Post('logout')
-  @Throttle({ default: { limit: 20, ttl: 60_000, blockDuration: 60_000 } })
+  @Throttle({ default: { limit: 10, ttl: 60_000, blockDuration: 60_000 } })
   @ApiOperation({
     summary: 'Revoga refresh token em cookie HttpOnly e encerra sessao',
   })

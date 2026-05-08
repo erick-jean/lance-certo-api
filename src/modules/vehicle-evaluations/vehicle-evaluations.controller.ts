@@ -30,7 +30,6 @@ import { Throttle } from '@nestjs/throttler';
 @ApiUnauthorizedResponse({ description: 'Unauthorized' })
 @ApiTooManyRequestsResponse({ description: 'Too many requests' })
 @UseGuards(AuthGuard, VehicleOwnerGuard)
-@Throttle({ default: { limit: 30, ttl: 60_000, blockDuration: 60_000 } })
 @Controller('vehicle')
 export class VehicleEvaluationsController {
   constructor(
@@ -39,6 +38,7 @@ export class VehicleEvaluationsController {
 
   @ApiCreatedResponse({ type: ResponseVehicleEvaluationDto })
   @Post(':vehicleId/evaluation')
+  @Throttle({ default: { limit: 10, ttl: 60_000, blockDuration: 120_000 } })
   create(
     @Param('vehicleId', new ParseUUIDPipe()) vehicleId: string,
     @Body() createVehicleEvaluationDto: CreateVehicleEvaluationDto,
@@ -50,11 +50,13 @@ export class VehicleEvaluationsController {
   }
 
   @Get(':vehicleId/evaluation')
+  @Throttle({ default: { limit: 60, ttl: 60_000, blockDuration: 60_000 } })
   findOne(@Param('id') id: string) {
     return this.vehicleEvaluationsService.findOne(+id);
   }
 
   @Patch(':vehicleId/evaluation')
+  @Throttle({ default: { limit: 20, ttl: 60_000, blockDuration: 120_000 } })
   update(
     @Param('id') id: string,
     @Body() updateVehicleEvaluationDto: UpdateVehicleEvaluationDto,
@@ -66,6 +68,7 @@ export class VehicleEvaluationsController {
   }
 
   @Delete(':vehicleId/evaluation')
+  @Throttle({ default: { limit: 10, ttl: 60_000, blockDuration: 300_000 } })
   remove(@Param('id') id: string) {
     return this.vehicleEvaluationsService.remove(+id);
   }

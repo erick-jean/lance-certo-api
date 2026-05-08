@@ -39,6 +39,7 @@ export class SubscriptionController {
    * Returns the current plan for the authenticated user.
    */
   @Get()
+  @Throttle({ default: { limit: 60, ttl: 60_000, blockDuration: 60_000 } })
   @UseGuards(AuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Retorna plano atual do usuario' })
@@ -53,6 +54,7 @@ export class SubscriptionController {
    * Starts the checkout flow for the authenticated user.
    */
   @Post('checkout')
+  @Throttle({ default: { limit: 10, ttl: 60_000, blockDuration: 300_000 } })
   @UseGuards(AuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Inicia pagamento ou assinatura' })
@@ -65,6 +67,7 @@ export class SubscriptionController {
    * Cancels renewal for the authenticated user's subscription.
    */
   @Post('cancel')
+  @Throttle({ default: { limit: 5, ttl: 60_000, blockDuration: 300_000 } })
   @UseGuards(AuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Cancela assinatura' })
@@ -80,7 +83,7 @@ export class SubscriptionController {
    */
   @HttpCode(HttpStatus.OK)
   @Post('webhook')
-  @Throttle({ default: { limit: 30, ttl: 60_000, blockDuration: 60_000 } })
+  @Throttle({ default: { limit: 60, ttl: 60_000, blockDuration: 300_000 } })
   @ApiOperation({ summary: 'Recebe eventos do gateway de pagamento' })
   @ApiOkResponse({ type: MessageResponseDto })
   webhook(
