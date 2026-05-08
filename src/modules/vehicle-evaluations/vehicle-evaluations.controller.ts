@@ -8,6 +8,7 @@ import {
   Delete,
   ParseUUIDPipe,
   UseGuards,
+  Req,
 } from '@nestjs/common';
 import { VehicleEvaluationsService } from './vehicle-evaluations.service';
 import { CreateVehicleEvaluationDto } from './dto/create-vehicle-evaluation.dto';
@@ -25,6 +26,7 @@ import { ResponseVehicleEvaluationDto } from './dto/response-vehicle-evaluation.
 import { VehicleOwnerGuard } from '../vehicles/guards/vehicle-owner/vehicle-owner.guard';
 import { AuthGuard } from '../auth/auth.guard';
 import { Throttle } from '@nestjs/throttler';
+import { AuthenticatedRequest } from '../auth/interfaces/authenticated-request.interface';
 
 @ApiTags('Vehicle Evaluation / Avaliação do veículo')
 @ApiBearerAuth()
@@ -42,10 +44,12 @@ export class VehicleEvaluationsController {
   @Throttle({ default: { limit: 10, ttl: 60_000, blockDuration: 120_000 } })
   @ApiOperation({ summary: 'Cria avaliação do veiculo.' })
   create(
+    @Req() req: AuthenticatedRequest,
     @Param('vehicleId', new ParseUUIDPipe()) vehicleId: string,
     @Body() createVehicleEvaluationDto: CreateVehicleEvaluationDto,
   ): Promise<ResponseVehicleEvaluationDto> {
     return this.vehicleEvaluationsService.create(
+      req.user.sub,
       vehicleId,
       createVehicleEvaluationDto,
     );
@@ -78,11 +82,11 @@ export class VehicleEvaluationsController {
     return this.vehicleEvaluationsService.remove(+id);
   }
 
-  @ApiOperation({ summary: 'Recalcula lance recomendado.' })
-  @Post('/vehicles/:vehicleId/evaluation/recalculate')
-  recalculate(@Body() createVehicleEvaluationDto: CreateVehicleEvaluationDto) {
-    return this.vehicleEvaluationsService.recalculate(
-      createVehicleEvaluationDto,
-    );
-  }
+  // @ApiOperation({ summary: 'Recalcula lance recomendado.' })
+  // @Post('/vehicles/:vehicleId/evaluation/recalculate')
+  // recalculate(@Body() createVehicleEvaluationDto: CreateVehicleEvaluationDto) {
+  //   return this.vehicleEvaluationsService.recalculate(
+  //     createVehicleEvaluationDto,
+  //   );
+  // }
 }

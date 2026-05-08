@@ -3,8 +3,10 @@ import {
   AuctionType,
   FuelType,
   TransmissionType,
+  VehicleDamageType,
   VehicleStatus,
 } from '../../../../generated/prisma/enums';
+import { IsEnum, IsOptional } from 'class-validator';
 
 type DecimalLike = number | { toString(): string } | null | undefined;
 
@@ -126,6 +128,14 @@ export class ResponseVehicleDto {
 
   @ApiProperty({ example: 92000.0 })
   auctionCurrentBid!: number | null;
+
+  @ApiProperty({
+    enum: VehicleDamageType,
+    example: VehicleDamageType.NONE,
+  })
+  @IsOptional()
+  @IsEnum(VehicleDamageType)
+  damageType?: VehicleDamageType;
 
   @ApiProperty({
     enum: VehicleStatus,

@@ -15,6 +15,7 @@ import {
   AuctionType,
   FuelType,
   TransmissionType,
+  VehicleDamageType,
   VehicleStatus,
 } from '../../../../generated/prisma/enums';
 
@@ -163,6 +164,14 @@ export class CreateVehicleDto {
   @IsNumber()
   @Min(0)
   auctionCurrentBid?: number | null;
+
+  @ApiPropertyOptional({
+    enum: VehicleDamageType,
+    example: VehicleDamageType.NONE,
+  })
+  @IsOptional()
+  @IsEnum(VehicleDamageType)
+  damageType?: VehicleDamageType;
 
   @ApiPropertyOptional({
     enum: VehicleStatus,

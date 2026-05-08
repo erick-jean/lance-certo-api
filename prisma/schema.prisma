@@ -108,6 +108,15 @@ enum VehicleStatus {
   SOLD
 }
 
+enum VehicleDamageType {
+  NONE
+  LOW_DAMAGE
+  MEDIUM_DAMAGE
+  HIGH_DAMAGE
+  FLOOD
+  OTHER
+}
+
 model Vehicle {
   id String @id @default(uuid())
 
@@ -154,6 +163,8 @@ model Vehicle {
 
   auctionInitialBid Decimal? @db.Decimal(12, 2)
   auctionCurrentBid Decimal? @db.Decimal(12, 2)
+
+  damageType VehicleDamageType @default(NONE)
 
   // Controle
   status VehicleStatus @default(ANALYZING)
@@ -212,8 +223,8 @@ model VehicleEvaluation {
   inspectionCost      Decimal? @db.Decimal(12, 2) // Custo de inspeção
 
   // Margens
-  desiredProfitMarginPercent Decimal? @db.Decimal(5, 2) // Margem de lucro desejada
-  safetyMarginPercent        Decimal? @db.Decimal(5, 2) // Margem de segurança
+  desiredProfitMarginPercent Decimal? @default(15.00) @db.Decimal(5, 2) // Margem de lucro desejada
+  safetyMarginPercent        Decimal? @default(5.00) @db.Decimal(5, 2) // Margem de segurança
 
   // Resultados calculados
   maxRecommendedBid  Decimal? @db.Decimal(12, 2) // Lance máximo recomendado
