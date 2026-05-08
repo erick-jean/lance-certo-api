@@ -15,6 +15,7 @@ import { UpdateVehicleEvaluationDto } from './dto/update-vehicle-evaluation.dto'
 import {
   ApiBearerAuth,
   ApiCreatedResponse,
+  ApiOperation,
   ApiTags,
   ApiTooManyRequestsResponse,
   ApiUnauthorizedResponse,
@@ -39,6 +40,7 @@ export class VehicleEvaluationsController {
   @ApiCreatedResponse({ type: ResponseVehicleEvaluationDto })
   @Post(':vehicleId/evaluation')
   @Throttle({ default: { limit: 10, ttl: 60_000, blockDuration: 120_000 } })
+  @ApiOperation({ summary: 'Cria avaliação do veiculo.' })
   create(
     @Param('vehicleId', new ParseUUIDPipe()) vehicleId: string,
     @Body() createVehicleEvaluationDto: CreateVehicleEvaluationDto,
@@ -49,12 +51,14 @@ export class VehicleEvaluationsController {
     );
   }
 
+  @ApiOperation({ summary: 'Busca avaliação do veículo.' })
   @Get(':vehicleId/evaluation')
   @Throttle({ default: { limit: 60, ttl: 60_000, blockDuration: 60_000 } })
   findOne(@Param('id') id: string) {
     return this.vehicleEvaluationsService.findOne(+id);
   }
 
+  @ApiOperation({ summary: 'Atualiza avaliação do veículo.' })
   @Patch(':vehicleId/evaluation')
   @Throttle({ default: { limit: 20, ttl: 60_000, blockDuration: 120_000 } })
   update(
@@ -67,16 +71,18 @@ export class VehicleEvaluationsController {
     );
   }
 
+  @ApiOperation({ summary: 'Apaga avaliação do veículo' })
   @Delete(':vehicleId/evaluation')
   @Throttle({ default: { limit: 10, ttl: 60_000, blockDuration: 300_000 } })
   remove(@Param('id') id: string) {
     return this.vehicleEvaluationsService.remove(+id);
   }
 
-  // @Post('/vehicles/:vehicleId/evaluation/recalculate')
-  // recalculate(@Body() createVehicleEvaluationDto: CreateVehicleEvaluationDto) {
-  //   return this.vehicleEvaluationsService.recalculate(
-  //     createVehicleEvaluationDto,
-  //   );
-  // }
+  @ApiOperation({ summary: 'Recalcula lance recomendado.' })
+  @Post('/vehicles/:vehicleId/evaluation/recalculate')
+  recalculate(@Body() createVehicleEvaluationDto: CreateVehicleEvaluationDto) {
+    return this.vehicleEvaluationsService.recalculate(
+      createVehicleEvaluationDto,
+    );
+  }
 }
