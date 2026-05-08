@@ -11,8 +11,8 @@ type ResponseVehicleEvaluationInput = {
   documentationCost: Prisma.Decimal | null;
   transportCost: Prisma.Decimal | null;
   inspectionCost: Prisma.Decimal | null;
-  desiredProfitMargin: Prisma.Decimal | null;
-  safetyMargin: Prisma.Decimal | null;
+  desiredProfitMarginPercent: Prisma.Decimal | null;
+  safetyMarginPercent: Prisma.Decimal | null;
   maxRecommendedBid: Prisma.Decimal | null;
   estimatedFinalCost: Prisma.Decimal | null;
   estimatedProfit: Prisma.Decimal | null;
@@ -23,8 +23,8 @@ type ResponseVehicleEvaluationInput = {
   | 'documentationCost'
   | 'transportCost'
   | 'inspectionCost'
-  | 'desiredProfitMargin'
-  | 'safetyMargin'
+  | 'desiredProfitMarginPercent'
+  | 'safetyMarginPercent'
   | 'maxRecommendedBid'
   | 'estimatedFinalCost'
   | 'estimatedProfit'
@@ -53,10 +53,10 @@ export class ResponseVehicleEvaluationDto {
   inspectionCost!: number | null;
 
   @ApiProperty({ nullable: true })
-  desiredProfitMargin!: number | null;
+  desiredProfitMarginPercent!: number | null;
 
   @ApiProperty({ nullable: true })
-  safetyMargin!: number | null;
+  safetyMarginPercent!: number | null;
 
   @ApiProperty({ nullable: true })
   maxRecommendedBid!: number | null;
@@ -132,12 +132,12 @@ export class ResponseVehicleEvaluationDto {
       ? Number(evaluation.inspectionCost)
       : null;
 
-    this.desiredProfitMargin = evaluation.desiredProfitMargin
-      ? Number(evaluation.desiredProfitMargin)
+    this.desiredProfitMarginPercent = evaluation.desiredProfitMarginPercent
+      ? Number(evaluation.desiredProfitMarginPercent)
       : null;
 
-    this.safetyMargin = evaluation.safetyMargin
-      ? Number(evaluation.safetyMargin)
+    this.safetyMarginPercent = evaluation.safetyMarginPercent
+      ? Number(evaluation.safetyMarginPercent)
       : null;
 
     this.maxRecommendedBid = evaluation.maxRecommendedBid

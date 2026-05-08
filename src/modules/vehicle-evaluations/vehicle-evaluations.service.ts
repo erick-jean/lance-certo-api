@@ -9,7 +9,6 @@ export class VehicleEvaluationsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(
-    // userId: string,
     vehicleId: string,
     createVehicleEvaluationDto: CreateVehicleEvaluationDto,
   ): Promise<ResponseVehicleEvaluationDto> {

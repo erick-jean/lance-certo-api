@@ -32,15 +32,15 @@ export class CreateVehicleEvaluationDto {
   @Min(0)
   inspectionCost?: number | null;
 
-  @ApiPropertyOptional({ example: 15000, nullable: true })
+  @ApiPropertyOptional({ example: 15, nullable: true })
   @IsOptional()
   @IsNumber()
   @Min(0)
-  desiredProfitMargin?: number | null;
+  desiredProfitMarginPercent?: number | null;
 
-  @ApiPropertyOptional({ example: 5000, nullable: true })
+  @ApiPropertyOptional({ example: 2, nullable: true })
   @IsOptional()
   @IsNumber()
   @Min(0)
-  safetyMargin?: number | null;
+  safetyMarginPercent?: number | null;
 }
