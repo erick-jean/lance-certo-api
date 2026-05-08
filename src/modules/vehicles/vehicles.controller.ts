@@ -42,6 +42,7 @@ import { Throttle } from '@nestjs/throttler';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { VehicleImageResponseDto } from './dto/response-vehicle-image.dto';
+import { VehicleOwnerGuard } from './guards/vehicle-owner/vehicle-owner.guard';
 
 @ApiTags('Vehicles / Veículos')
 @ApiBearerAuth()
@@ -98,6 +99,7 @@ export class VehiclesController {
   @ApiNotFoundResponse({ description: 'Vehicle not found' })
   @Get(':vehicleId')
   @Throttle({ default: { limit: 30, ttl: 60_000, blockDuration: 60_000 } })
+  @UseGuards(VehicleOwnerGuard)
   findOne(
     @Param('vehicleId', new ParseUUIDPipe()) vehicleId: string,
     @Req() req: AuthenticatedRequest,
@@ -111,6 +113,7 @@ export class VehiclesController {
   @ApiNotFoundResponse({ description: 'Vehicle not found' })
   @Throttle({ default: { limit: 30, ttl: 60_000, blockDuration: 60_000 } })
   @Patch(':vehicleId')
+  @UseGuards(VehicleOwnerGuard)
   update(
     @Param('vehicleId', new ParseUUIDPipe()) vehicleId: string,
     @Body() updateVehicleDto: UpdateVehicleDto,
@@ -128,6 +131,7 @@ export class VehiclesController {
   @ApiNotFoundResponse({ description: 'Vehicle not found' })
   @Delete(':vehicleId')
   @Throttle({ default: { limit: 30, ttl: 60_000, blockDuration: 60_000 } })
+  @UseGuards(VehicleOwnerGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(
     @Req() req: AuthenticatedRequest,
@@ -141,6 +145,7 @@ export class VehiclesController {
   @ApiNotFoundResponse({ description: 'Vehicle not found' })
   @Get(':vehicleId/images')
   @Throttle({ default: { limit: 30, ttl: 60_000, blockDuration: 60_000 } })
+  @UseGuards(VehicleOwnerGuard)
   findImages(
     @Req() req: AuthenticatedRequest,
     @Param('vehicleId', new ParseUUIDPipe()) vehicleId: string,
@@ -153,6 +158,7 @@ export class VehiclesController {
   @ApiNotFoundResponse({ description: 'Vehicle image not found' })
   @Delete(':vehicleId/images/:imageId')
   @Throttle({ default: { limit: 30, ttl: 60_000, blockDuration: 60_000 } })
+  @UseGuards(VehicleOwnerGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   removeImage(
     @Req() req: AuthenticatedRequest,
@@ -185,6 +191,7 @@ export class VehiclesController {
   @ApiBadRequestResponse({ description: 'Invalid image upload' })
   @ApiNotFoundResponse({ description: 'Vehicle not found' })
   @Throttle({ default: { limit: 30, ttl: 60_000, blockDuration: 60_000 } })
+  @UseGuards(VehicleOwnerGuard)
   @UseInterceptors(
     /**
      * Intercepts multipart/form-data requests

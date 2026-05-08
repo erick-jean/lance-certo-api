@@ -2,7 +2,7 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import {
   EvaluationRecommendation,
   EvaluationRiskLevel,
-} from 'generated/prisma/enums';
+} from '../../../../generated/prisma/enums';
 
 export class CreateVehicleEvaluationDto {
   /**
