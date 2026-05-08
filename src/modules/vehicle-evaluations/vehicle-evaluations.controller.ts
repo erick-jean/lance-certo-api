@@ -19,22 +19,17 @@ export class VehicleEvaluationsController {
     private readonly vehicleEvaluationsService: VehicleEvaluationsService,
   ) {}
 
-  @Post()
+  @Post(':vehicleId/evaluation')
   create(@Body() createVehicleEvaluationDto: CreateVehicleEvaluationDto) {
     return this.vehicleEvaluationsService.create(createVehicleEvaluationDto);
   }
 
-  @Get()
-  findAll() {
-    return this.vehicleEvaluationsService.findAll();
-  }
-
-  @Get(':id')
+  @Get(':vehicleId/evaluation')
   findOne(@Param('id') id: string) {
     return this.vehicleEvaluationsService.findOne(+id);
   }
 
-  @Patch(':id')
+  @Patch(':vehicleId/evaluation')
   update(
     @Param('id') id: string,
     @Body() updateVehicleEvaluationDto: UpdateVehicleEvaluationDto,
@@ -45,8 +40,13 @@ export class VehicleEvaluationsController {
     );
   }
 
-  @Delete(':id')
+  @Delete(':vehicleId/evaluation')
   remove(@Param('id') id: string) {
     return this.vehicleEvaluationsService.remove(+id);
+  }
+
+  @Post('/vehicles/:vehicleId/evaluation/recalculate')
+  recalculate(@Body() createVehicleEvaluationDto: CreateVehicleEvaluationDto) {
+    return this.vehicleEvaluationsService.create(createVehicleEvaluationDto);
   }
 }

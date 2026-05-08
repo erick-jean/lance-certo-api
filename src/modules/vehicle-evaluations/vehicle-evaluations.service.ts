@@ -8,10 +8,6 @@ export class VehicleEvaluationsService {
     return 'This action adds a new vehicleEvaluation';
   }
 
-  findAll() {
-    return `This action returns all vehicleEvaluations`;
-  }
-
   findOne(id: number) {
     return `This action returns a #${id} vehicleEvaluation`;
   }
@@ -22,5 +18,9 @@ export class VehicleEvaluationsService {
 
   remove(id: number) {
     return `This action removes a #${id} vehicleEvaluation`;
+  }
+
+  recalculate(id: number) {
+    return `This action returns a #${id} vehicleEvaluation`;
   }
 }
