@@ -212,8 +212,8 @@ model VehicleEvaluation {
   inspectionCost      Decimal? @db.Decimal(12, 2) // Custo de inspeção
 
   // Margens
-  desiredProfitMargin Decimal? @db.Decimal(12, 2) // Margem de lucro desejada
-  safetyMargin        Decimal? @db.Decimal(12, 2) // Margem de segurança
+  desiredProfitMarginPercent Decimal? @db.Decimal(5, 2) // Margem de lucro desejada
+  safetyMarginPercent        Decimal? @db.Decimal(5, 2) // Margem de segurança
 
   // Resultados calculados
   maxRecommendedBid  Decimal? @db.Decimal(12, 2) // Lance máximo recomendado
