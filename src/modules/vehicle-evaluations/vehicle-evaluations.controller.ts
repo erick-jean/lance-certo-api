@@ -23,12 +23,14 @@ import { ResponseVehicleEvaluationDto } from './dto/response-vehicle-evaluation.
 
 import { VehicleOwnerGuard } from '../vehicles/guards/vehicle-owner/vehicle-owner.guard';
 import { AuthGuard } from '../auth/auth.guard';
+import { Throttle } from '@nestjs/throttler';
 
 @ApiTags('Vehicle Evaluation / Avaliação do veículo')
 @ApiBearerAuth()
 @ApiUnauthorizedResponse({ description: 'Unauthorized' })
 @ApiTooManyRequestsResponse({ description: 'Too many requests' })
 @UseGuards(AuthGuard, VehicleOwnerGuard)
+@Throttle({ default: { limit: 30, ttl: 60_000, blockDuration: 60_000 } })
 @Controller('vehicle')
 export class VehicleEvaluationsController {
   constructor(
@@ -38,12 +40,10 @@ export class VehicleEvaluationsController {
   @ApiCreatedResponse({ type: ResponseVehicleEvaluationDto })
   @Post(':vehicleId/evaluation')
   create(
-    // @Req() req: AuthenticatedRequest,
     @Param('vehicleId', new ParseUUIDPipe()) vehicleId: string,
     @Body() createVehicleEvaluationDto: CreateVehicleEvaluationDto,
   ): Promise<ResponseVehicleEvaluationDto> {
     return this.vehicleEvaluationsService.create(
-      // req.user.sub,
       vehicleId,
       createVehicleEvaluationDto,
     );
