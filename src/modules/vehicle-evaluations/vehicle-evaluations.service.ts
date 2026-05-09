@@ -46,12 +46,8 @@ export class VehicleEvaluationsService {
       Number(dto.transportCost ?? 0) +
       Number(dto.inspectionCost ?? 0);
 
-    const marketValue = vehicle.marketValue
-      ? Number(vehicle.marketValue)
-      : null;
-
+    const marketValue = vehicle.marketValue ? Number(vehicle.marketValue) : null;
     const fipeValue = vehicle.fipeValue ? Number(vehicle.fipeValue) : null;
-
     const isComplete = Boolean(marketValue || fipeValue);
 
     const baseValue = marketValue ?? fipeValue ?? 0;

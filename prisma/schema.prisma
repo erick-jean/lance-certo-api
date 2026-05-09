@@ -217,10 +217,10 @@ model VehicleEvaluation {
 
   // Custos estimados
   estimatedRepairCost Decimal? @db.Decimal(12, 2) // Custo estimado do reparo
-  auctionFees         Decimal? @db.Decimal(12, 2) // Taxas de leilão
   documentationCost   Decimal? @db.Decimal(12, 2) // Custo estimado da documentação
   transportCost       Decimal? @db.Decimal(12, 2) // Custo de trasporte
   inspectionCost      Decimal? @db.Decimal(12, 2) // Custo de inspeção
+  auctionFees         Decimal? @default(5.00) @db.Decimal(5, 2) // Taxas de leilão
 
   // Margens
   desiredProfitMarginPercent Decimal? @default(15.00) @db.Decimal(5, 2) // Margem de lucro desejada
