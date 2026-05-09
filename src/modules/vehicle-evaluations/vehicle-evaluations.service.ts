@@ -33,11 +33,11 @@ export class VehicleEvaluationsService {
     });
 
     // Verifica se já tem uma avalição do veiculo
-    // if (vehicleEvaluation) {
-    //   throw new ConflictException(
-    //     'Já existe uma avaliação cadastrado para esse veiculo.',
-    //   );
-    // }
+    if (vehicleEvaluation) {
+      throw new ConflictException(
+        'There is already a review registered for this vehicle.',
+      );
+    }
 
     const totalCosts =
       Number(dto.estimatedRepairCost ?? 0) +
