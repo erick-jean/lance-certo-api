@@ -110,10 +110,10 @@ enum VehicleStatus {
 
 enum VehicleDamageType {
   NONE
-  LOW_DAMAGE
-  MEDIUM_DAMAGE
-  HIGH_DAMAGE
-  FLOOD
+  LOW_DAMAGE // Pequena monta
+  MEDIUM_DAMAGE // Média monta
+  HIGH_DAMAGE // Grande monta
+  FLOOD // Enchente
   OTHER
 }
 
