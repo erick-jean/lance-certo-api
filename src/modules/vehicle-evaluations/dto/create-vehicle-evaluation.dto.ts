@@ -8,7 +8,7 @@ export class CreateVehicleEvaluationDto {
   @Min(0)
   estimatedRepairCost?: number | null;
 
-  @ApiPropertyOptional({ example: 2500, nullable: true })
+  @ApiPropertyOptional({ example: 5, nullable: true })
   @IsOptional()
   @IsNumber()
   @Min(0)

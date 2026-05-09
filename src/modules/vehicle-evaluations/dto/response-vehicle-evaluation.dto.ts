@@ -37,34 +37,34 @@ export class ResponseVehicleEvaluationDto {
   @ApiProperty({ example: 'c1a2b3d4-uuid' })
   vehicleId!: string;
 
-  @ApiProperty({ nullable: true })
+  @ApiProperty({ example: 8500, nullable: true })
   estimatedRepairCost!: number | null;
 
-  @ApiProperty({ nullable: true })
+  @ApiProperty({ example: 5, nullable: true })
   auctionFees!: number | null;
 
-  @ApiProperty({ nullable: true })
+  @ApiProperty({ example: 1200, nullable: true })
   documentationCost!: number | null;
 
-  @ApiProperty({ nullable: true })
+  @ApiProperty({ example: 1800, nullable: true })
   transportCost!: number | null;
 
-  @ApiProperty({ nullable: true })
+  @ApiProperty({ example: 500, nullable: true })
   inspectionCost!: number | null;
 
-  @ApiProperty({ nullable: true })
+  @ApiProperty({ example: 15, nullable: true })
   desiredProfitMarginPercent!: number | null;
 
-  @ApiProperty({ nullable: true })
+  @ApiProperty({ example: 5, nullable: true })
   safetyMarginPercent!: number | null;
 
-  @ApiProperty({ nullable: true })
+  @ApiProperty({ example: 25000, nullable: true })
   maxRecommendedBid!: number | null;
 
-  @ApiProperty({ nullable: true })
+  @ApiProperty({ example: 20000, nullable: true })
   estimatedFinalCost!: number | null;
 
-  @ApiProperty({ nullable: true })
+  @ApiProperty({ example: 10000, nullable: true })
   estimatedProfit!: number | null;
 
   @ApiProperty({
