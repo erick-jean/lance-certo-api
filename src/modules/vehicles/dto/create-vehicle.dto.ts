@@ -1,4 +1,4 @@
-import { ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
   IsDateString,
@@ -17,6 +17,7 @@ import {
   TransmissionType,
   VehicleDamageType,
   VehicleStatus,
+  VehicleType,
 } from '../../../../generated/prisma/enums';
 
 export class CreateVehicleDto {
@@ -81,6 +82,13 @@ export class CreateVehicleDto {
   @IsOptional()
   @IsEnum(TransmissionType)
   transmission?: TransmissionType | null;
+
+  @ApiProperty({
+    enum: VehicleType,
+    example: VehicleType.CAR,
+  })
+  @IsEnum(VehicleType)
+  type!: VehicleType;
 
   @ApiPropertyOptional({ example: 45200 })
   @IsOptional()

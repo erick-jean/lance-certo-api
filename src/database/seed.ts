@@ -18,22 +18,25 @@ async function main() {
   //   return;
   // }
 
-  // await prisma.user.createMany({
-  //   data: [
-  //     {
-  //       name: 'Admin',
-  //       email: 'admin@email.com',
-  //       password: adminPassword,
-  //       role: 'admin',
-  //     },
-  //     {
-  //       name: 'Erick Prado',
-  //       email: 'erickprado@email.com',
-  //       password: userPassword,
-  //       role: 'user',
-  //     },
-  //   ],
-  // });
+  const adminPassword = ""
+  const userPassword = ""
+
+  await prisma.user.createMany({
+    data: [
+      {
+        name: 'Admin',
+        email: 'admin@email.com',
+        password: adminPassword,
+        role: 'admin',
+      },
+      {
+        name: 'Erick Prado',
+        email: 'erickprado@email.com',
+        password: userPassword,
+        role: 'user',
+      },
+    ],
+  });
 
   await prisma.vehicle.createMany({
     data: [

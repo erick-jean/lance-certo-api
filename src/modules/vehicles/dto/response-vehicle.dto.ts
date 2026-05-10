@@ -5,6 +5,7 @@ import {
   TransmissionType,
   VehicleDamageType,
   VehicleStatus,
+  VehicleType,
 } from '../../../../generated/prisma/enums';
 import { IsEnum, IsOptional } from 'class-validator';
 
@@ -22,6 +23,7 @@ type ResponseVehicleInput = {
   color?: string | null;
   fuelType?: FuelType | null;
   transmission?: TransmissionType | null;
+  type?: VehicleType;
   mileage?: number | null;
   fipeCode?: string | null;
   fipeValue?: DecimalLike;
@@ -83,6 +85,12 @@ export class ResponseVehicleDto {
     nullable: true,
   })
   transmission!: TransmissionType | null;
+
+  @ApiProperty({
+    enum: VehicleType,
+    example: VehicleType.CAR,
+  })
+  type!: VehicleType;
 
   @ApiProperty({ example: 45200 })
   mileage?: number | null;

@@ -96,8 +96,8 @@ enum AuctionType {
   JUDICIAL
   EXTRAJUDICIAL
   BANK
-  INSURANCE
-  DEALERSHIP
+  INSURANCE //SEGURO
+  DEALERSHIP //CONCESSIONÁRIA
   OTHER
 }
 
@@ -115,6 +115,14 @@ enum VehicleDamageType {
   HIGH_DAMAGE // Grande monta
   FLOOD // Enchente
   OTHER
+}
+
+enum VehicleType {
+  CAR
+  MOTORCYCLE
+  TRUCK
+  VAN
+  BUS
 }
 
 model Vehicle {
@@ -136,6 +144,7 @@ model Vehicle {
   color        String?           @db.VarChar(50)
   fuelType     FuelType?
   transmission TransmissionType?
+  type         VehicleType       @default(CAR)
 
   mileage Int?
 
