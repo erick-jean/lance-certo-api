@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateChecklistTemplateDto } from '../dto/create-checklist-template.dto';
 import { UpdateChecklistDto } from '../dto/update-checklist.dto';
 import { PrismaService } from 'src/database/prisma.service';
@@ -16,19 +16,43 @@ export class ChecklistService {
     });
   }
 
-  findAll() {
-    return `This action returns all checklist`;
+  async findAll(): Promise<ResponseChecklistTemplateDto[]> {
+    return this.prisma.checklistTemplate.findMany();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} checklist`;
+  async findOne(id: string): Promise<ResponseChecklistTemplateDto> {
+    const checklistTemplate = await this.prisma.checklistTemplate.findUnique({
+      where: { id },
+    });
+
+    if (!checklistTemplate) {
+      throw new NotFoundException('Checklist template not found');
+    }
+
+    return checklistTemplate;
   }
 
-  update(id: number, updateChecklistDto: UpdateChecklistDto) {
-    return `This action updates a #${id} checklist`;
+  async update(
+    id: string,
+    updateChecklistDto: UpdateChecklistDto,
+  ): Promise<ResponseChecklistTemplateDto> {
+    try {
+      return await this.prisma.checklistTemplate.update({
+        where: { id },
+        data: { ...updateChecklistDto },
+      });
+    } catch (error) {
+      throw new NotFoundException('Checklist template not found');
+    }
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} checklist`;
+  async remove(id: string): Promise<void> {
+    try {
+      await this.prisma.checklistTemplate.delete({
+        where: { id },
+      });
+    } catch {
+      throw new NotFoundException('Checklist template not found');
+    }
   }
 }
