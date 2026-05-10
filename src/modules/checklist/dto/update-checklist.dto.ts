@@ -1,4 +1,4 @@
 import { PartialType } from '@nestjs/swagger';
-import { CreateChecklistDto } from './create-checklist-template.dto';
+import { CreateChecklistTemplateDto } from './create-checklist-template.dto';
 
-export class UpdateChecklistDto extends PartialType(CreateChecklistDto) {}
+export class UpdateChecklistDto extends PartialType(CreateChecklistTemplateDto) {}

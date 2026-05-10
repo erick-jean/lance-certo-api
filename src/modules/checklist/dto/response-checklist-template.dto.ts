@@ -2,47 +2,30 @@ import { ApiProperty } from '@nestjs/swagger';
 import { VehicleType } from 'generated/prisma/enums';
 
 export class ResponseChecklistTemplateDto {
-  @ApiProperty({
-    example: 'c1a2b3d4-uuid',
-    description: 'ID único do template',
-  })
+  @ApiProperty({ example: 'c1a2b3d4-uuid' })
   id!: string;
 
-  @ApiProperty({
-    example: 'Checklist padrão carro',
-    description: 'Nome do template',
-  })
+  @ApiProperty({ example: 'Checklist padrão carro' })
   name!: string;
 
   @ApiProperty({
     enum: VehicleType,
     example: VehicleType.CAR,
-    description: 'Tipo de veículo do checklist',
   })
   vehicleType!: VehicleType;
 
-  @ApiProperty({
-    example: true,
-    description: 'Indica se o template está ativo',
-  })
+  @ApiProperty({ example: true })
   isActive!: boolean;
 
   @ApiProperty({
     example: 15,
-    description: 'Quantidade de itens no checklist',
     required: false,
   })
   totalItems?: number;
 
-  @ApiProperty({
-    example: '2026-05-06T17:32:44.757Z',
-    description: 'Data de criação',
-  })
+  @ApiProperty({ example: '2026-05-06T17:32:44.757Z' })
   createdAt!: Date;
 
-  @ApiProperty({
-    example: '2026-05-06T17:32:44.757Z',
-    description: 'Data da última atualização',
-  })
+  @ApiProperty({ example: '2026-05-06T17:32:44.757Z' })
   updatedAt!: Date;
 }
