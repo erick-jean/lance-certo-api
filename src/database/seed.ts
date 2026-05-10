@@ -3,6 +3,7 @@
 import 'dotenv/config';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../../generated/prisma/client';
+import { HashService } from 'src/common/hash/hash.service';
 
 const adapter = new PrismaPg({
   connectionString: process.env.DATABASE_URL!,
@@ -11,6 +12,8 @@ const adapter = new PrismaPg({
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
+  const hashService = new HashService();
+
   // const countvehicle = await prisma.vehicle.count();
 
   // if (countvehicle > 0) {
@@ -18,30 +21,30 @@ async function main() {
   //   return;
   // }
 
-  const adminPassword = ""
-  const userPassword = ""
+  const adminPassword = await hashService.hash('123456');
+  const userPassword = await hashService.hash('123456');
 
-  await prisma.user.createMany({
-    data: [
-      {
-        name: 'Admin',
-        email: 'admin@email.com',
-        password: adminPassword,
-        role: 'admin',
-      },
-      {
-        name: 'Erick Prado',
-        email: 'erickprado@email.com',
-        password: userPassword,
-        role: 'user',
-      },
-    ],
-  });
+  // await prisma.user.createMany({
+  //   data: [
+  //     {
+  //       name: 'Admin',
+  //       email: 'admin@email.com',
+  //       password: adminPassword,
+  //       role: 'admin',
+  //     },
+  //     {
+  //       name: 'Erick Prado',
+  //       email: 'erickprado@email.com',
+  //       password: userPassword,
+  //       role: 'user',
+  //     },
+  //   ],
+  // });
 
   await prisma.vehicle.createMany({
     data: [
       {
-        userId: 'c8cfe0c5-db13-47f6-8f98-552cf0a7de85',
+        userId: '551a2a43-61c4-4e6d-96ad-d566e18476eb',
         plate: 'QWE1A23',
         brand: 'Honda',
         model: 'Civic',
@@ -51,6 +54,7 @@ async function main() {
         color: 'Preto',
         fuelType: 'FLEX',
         transmission: 'AUTOMATIC',
+        type: 'CAR',
         mileage: 45200,
         fipeCode: '014082-0',
         fipeValue: 145000,
@@ -64,12 +68,12 @@ async function main() {
         yardAddress: 'Av. Gury Marques, 5500',
         auctionInitialBid: 85000,
         auctionCurrentBid: 92000,
+        damageType: 'LOW_DAMAGE',
         status: 'ANALYZING',
         notes: 'Pequenos riscos no para-choque.',
       },
-
       {
-        userId: 'c8cfe0c5-db13-47f6-8f98-552cf0a7de85',
+        userId: '551a2a43-61c4-4e6d-96ad-d566e18476eb',
         plate: 'BRA2B45',
         brand: 'Toyota',
         model: 'Corolla',
@@ -79,6 +83,7 @@ async function main() {
         color: 'Branco',
         fuelType: 'FLEX',
         transmission: 'CVT',
+        type: 'CAR',
         mileage: 62000,
         fipeCode: '002184-9',
         fipeValue: 128000,
@@ -92,12 +97,12 @@ async function main() {
         yardAddress: 'Rua Projetada A',
         auctionInitialBid: 72000,
         auctionCurrentBid: 81000,
+        damageType: 'NONE',
         status: 'ANALYZING',
         notes: 'Veículo aparentemente íntegro.',
       },
-
       {
-        userId: 'c8cfe0c5-db13-47f6-8f98-552cf0a7de85',
+        userId: '551a2a43-61c4-4e6d-96ad-d566e18476eb',
         plate: 'TES3C67',
         brand: 'Volkswagen',
         model: 'Golf GTI',
@@ -107,6 +112,7 @@ async function main() {
         color: 'Vermelho',
         fuelType: 'GASOLINE',
         transmission: 'AUTOMATIC',
+        type: 'CAR',
         mileage: 89000,
         fipeCode: '005340-6',
         fipeValue: 115000,
@@ -120,12 +126,12 @@ async function main() {
         yardAddress: 'Rodovia Anhanguera KM 25',
         auctionInitialBid: 65000,
         auctionCurrentBid: 70000,
+        damageType: 'NONE',
         status: 'ANALYZING',
         notes: 'Necessário troca dos pneus.',
       },
-
       {
-        userId: 'c8cfe0c5-db13-47f6-8f98-552cf0a7de85',
+        userId: '551a2a43-61c4-4e6d-96ad-d566e18476eb',
         plate: 'FOX4D89',
         brand: 'Ford',
         model: 'Ranger',
@@ -135,6 +141,7 @@ async function main() {
         color: 'Prata',
         fuelType: 'DIESEL',
         transmission: 'AUTOMATIC',
+        type: 'TRUCK',
         mileage: 71000,
         fipeCode: '003269-7',
         fipeValue: 189000,
@@ -148,12 +155,12 @@ async function main() {
         yardAddress: 'Distrito Industrial',
         auctionInitialBid: 105000,
         auctionCurrentBid: 118000,
+        damageType: 'LOW_DAMAGE',
         status: 'PURCHASED',
         notes: 'Sinistro leve frontal.',
       },
-
       {
-        userId: 'c8cfe0c5-db13-47f6-8f98-552cf0a7de85',
+        userId: '551a2a43-61c4-4e6d-96ad-d566e18476eb',
         plate: 'BMW5E12',
         brand: 'BMW',
         model: '320i',
@@ -163,6 +170,7 @@ async function main() {
         color: 'Azul',
         fuelType: 'FLEX',
         transmission: 'AUTOMATIC',
+        type: 'CAR',
         mileage: 15000,
         fipeCode: '009876-1',
         fipeValue: 289000,
@@ -176,6 +184,7 @@ async function main() {
         yardAddress: 'Rua Industrial 300',
         auctionInitialBid: 180000,
         auctionCurrentBid: 192000,
+        damageType: 'OTHER',
         status: 'ANALYZING',
         notes: 'Sem chave.',
       },

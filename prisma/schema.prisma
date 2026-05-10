@@ -13,18 +13,6 @@ datasource db {
   provider = "postgresql"
 }
 
-enum SubscriptionPlan {
-  free
-  premium
-}
-
-enum SubscriptionPlanStatus {
-  active
-  inactive
-  canceled
-  past_due
-}
-
 model User {
   id                  String                 @id @default(uuid())
   name                String                 @db.VarChar(255)
@@ -43,6 +31,18 @@ model User {
   vehicles            Vehicle[]
 
   @@map("users")
+}
+
+enum SubscriptionPlan {
+  free
+  premium
+}
+
+enum SubscriptionPlanStatus {
+  active
+  inactive
+  canceled
+  past_due
 }
 
 model PasswordResetToken {
@@ -73,56 +73,6 @@ model RefreshToken {
   @@index([userId])
   @@index([expiresAt])
   @@map("refresh_tokens")
-}
-
-enum FuelType {
-  GASOLINE
-  ETHANOL
-  FLEX
-  DIESEL
-  ELECTRIC
-  HYBRID
-  GNV
-}
-
-enum TransmissionType {
-  MANUAL
-  AUTOMATIC
-  CVT
-  AUTOMATED
-}
-
-enum AuctionType {
-  JUDICIAL
-  EXTRAJUDICIAL
-  BANK
-  INSURANCE //SEGURO
-  DEALERSHIP //CONCESSIONÁRIA
-  OTHER
-}
-
-enum VehicleStatus {
-  ANALYZING
-  REJECTED
-  PURCHASED
-  SOLD
-}
-
-enum VehicleDamageType {
-  NONE
-  LOW_DAMAGE // Pequena monta
-  MEDIUM_DAMAGE // Média monta
-  HIGH_DAMAGE // Grande monta
-  FLOOD // Enchente
-  OTHER
-}
-
-enum VehicleType {
-  CAR
-  MOTORCYCLE
-  TRUCK
-  VAN
-  BUS
 }
 
 model Vehicle {
@@ -189,6 +139,56 @@ model Vehicle {
   @@map("vehicles")
 }
 
+enum FuelType {
+  GASOLINE
+  ETHANOL
+  FLEX
+  DIESEL
+  ELECTRIC
+  HYBRID
+  GNV
+}
+
+enum TransmissionType {
+  MANUAL
+  AUTOMATIC
+  CVT
+  AUTOMATED
+}
+
+enum AuctionType {
+  JUDICIAL
+  EXTRAJUDICIAL
+  BANK
+  INSURANCE //SEGURO
+  DEALERSHIP //CONCESSIONÁRIA
+  OTHER
+}
+
+enum VehicleStatus {
+  ANALYZING
+  REJECTED
+  PURCHASED
+  SOLD
+}
+
+enum VehicleDamageType {
+  NONE
+  LOW_DAMAGE // Pequena monta
+  MEDIUM_DAMAGE // Média monta
+  HIGH_DAMAGE // Grande monta
+  FLOOD // Enchente
+  OTHER
+}
+
+enum VehicleType {
+  CAR
+  MOTORCYCLE
+  TRUCK
+  VAN
+  BUS
+}
+
 model VehicleImage {
   id String @id @default(uuid())
 
@@ -206,30 +206,11 @@ model VehicleImage {
   @@map("vehicle_images")
 }
 
-enum EvaluationRiskLevel {
-  LOW
-  MEDIUM
-  HIGH
-}
-
-enum EvaluationRecommendation {
-  RECOMMENDED
-  CAUTION
-  NOT_RECOMMENDED
-}
-
 model VehicleEvaluation {
   id String @id @default(uuid())
 
   vehicleId String  @unique
   vehicle   Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
-
-  // Custos estimados
-  estimatedRepairCost Decimal? @db.Decimal(12, 2) // Custo estimado do reparo
-  documentationCost   Decimal? @db.Decimal(12, 2) // Custo estimado da documentação
-  transportCost       Decimal? @db.Decimal(12, 2) // Custo de trasporte
-  inspectionCost      Decimal? @db.Decimal(12, 2) // Custo de inspeção
-  auctionFees         Decimal? @default(5.00) @db.Decimal(5, 2) // Taxas de leilão
 
   // Margens
   desiredProfitMarginPercent Decimal? @default(15.00) @db.Decimal(5, 2) // Margem de lucro desejada
@@ -247,11 +228,68 @@ model VehicleEvaluation {
   isComplete       Boolean   @default(false)
   lastCalculatedAt DateTime?
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  evaluationExpenses EvaluationExpense[]
 
   @@index([vehicleId])
   @@index([riskLevel])
   @@index([recommendation])
   @@map("vehicle_evaluations")
+}
+
+enum EvaluationRiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum EvaluationRecommendation {
+  RECOMMENDED
+  CAUTION
+  NOT_RECOMMENDED
+}
+
+model EvaluationExpense {
+  id String @id @default(uuid())
+
+  evaluationId String
+  evaluation   VehicleEvaluation @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+
+  category ExpenseCategory
+  source   ExpenseSource
+
+  name   String
+  amount Decimal @db.Decimal(12, 2)
+
+  isRequired Boolean @default(false)
+
+  notes String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([evaluationId])
+  @@index([category])
+  @@map("evaluation_expenses")
+}
+
+enum ExpenseCategory {
+  DOCUMENTATION
+  REPAIR
+  AUCTION_FEE
+  TRANSPORT
+  INSPECTION
+  DEBT
+  REGULARIZATION
+  PREPARATION_SALE
+  OTHER
+}
+
+enum ExpenseSource {
+  USER
+  SYSTEM
+  CHECKLIST
+  AUCTION_RULE
+  DOCUMENTATION_RULE
 }

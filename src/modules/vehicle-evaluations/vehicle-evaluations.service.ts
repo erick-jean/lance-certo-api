@@ -39,12 +39,12 @@ export class VehicleEvaluationsService {
       );
     }
 
-    const totalCosts =
-      Number(dto.estimatedRepairCost ?? 0) +
-      Number(dto.auctionFees ?? 0) +
-      Number(dto.documentationCost ?? 0) +
-      Number(dto.transportCost ?? 0) +
-      Number(dto.inspectionCost ?? 0);
+    // const totalCosts =
+    //   Number(dto.estimatedRepairCost ?? 0) +
+    //   Number(dto.auctionFees ?? 0) +
+    //   Number(dto.documentationCost ?? 0) +
+    //   Number(dto.transportCost ?? 0) +
+    //   Number(dto.inspectionCost ?? 0);
 
     const marketValue = vehicle.marketValue ? Number(vehicle.marketValue) : null;
     const fipeValue = vehicle.fipeValue ? Number(vehicle.fipeValue) : null;
