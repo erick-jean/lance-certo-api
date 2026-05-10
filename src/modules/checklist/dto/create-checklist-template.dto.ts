@@ -11,4 +11,7 @@ export class CreateChecklistTemplateDto {
   @ApiProperty({ example: VehicleType.CAR, enum: VehicleType })
   @IsEnum(VehicleType)
   vehicleType!: VehicleType;
+
+  @ApiProperty({ example: true })
+  isActive!: boolean;
 }
