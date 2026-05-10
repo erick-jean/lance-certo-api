@@ -1,11 +1,19 @@
 import { Injectable } from '@nestjs/common';
-import { CreateChecklistDto } from '../dto/create-checklist.dto';
+import { CreateChecklistTemplateDto } from '../dto/create-checklist-template.dto';
 import { UpdateChecklistDto } from '../dto/update-checklist.dto';
+import { PrismaService } from 'src/database/prisma.service';
+import { ResponseChecklistTemplateDto } from '../dto/response-checklist-template.dto';
 
 @Injectable()
 export class ChecklistService {
-  create(createChecklistDto: CreateChecklistDto) {
-    return 'This action adds a new checklist';
+  constructor(private readonly prisma: PrismaService) {}
+
+  async create(
+    dto: CreateChecklistTemplateDto,
+  ): Promise<ResponseChecklistTemplateDto> {
+    return await this.prisma.checklistTemplate.create({
+      data: { ...dto },
+    });
   }
 
   findAll() {

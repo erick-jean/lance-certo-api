@@ -299,7 +299,7 @@ enum ExpenseSource {
 model ChecklistTemplate {
   id String @id @default(uuid())
 
-  name        String
+  name        String      @db.VarChar(255)
   vehicleType VehicleType
 
   isActive Boolean @default(true)
@@ -312,7 +312,6 @@ model ChecklistTemplate {
   @@index([vehicleType])
   @@map("checklist_templates")
 }
-
 
 model ChecklistTemplateItem {
   id String @id @default(uuid())
