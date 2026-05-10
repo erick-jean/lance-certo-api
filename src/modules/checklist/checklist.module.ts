@@ -1,9 +1,12 @@
 import { Module } from '@nestjs/common';
 import { ChecklistService } from './service/checklist-templates.service';
 import { ChecklistController } from './controller/checklist-templates.controller';
+import { AuthModule } from '../auth/auth.module';
+import { AdminGuard } from 'src/common/guards/admin.guard';
 
 @Module({
+  imports: [AuthModule],
   controllers: [ChecklistController],
-  providers: [ChecklistService],
+  providers: [ChecklistService, AdminGuard],
 })
 export class ChecklistModule {}
