@@ -9,7 +9,6 @@ import { AuthModule } from './modules/auth/auth.module';
 import { SubscriptionModule } from './modules/subscription/subscription.module';
 import { validateEnv } from './config/env.validation';
 import { VehiclesModule } from './modules/vehicles/vehicles.module';
-import { VehicleEvaluationsModule } from './modules/vehicle-evaluations/vehicle-evaluations.module';
 
 @Module({
   imports: [
@@ -29,7 +28,6 @@ import { VehicleEvaluationsModule } from './modules/vehicle-evaluations/vehicle-
     AuthModule,
     SubscriptionModule,
     VehiclesModule,
-    VehicleEvaluationsModule,
   ],
   providers: [
     {
