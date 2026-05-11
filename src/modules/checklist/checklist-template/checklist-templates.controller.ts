@@ -11,10 +11,10 @@ import {
   HttpCode,
   UseGuards,
 } from '@nestjs/common';
-import { ChecklistService } from '../service/checklist-templates.service';
-import { CreateChecklistTemplateDto } from '../dto/create-checklist-template.dto';
-import { UpdateChecklistDto } from '../dto/update-checklist.dto';
-import { ResponseChecklistTemplateDto } from '../dto/response-checklist-template.dto';
+import { ChecklistService } from './checklist-templates.service';
+import { CreateChecklistTemplateDto } from './dto/create-checklist-template.dto';
+import { UpdateChecklistDto } from './dto/update-checklist.dto';
+import { ResponseChecklistTemplateDto } from './dto/response-checklist-template.dto';
 import {
   ApiBearerAuth,
   ApiCreatedResponse,

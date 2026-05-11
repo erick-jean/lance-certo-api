@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsString, MaxLength } from 'class-validator';
-import { VehicleType } from '../../../../generated/prisma/enums';
+import { VehicleType } from '../../../../../generated/prisma/enums';
 
 export class CreateChecklistTemplateDto {
   @ApiProperty({ example: 'Checklist padrão carro' })
