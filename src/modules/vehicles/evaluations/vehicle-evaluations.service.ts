@@ -32,18 +32,54 @@ export class VehicleEvaluationsService {
       where: { vehicleId },
     });
 
-    // Verifica se já tem uma avalição do veiculo
     if (vehicleEvaluation) {
       throw new ConflictException(
         'There is already a review registered for this vehicle.',
       );
     }
 
-    const evaluation = await this.prisma.vehicleEvaluation.create({
-      data: {
-        vehicleId,
-        ...this.toEvaluationWritableData(dto),
+    const checklistTemplate = await this.prisma.checklistTemplate.findFirst({
+      where: {
+        vehicleType: vehicle.type,
+        isActive: true,
       },
+      include: {
+        items: {
+          orderBy: {
+            order: 'asc',
+          },
+        },
+      },
+    });
+
+    if (!checklistTemplate) {
+      throw new NotFoundException(
+        `Checklist template not found for vehicle type ${vehicle.type}.`,
+      );
+    }
+
+    const evaluation = await this.prisma.$transaction(async (tx) => {
+      const createdEvaluation = await tx.vehicleEvaluation.create({
+        data: {
+          vehicleId,
+          ...this.toEvaluationWritableData(dto),
+        },
+      });
+
+      await tx.evaluationChecklistItem.createMany({
+        data: checklistTemplate.items.map((item) => ({
+          evaluationId: createdEvaluation.id,
+          templateItemId: item.id,
+          category: item.category,
+          name: item.name,
+          status: 'NOT_CHECKED',
+          quantity: 1,
+          estimatedUnitCost: item.defaultEstimatedCost,
+          estimatedTotalCost: null,
+        })),
+      });
+
+      return createdEvaluation;
     });
 
     return new ResponseVehicleEvaluationDto(evaluation);

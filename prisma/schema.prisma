@@ -270,6 +270,7 @@ model EvaluationExpense {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@unique([evaluationId, name, source])
   @@index([evaluationId])
   @@index([category])
   @@map("evaluation_expenses")
