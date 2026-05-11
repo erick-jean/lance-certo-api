@@ -37,22 +37,21 @@ import { UpdateChecklistTemplateItemDto } from './dto/update-checklist-template-
 @ApiTags('Checklist Templates')
 @ApiBearerAuth()
 @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+@ApiForbiddenResponse({ description: 'Admin access required' })
 @ApiTooManyRequestsResponse({ description: 'Too many requests' })
 /**
- * Every checklist route requires a valid JWT. AdminGuard is applied per route
- * because users may read template items when creating/evaluating vehicles, but
- * only admins can change the global checklist reference data.
+ * Checklist templates and template items are administrative reference data.
+ * Every route requires a valid JWT and admin role because changes or reads here
+ * expose the global checklist rules used by vehicle evaluations.
  */
-@UseGuards(AuthGuard)
+@UseGuards(AuthGuard, AdminGuard)
 @Controller()
 export class ChecklistController {
   constructor(private readonly checklistService: ChecklistService) {}
 
   @ApiOperation({ summary: 'Cria Template de Checklist' })
   @ApiCreatedResponse({ type: ResponseChecklistTemplateDto })
-  @ApiForbiddenResponse({ description: 'Admin access required' })
   @Throttle({ default: { limit: 20, ttl: 60_000, blockDuration: 120_000 } })
-  @UseGuards(AdminGuard)
   @Post('checklist-templates')
   createChecklistTemplate(
     @Body() createChecklistTemplateDto: CreateChecklistTemplateDto,
@@ -72,10 +71,8 @@ export class ChecklistController {
 
   @ApiOperation({ summary: 'Busca Template de Checklist por id.' })
   @ApiOkResponse({ type: ResponseChecklistTemplateDto })
-  @ApiForbiddenResponse({ description: 'Admin access required' })
   @ApiNotFoundResponse({ description: 'Template Checklist not found' })
   @Throttle({ default: { limit: 60, ttl: 60_000, blockDuration: 60_000 } })
-  @UseGuards(AdminGuard)
   @Get('checklist-templates/:id')
   findOneChecklistTemplate(
     @Param('id', new ParseUUIDPipe()) id: string,
@@ -85,10 +82,8 @@ export class ChecklistController {
 
   @ApiOperation({ summary: 'Atualiza Template de Checklist.' })
   @ApiOkResponse({ type: ResponseChecklistTemplateDto })
-  @ApiForbiddenResponse({ description: 'Admin access required' })
   @ApiNotFoundResponse({ description: 'Template Checklist not found' })
   @Throttle({ default: { limit: 20, ttl: 60_000, blockDuration: 120_000 } })
-  @UseGuards(AdminGuard)
   @Patch('checklist-templates/:id')
   updateChecklistTemplate(
     @Param('id', new ParseUUIDPipe()) id: string,
@@ -104,10 +99,8 @@ export class ChecklistController {
   @ApiNoContentResponse({
     description: 'Template Checklist removed successfully',
   })
-  @ApiForbiddenResponse({ description: 'Admin access required' })
   @ApiNotFoundResponse({ description: 'Template Checklist not found' })
   @Throttle({ default: { limit: 10, ttl: 60_000, blockDuration: 300_000 } })
-  @UseGuards(AdminGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   @Delete('checklist-templates/:id')
   removeChecklistTemplate(
@@ -121,9 +114,7 @@ export class ChecklistController {
   @ApiOperation({ summary: 'Cria Item de Checklist' })
   @Throttle({ default: { limit: 20, ttl: 60_000, blockDuration: 120_000 } })
   @ApiCreatedResponse({ type: ResponseChecklistTemplateItemDto })
-  @ApiForbiddenResponse({ description: 'Admin access required' })
   @ApiNotFoundResponse({ description: 'Template Checklist not found' })
-  @UseGuards(AdminGuard)
   @Post('checklist-templates/:templateId/items')
   createItemChecklist(
     @Param('templateId', new ParseUUIDPipe()) templateId: string,
@@ -148,10 +139,8 @@ export class ChecklistController {
 
   @ApiOperation({ summary: 'Busca item no Template de Checklist por id.' })
   @ApiOkResponse({ type: ResponseChecklistTemplateItemDto })
-  @ApiForbiddenResponse({ description: 'Admin access required' })
   @ApiNotFoundResponse({ description: 'Template Checklist item not found' })
   @Throttle({ default: { limit: 60, ttl: 60_000, blockDuration: 60_000 } })
-  @UseGuards(AdminGuard)
   @Get('checklist-template/:itemId/items')
   findOneItemChecklist(
     @Param('itemId', new ParseUUIDPipe()) itemId: string,
@@ -161,10 +150,8 @@ export class ChecklistController {
 
   @ApiOperation({ summary: 'Atualiza item de Template de Checklist.' })
   @ApiOkResponse({ type: ResponseChecklistTemplateItemDto })
-  @ApiForbiddenResponse({ description: 'Admin access required' })
   @ApiNotFoundResponse({ description: 'Template Checklist item not found' })
   @Throttle({ default: { limit: 20, ttl: 60_000, blockDuration: 120_000 } })
-  @UseGuards(AdminGuard)
   @Patch('checklist-template/:itemId/items')
   updateItemChecklist(
     @Param('itemId', new ParseUUIDPipe()) itemId: string,
@@ -180,10 +167,8 @@ export class ChecklistController {
   @ApiNoContentResponse({
     description: 'Template Checklist item removed successfully',
   })
-  @ApiForbiddenResponse({ description: 'Admin access required' })
   @ApiNotFoundResponse({ description: 'Template Checklist item not found' })
   @Throttle({ default: { limit: 10, ttl: 60_000, blockDuration: 300_000 } })
-  @UseGuards(AdminGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   @Delete('checklist-template/:itemId/items')
   removeItemChecklist(
