@@ -157,6 +157,29 @@ export class ChecklistService {
     return new ResponseChecklistTemplateItemDto(itemChecklist);
   }
 
+  async findAllItemChecklist(
+    templateId: string,
+  ): Promise<ResponseChecklistTemplateItemDto[]> {
+    const checklistTemplate = await this.prisma.checklistTemplate.findUnique({
+      where: { id: templateId },
+      select: { id: true },
+    });
+
+    if (!checklistTemplate) {
+      throw new NotFoundException('Checklist template not found');
+    }
+
+    const itemsChecklistTemplate =
+      await this.prisma.checklistTemplateItem.findMany({
+        where: { templateId },
+        orderBy: [{ order: 'asc' }, { createdAt: 'asc' }],
+      });
+
+    return itemsChecklistTemplate.map(
+      (item) => new ResponseChecklistTemplateItemDto(item),
+    );
+  }
+
   async updateItemChecklist(
     itemId: string,
     dto: UpdateChecklistTemplateItemDto,
