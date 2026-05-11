@@ -14,13 +14,6 @@ import { ChecklistSeverity } from '../../../../../generated/prisma/enums';
 
 export class CreateChecklistTemplateItemDto {
   @ApiProperty({
-    example: 'c1a2b3d4-uuid',
-  })
-  @IsUUID()
-  @IsNotEmpty()
-  templateId!: string;
-
-  @ApiProperty({
     example: 'Lataria',
   })
   @IsString()

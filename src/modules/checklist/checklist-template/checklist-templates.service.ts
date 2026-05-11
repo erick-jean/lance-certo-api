@@ -4,12 +4,14 @@ import { UpdateChecklistDto } from './dto/update-checklist.dto';
 import { PrismaService } from 'src/database/prisma.service';
 import { ResponseChecklistTemplateDto } from './dto/response-checklist-template.dto';
 import { Prisma } from '../../../../generated/prisma/client';
+import { CreateChecklistTemplateItemDto } from './dto/create-checklist-template-item.dto';
+import { ResponseChecklistTemplateItemDto } from './dto/response-checklist-template-item.dto';
 
 @Injectable()
 export class ChecklistService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(
+  async createChecklistTemplate(
     dto: CreateChecklistTemplateDto,
   ): Promise<ResponseChecklistTemplateDto> {
     const checklistTemplate = await this.prisma.checklistTemplate.create({
@@ -26,7 +28,7 @@ export class ChecklistService {
     return new ResponseChecklistTemplateDto(checklistTemplate);
   }
 
-  async findAll(): Promise<ResponseChecklistTemplateDto[]> {
+  async findAllChecklistTemplate(): Promise<ResponseChecklistTemplateDto[]> {
     const checklistTemplates = await this.prisma.checklistTemplate.findMany({
       /**
        * `_count.items` lets the API expose how many default items a template
@@ -50,7 +52,9 @@ export class ChecklistService {
     );
   }
 
-  async findOne(id: string): Promise<ResponseChecklistTemplateDto> {
+  async findOneChecklistTemplate(
+    id: string,
+  ): Promise<ResponseChecklistTemplateDto> {
     const checklistTemplate = await this.prisma.checklistTemplate.findUnique({
       where: { id },
       include: {
@@ -69,7 +73,7 @@ export class ChecklistService {
     return new ResponseChecklistTemplateDto(checklistTemplate);
   }
 
-  async update(
+  async updateChecklistTemplate(
     id: string,
     updateChecklistDto: UpdateChecklistDto,
   ): Promise<ResponseChecklistTemplateDto> {
@@ -96,7 +100,7 @@ export class ChecklistService {
     }
   }
 
-  async remove(id: string): Promise<void> {
+  async removeChecklistTemplate(id: string): Promise<void> {
     try {
       await this.prisma.checklistTemplate.delete({
         where: { id },
@@ -108,6 +112,48 @@ export class ChecklistService {
 
       throw new NotFoundException('Checklist template not found');
     }
+  }
+
+  async createItemChecklist(
+    templateId: string,
+    dto: CreateChecklistTemplateItemDto,
+  ): Promise<ResponseChecklistTemplateItemDto> {
+    const checklistTemplate = await this.prisma.checklistTemplate.findUnique({
+      where: { id: templateId },
+    });
+
+    if (!checklistTemplate) {
+      throw new NotFoundException('Checklist template not found');
+    }
+
+    const checklistTemplateItem =
+      await this.prisma.checklistTemplateItem.create({
+        data: { ...dto, templateId },
+      });
+
+    return new ResponseChecklistTemplateItemDto({
+      ...checklistTemplateItem,
+      defaultEstimatedCost:
+        checklistTemplateItem.defaultEstimatedCost?.toNumber() ?? null,
+    });
+  }
+
+  async findOneItemChecklist(
+    id: string,
+  ): Promise<ResponseChecklistTemplateItemDto> {
+    const itemChecklist = await this.prisma.checklistTemplateItem.findUnique({
+      where: { id },
+    });
+
+    if (!itemChecklist) {
+      throw new NotFoundException('Item Checklist template not found');
+    }
+
+    return new ResponseChecklistTemplateItemDto({
+      ...itemChecklist,
+      defaultEstimatedCost:
+        itemChecklist.defaultEstimatedCost?.toNumber() ?? null,
+    });
   }
 
   private toChecklistTemplateCreateData(
