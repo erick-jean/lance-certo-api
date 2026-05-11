@@ -42,7 +42,7 @@ import { AdminGuard } from 'src/common/guards/admin.guard';
  * from changing global checklist rules for other users.
  */
 @UseGuards(AuthGuard, AdminGuard)
-@Controller('checklist-templates')
+@Controller('admin/checklist-templates')
 export class ChecklistController {
   constructor(private readonly checklistService: ChecklistService) {}
 
