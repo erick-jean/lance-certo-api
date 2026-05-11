@@ -248,6 +248,7 @@ export class ChecklistService {
     return {
       category: dto.category,
       name: dto.name,
+      question: dto.question,
       defaultEstimatedCost: dto.defaultEstimatedCost,
       severity: dto.severity,
       requiresQuantity: dto.requiresQuantity,
@@ -262,6 +263,7 @@ export class ChecklistService {
     return {
       category: dto.category,
       name: dto.name,
+      question: dto.question,
       defaultEstimatedCost: dto.defaultEstimatedCost,
       severity: dto.severity,
       requiresQuantity: dto.requiresQuantity,

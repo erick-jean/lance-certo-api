@@ -22,6 +22,9 @@ export class ResponseChecklistTemplateItemDto {
   @ApiProperty({ example: 'Parachoque dianteiro' })
   name!: string;
 
+  @ApiPropertyOptional({ example: 'O parachoque dianteiro esta danificado?' })
+  question?: string | null;
+
   @ApiPropertyOptional({ example: 350.75 })
   defaultEstimatedCost?: number | null;
 

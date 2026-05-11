@@ -767,6 +767,10 @@ const motorcycleChecklistItems = [
   [string, string, string, ChecklistSeverity, boolean, boolean, number]
 >;
 
+function buildChecklistQuestion(itemName: string): string {
+  return `O item "${itemName}" apresenta problema, dano, desgaste ou pendencia?`;
+}
+
 async function main() {
   const hashService = new HashService();
 
@@ -881,6 +885,7 @@ async function main() {
           templateId: template.id,
           category,
           name,
+          question: buildChecklistQuestion(name),
           defaultEstimatedCost,
           severity,
           requiresQuantity,

@@ -31,6 +31,14 @@ export class CreateChecklistTemplateItemDto {
   name!: string;
 
   @ApiPropertyOptional({
+    example: 'O parachoque dianteiro esta danificado?',
+  })
+  @IsString()
+  @MaxLength(255)
+  @IsOptional()
+  question?: string | null;
+
+  @ApiPropertyOptional({
     example: 350.75,
   })
   @Type(() => Number)
