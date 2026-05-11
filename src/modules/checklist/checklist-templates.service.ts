@@ -1,14 +1,17 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-
-
 import { PrismaService } from 'src/database/prisma.service';
-
 import { Prisma } from '../../../generated/prisma/client';
 import { CreateChecklistTemplateItemDto } from './dto/create-checklist-template-item.dto';
 import { ResponseChecklistTemplateItemDto } from './dto/response-checklist-template-item.dto';
 import { CreateChecklistTemplateDto } from './dto/create-checklist-template.dto';
 import { ResponseChecklistTemplateDto } from './dto/response-checklist-template.dto';
 import { UpdateChecklistDto } from './dto/update-checklist.dto';
+import { UpdateChecklistTemplateItemDto } from './dto/update-checklist-template-item.dto';
+
+type ChecklistTemplateItemCreateData = Omit<
+  Prisma.ChecklistTemplateItemUncheckedCreateInput,
+  'templateId'
+>;
 
 @Injectable()
 export class ChecklistService {
@@ -131,14 +134,13 @@ export class ChecklistService {
 
     const checklistTemplateItem =
       await this.prisma.checklistTemplateItem.create({
-        data: { ...dto, templateId },
+        data: {
+          templateId,
+          ...this.toChecklistTemplateItemCreateData(dto),
+        },
       });
 
-    return new ResponseChecklistTemplateItemDto({
-      ...checklistTemplateItem,
-      defaultEstimatedCost:
-        checklistTemplateItem.defaultEstimatedCost?.toNumber() ?? null,
-    });
+    return new ResponseChecklistTemplateItemDto(checklistTemplateItem);
   }
 
   async findOneItemChecklist(
@@ -152,11 +154,41 @@ export class ChecklistService {
       throw new NotFoundException('Item Checklist template not found');
     }
 
-    return new ResponseChecklistTemplateItemDto({
-      ...itemChecklist,
-      defaultEstimatedCost:
-        itemChecklist.defaultEstimatedCost?.toNumber() ?? null,
-    });
+    return new ResponseChecklistTemplateItemDto(itemChecklist);
+  }
+
+  async updateItemChecklist(
+    itemId: string,
+    dto: UpdateChecklistTemplateItemDto,
+  ): Promise<ResponseChecklistTemplateItemDto> {
+    try {
+      const itemChecklist = await this.prisma.checklistTemplateItem.update({
+        where: { id: itemId },
+        data: this.toChecklistTemplateItemUpdateData(dto),
+      });
+
+      return new ResponseChecklistTemplateItemDto(itemChecklist);
+    } catch (error) {
+      if (!this.isRecordNotFoundError(error)) {
+        throw error;
+      }
+
+      throw new NotFoundException('Item Checklist template not found');
+    }
+  }
+
+  async removeItemChecklist(itemId: string): Promise<void> {
+    try {
+      await this.prisma.checklistTemplateItem.delete({
+        where: { id: itemId },
+      });
+    } catch (error) {
+      if (!this.isRecordNotFoundError(error)) {
+        throw error;
+      }
+
+      throw new NotFoundException('Item Checklist template not found');
+    }
   }
 
   private toChecklistTemplateCreateData(
@@ -169,6 +201,7 @@ export class ChecklistService {
     return {
       name: dto.name,
       vehicleType: dto.vehicleType,
+      isActive: dto.isActive,
     };
   }
 
@@ -178,6 +211,39 @@ export class ChecklistService {
     return {
       name: dto.name,
       vehicleType: dto.vehicleType,
+      isActive: dto.isActive,
+    };
+  }
+
+  private toChecklistTemplateItemCreateData(
+    dto: CreateChecklistTemplateItemDto,
+  ): ChecklistTemplateItemCreateData {
+    /**
+     * Item templates become the source data copied into vehicle evaluations.
+     * Keep the write list explicit so clients cannot set ids or timestamps.
+     */
+    return {
+      category: dto.category,
+      name: dto.name,
+      defaultEstimatedCost: dto.defaultEstimatedCost,
+      severity: dto.severity,
+      requiresQuantity: dto.requiresQuantity,
+      isRequired: dto.isRequired,
+      order: dto.order,
+    };
+  }
+
+  private toChecklistTemplateItemUpdateData(
+    dto: UpdateChecklistTemplateItemDto,
+  ): Prisma.ChecklistTemplateItemUncheckedUpdateInput {
+    return {
+      category: dto.category,
+      name: dto.name,
+      defaultEstimatedCost: dto.defaultEstimatedCost,
+      severity: dto.severity,
+      requiresQuantity: dto.requiresQuantity,
+      isRequired: dto.isRequired,
+      order: dto.order,
     };
   }
 

@@ -1,5 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsString, MaxLength } from 'class-validator';
+import {
+  IsBoolean,
+  IsEnum,
+  IsOptional,
+  IsString,
+  MaxLength,
+} from 'class-validator';
 import { VehicleType } from '../../../../generated/prisma/enums';
 
 export class CreateChecklistTemplateDto {
@@ -12,6 +18,8 @@ export class CreateChecklistTemplateDto {
   @IsEnum(VehicleType)
   vehicleType!: VehicleType;
 
-  @ApiProperty({ example: true })
-  isActive!: boolean;
+  @ApiProperty({ example: true, required: false, default: true })
+  @IsBoolean()
+  @IsOptional()
+  isActive?: boolean;
 }

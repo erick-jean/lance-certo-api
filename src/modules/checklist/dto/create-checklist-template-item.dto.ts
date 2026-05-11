@@ -4,8 +4,10 @@ import {
   IsEnum,
   IsInt,
   IsNotEmpty,
+  IsNumber,
   IsOptional,
   IsString,
+  MaxLength,
   Min,
 } from 'class-validator';
 import { Type } from 'class-transformer';
@@ -17,6 +19,7 @@ export class CreateChecklistTemplateItemDto {
   })
   @IsString()
   @IsNotEmpty()
+  @MaxLength(100)
   category!: string;
 
   @ApiProperty({
@@ -24,6 +27,7 @@ export class CreateChecklistTemplateItemDto {
   })
   @IsString()
   @IsNotEmpty()
+  @MaxLength(255)
   name!: string;
 
   @ApiPropertyOptional({
@@ -31,7 +35,9 @@ export class CreateChecklistTemplateItemDto {
   })
   @Type(() => Number)
   @IsOptional()
-  defaultEstimatedCost?: number;
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
+  defaultEstimatedCost?: number | null;
 
   @ApiProperty({
     enum: ChecklistSeverity,

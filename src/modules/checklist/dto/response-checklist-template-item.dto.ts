@@ -1,10 +1,15 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ChecklistSeverity } from '../../../../generated/prisma/enums';
+import { Prisma } from '../../../../generated/prisma/client';
+
+type ChecklistTemplateItemResponseInput = Omit<
+  ResponseChecklistTemplateItemDto,
+  'defaultEstimatedCost'
+> & {
+  defaultEstimatedCost: Prisma.Decimal | number | null;
+};
 
 export class ResponseChecklistTemplateItemDto {
-  constructor(partial: Partial<ResponseChecklistTemplateItemDto>) {
-    Object.assign(this, partial);
-  }
   @ApiProperty({ example: 'c1a2b3d4-uuid' })
   id!: string;
 
@@ -40,4 +45,12 @@ export class ResponseChecklistTemplateItemDto {
 
   @ApiProperty({ example: '2026-05-06T17:32:44.757Z' })
   updatedAt!: Date;
+
+  constructor(item: ChecklistTemplateItemResponseInput) {
+    Object.assign(this, item);
+    this.defaultEstimatedCost =
+      item.defaultEstimatedCost === null
+        ? null
+        : Number(item.defaultEstimatedCost);
+  }
 }
