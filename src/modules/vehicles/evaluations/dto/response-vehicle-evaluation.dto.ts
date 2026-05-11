@@ -85,26 +85,38 @@ export class ResponseVehicleEvaluationDto {
   updatedAt!: Date;
 
   constructor(evaluation: ResponseVehicleEvaluationInput) {
-    Object.assign(this, evaluation);
+    this.id = evaluation.id!;
+    this.vehicleId = evaluation.vehicleId!;
+    this.riskLevel = evaluation.riskLevel ?? null;
+    this.recommendation = evaluation.recommendation ?? null;
+    this.isComplete = evaluation.isComplete ?? false;
+    this.lastCalculatedAt = evaluation.lastCalculatedAt ?? null;
+    this.createdAt = evaluation.createdAt!;
+    this.updatedAt = evaluation.updatedAt!;
 
-    this.desiredProfitMarginPercent = evaluation.desiredProfitMarginPercent
-      ? Number(evaluation.desiredProfitMarginPercent)
-      : null;
+    this.desiredProfitMarginPercent =
+      evaluation.desiredProfitMarginPercent === null
+        ? null
+        : Number(evaluation.desiredProfitMarginPercent);
 
-    this.safetyMarginPercent = evaluation.safetyMarginPercent
-      ? Number(evaluation.safetyMarginPercent)
-      : null;
+    this.safetyMarginPercent =
+      evaluation.safetyMarginPercent === null
+        ? null
+        : Number(evaluation.safetyMarginPercent);
 
-    this.maxRecommendedBid = evaluation.maxRecommendedBid
-      ? Number(evaluation.maxRecommendedBid)
-      : null;
+    this.maxRecommendedBid =
+      evaluation.maxRecommendedBid === null
+        ? null
+        : Number(evaluation.maxRecommendedBid);
 
-    this.estimatedFinalCost = evaluation.estimatedFinalCost
-      ? Number(evaluation.estimatedFinalCost)
-      : null;
+    this.estimatedFinalCost =
+      evaluation.estimatedFinalCost === null
+        ? null
+        : Number(evaluation.estimatedFinalCost);
 
-    this.estimatedProfit = evaluation.estimatedProfit
-      ? Number(evaluation.estimatedProfit)
-      : null;
+    this.estimatedProfit =
+      evaluation.estimatedProfit === null
+        ? null
+        : Number(evaluation.estimatedProfit);
   }
 }

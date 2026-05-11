@@ -184,6 +184,589 @@ const seedVehicles = [
   },
 ] satisfies Omit<Prisma.VehicleUncheckedCreateInput, 'userId'>[];
 
+type ChecklistItemSeed = [
+  string,
+  string,
+  string,
+  ChecklistSeverity,
+  boolean,
+  boolean,
+  number,
+];
+
+const carChecklistItems = [
+  [
+    'Motor',
+    'Compressão / fumaça / sopro',
+    '6500.00',
+    ChecklistSeverity.CRITICAL,
+    false,
+    true,
+    10,
+  ],
+  [
+    'Motor',
+    'Junta do cabeçote',
+    '2400.00',
+    ChecklistSeverity.HIGH,
+    false,
+    true,
+    11,
+  ],
+  [
+    'Motor',
+    'Vazamentos de óleo e vedações',
+    '650.00',
+    ChecklistSeverity.MEDIUM,
+    false,
+    true,
+    12,
+  ],
+  [
+    'Motor',
+    'Sistema de arrefecimento',
+    '950.00',
+    ChecklistSeverity.HIGH,
+    false,
+    true,
+    13,
+  ],
+  [
+    'Motor',
+    'Injeção / ignição',
+    '850.00',
+    ChecklistSeverity.MEDIUM,
+    false,
+    true,
+    14,
+  ],
+  [
+    'Motor',
+    'Coxins do motor',
+    '800.00',
+    ChecklistSeverity.MEDIUM,
+    false,
+    false,
+    15,
+  ],
+  [
+    'Transmissão',
+    'Kit de embreagem',
+    '1100.00',
+    ChecklistSeverity.HIGH,
+    false,
+    true,
+    20,
+  ],
+  [
+    'Transmissão',
+    'Câmbio manual / automático / CVT',
+    '4500.00',
+    ChecklistSeverity.CRITICAL,
+    false,
+    true,
+    21,
+  ],
+  [
+    'Transmissão',
+    'Atuador / cabo / hidráulico da embreagem',
+    '480.00',
+    ChecklistSeverity.MEDIUM,
+    false,
+    false,
+    22,
+  ],
+  [
+    'Transmissão',
+    'Semi-eixos / juntas homocinéticas',
+    '950.00',
+    ChecklistSeverity.HIGH,
+    false,
+    true,
+    23,
+  ],
+  [
+    'Transmissão',
+    'Retentores e vazamentos do câmbio',
+    '650.00',
+    ChecklistSeverity.MEDIUM,
+    false,
+    false,
+    24,
+  ],
+  [
+    'Transmissão',
+    'Trambulador / alavanca / coxins da caixa',
+    '520.00',
+    ChecklistSeverity.MEDIUM,
+    false,
+    false,
+    25,
+  ],
+  [
+    'Pneus',
+    'Pneus de rodagem',
+    '380.00',
+    ChecklistSeverity.HIGH,
+    true,
+    true,
+    30,
+  ],
+  ['Pneus', 'Estepe', '420.00', ChecklistSeverity.MEDIUM, false, false, 31],
+  [
+    'Pneus',
+    'Rodas / aros',
+    '280.00',
+    ChecklistSeverity.MEDIUM,
+    true,
+    false,
+    32,
+  ],
+  ['Pneus', 'Alinhamento', '140.00', ChecklistSeverity.LOW, false, false, 33],
+  ['Pneus', 'Balanceamento', '35.00', ChecklistSeverity.LOW, true, false, 34],
+  [
+    'Pneus',
+    'Válvulas / bicos / TPMS',
+    '90.00',
+    ChecklistSeverity.LOW,
+    true,
+    false,
+    35,
+  ],
+  [
+    'Elétrica',
+    'Bateria 12V',
+    '680.00',
+    ChecklistSeverity.MEDIUM,
+    false,
+    true,
+    40,
+  ],
+  [
+    'Elétrica',
+    'Alternador / carga',
+    '850.00',
+    ChecklistSeverity.HIGH,
+    false,
+    true,
+    41,
+  ],
+  [
+    'Elétrica',
+    'Motor de partida',
+    '700.00',
+    ChecklistSeverity.MEDIUM,
+    false,
+    true,
+    42,
+  ],
+  [
+    'Elétrica',
+    'Iluminação externa',
+    '320.00',
+    ChecklistSeverity.HIGH,
+    false,
+    true,
+    43,
+  ],
+  [
+    'Elétrica',
+    'Vidros / travas / comandos elétricos',
+    '650.00',
+    ChecklistSeverity.MEDIUM,
+    false,
+    false,
+    44,
+  ],
+  [
+    'Elétrica',
+    'ECU / chicote / fusíveis / relés',
+    '950.00',
+    ChecklistSeverity.HIGH,
+    false,
+    false,
+    45,
+  ],
+  [
+    'Lataria',
+    'Para-choques e grades',
+    '750.00',
+    ChecklistSeverity.MEDIUM,
+    false,
+    false,
+    50,
+  ],
+  [
+    'Lataria',
+    'Capô / tampa traseira / fechaduras',
+    '850.00',
+    ChecklistSeverity.MEDIUM,
+    false,
+    false,
+    51,
+  ],
+  [
+    'Lataria',
+    'Portas / paralamas / caixa de ar',
+    '1100.00',
+    ChecklistSeverity.MEDIUM,
+    false,
+    false,
+    52,
+  ],
+  [
+    'Lataria',
+    'Para-brisa / vidros fixos',
+    '900.00',
+    ChecklistSeverity.HIGH,
+    false,
+    true,
+    53,
+  ],
+  [
+    'Lataria',
+    'Retrovisores externos',
+    '350.00',
+    ChecklistSeverity.MEDIUM,
+    true,
+    true,
+    54,
+  ],
+  [
+    'Lataria',
+    'Estrutura frontal / traseira / longarinas',
+    '4000.00',
+    ChecklistSeverity.CRITICAL,
+    false,
+    true,
+    55,
+  ],
+  [
+    'Interior',
+    'Painel / acabamento interno',
+    '650.00',
+    ChecklistSeverity.LOW,
+    false,
+    false,
+    60,
+  ],
+  [
+    'Interior',
+    'Bancos / trilhos / regulagens',
+    '700.00',
+    ChecklistSeverity.MEDIUM,
+    false,
+    false,
+    61,
+  ],
+  [
+    'Interior',
+    'Forros / vedação / infiltração',
+    '750.00',
+    ChecklistSeverity.HIGH,
+    false,
+    false,
+    62,
+  ],
+  [
+    'Interior',
+    'Ar-condicionado / ventilação',
+    '1200.00',
+    ChecklistSeverity.MEDIUM,
+    false,
+    false,
+    63,
+  ],
+  [
+    'Interior',
+    'Painel de instrumentos / multimídia',
+    '750.00',
+    ChecklistSeverity.LOW,
+    false,
+    false,
+    64,
+  ],
+  [
+    'Interior',
+    'Chaves / telecomando / miolo',
+    '500.00',
+    ChecklistSeverity.MEDIUM,
+    false,
+    false,
+    65,
+  ],
+  [
+    'Suspensão',
+    'Amortecedores dianteiros',
+    '700.00',
+    ChecklistSeverity.HIGH,
+    false,
+    true,
+    70,
+  ],
+  [
+    'Suspensão',
+    'Amortecedores traseiros',
+    '600.00',
+    ChecklistSeverity.HIGH,
+    false,
+    true,
+    71,
+  ],
+  [
+    'Suspensão',
+    'Bandejas / pivôs / buchas',
+    '900.00',
+    ChecklistSeverity.HIGH,
+    false,
+    true,
+    72,
+  ],
+  [
+    'Suspensão',
+    'Molas / coxins / batentes',
+    '650.00',
+    ChecklistSeverity.MEDIUM,
+    false,
+    false,
+    73,
+  ],
+  [
+    'Suspensão',
+    'Caixa / terminais / axiais de direção',
+    '1100.00',
+    ChecklistSeverity.HIGH,
+    false,
+    true,
+    74,
+  ],
+  [
+    'Suspensão',
+    'Rolamentos de roda / cubos',
+    '550.00',
+    ChecklistSeverity.MEDIUM,
+    false,
+    false,
+    75,
+  ],
+  [
+    'Freios',
+    'Pastilhas de freio',
+    '280.00',
+    ChecklistSeverity.HIGH,
+    false,
+    true,
+    80,
+  ],
+  [
+    'Freios',
+    'Discos / tambores',
+    '650.00',
+    ChecklistSeverity.HIGH,
+    false,
+    true,
+    81,
+  ],
+  [
+    'Freios',
+    'Pinças / cilindros / reparos',
+    '700.00',
+    ChecklistSeverity.HIGH,
+    false,
+    true,
+    82,
+  ],
+  [
+    'Freios',
+    'Fluido / flexíveis / tubulação',
+    '320.00',
+    ChecklistSeverity.MEDIUM,
+    false,
+    true,
+    83,
+  ],
+  [
+    'Freios',
+    'Freio de estacionamento',
+    '420.00',
+    ChecklistSeverity.MEDIUM,
+    false,
+    false,
+    84,
+  ],
+  [
+    'Freios',
+    'ABS / módulo / sensores',
+    '900.00',
+    ChecklistSeverity.HIGH,
+    false,
+    true,
+    85,
+  ],
+  [
+    'Documentação',
+    'Transferência / ATPV-e / CRV-CRLV',
+    '420.00',
+    ChecklistSeverity.HIGH,
+    false,
+    true,
+    90,
+  ],
+  [
+    'Documentação',
+    'Vistoria / laudo / ECV',
+    '180.00',
+    ChecklistSeverity.MEDIUM,
+    false,
+    true,
+    91,
+  ],
+  [
+    'Documentação',
+    'Licenciamento em atraso',
+    '320.00',
+    ChecklistSeverity.HIGH,
+    false,
+    true,
+    92,
+  ],
+  [
+    'Documentação',
+    'Débitos de IPVA / multas',
+    '1000.00',
+    ChecklistSeverity.HIGH,
+    false,
+    true,
+    93,
+  ],
+  [
+    'Documentação',
+    'Placas / tarjeta / lacre',
+    '180.00',
+    ChecklistSeverity.MEDIUM,
+    false,
+    false,
+    94,
+  ],
+  [
+    'Documentação',
+    'Remarcação chassi / motor / 2ª via',
+    '380.00',
+    ChecklistSeverity.CRITICAL,
+    false,
+    true,
+    95,
+  ],
+  [
+    'Segurança',
+    'Airbags / luz SRS',
+    '4500.00',
+    ChecklistSeverity.CRITICAL,
+    false,
+    true,
+    100,
+  ],
+  [
+    'Segurança',
+    'Cintos de segurança',
+    '650.00',
+    ChecklistSeverity.CRITICAL,
+    false,
+    true,
+    101,
+  ],
+  [
+    'Segurança',
+    'Encostos de cabeça / ancoragens',
+    '250.00',
+    ChecklistSeverity.MEDIUM,
+    false,
+    false,
+    102,
+  ],
+  [
+    'Segurança',
+    'Espelhos retrovisores obrigatórios',
+    '300.00',
+    ChecklistSeverity.HIGH,
+    false,
+    true,
+    103,
+  ],
+  [
+    'Segurança',
+    'Faróis / setas / lanternas obrigatórias',
+    '300.00',
+    ChecklistSeverity.HIGH,
+    false,
+    true,
+    104,
+  ],
+  [
+    'Segurança',
+    'Recall pendente crítico',
+    '0.00',
+    ChecklistSeverity.HIGH,
+    false,
+    true,
+    105,
+  ],
+  [
+    'Inspeção/Outros',
+    'Scanner OBD / diagnóstico',
+    '120.00',
+    ChecklistSeverity.MEDIUM,
+    false,
+    true,
+    110,
+  ],
+  [
+    'Inspeção/Outros',
+    'Laudo cautelar / procedência',
+    '250.00',
+    ChecklistSeverity.HIGH,
+    false,
+    true,
+    111,
+  ],
+  [
+    'Inspeção/Outros',
+    'Sinais de enchente / salinidade',
+    '6000.00',
+    ChecklistSeverity.CRITICAL,
+    false,
+    true,
+    112,
+  ],
+  [
+    'Inspeção/Outros',
+    'Guincho / remoção',
+    '450.00',
+    ChecklistSeverity.MEDIUM,
+    false,
+    false,
+    113,
+  ],
+  [
+    'Inspeção/Outros',
+    'Higienização / odor / detailing',
+    '380.00',
+    ChecklistSeverity.LOW,
+    false,
+    false,
+    114,
+  ],
+  [
+    'Inspeção/Outros',
+    'Preparação estética para venda',
+    '650.00',
+    ChecklistSeverity.LOW,
+    false,
+    false,
+    115,
+  ],
+] satisfies ChecklistItemSeed[];
+
 const motorcycleChecklistItems = [
   [
     'Motor',
@@ -763,12 +1346,327 @@ const motorcycleChecklistItems = [
     false,
     115,
   ],
-] satisfies Array<
-  [string, string, string, ChecklistSeverity, boolean, boolean, number]
->;
+] satisfies ChecklistItemSeed[];
+
+const questionByName: Record<string, string> = {
+  'Compressão / fumaça / sopro':
+    'O motor apresenta fumaça, perda de compressão, sopro ou funcionamento irregular?',
+  'Junta do cabeçote':
+    'Há sinais de problema na junta do cabeçote, como mistura de óleo e água, superaquecimento ou fumaça branca?',
+  'Vazamentos de óleo e vedações':
+    'Há vazamentos de óleo no motor, câmbio ou vedações aparentes?',
+  'Vazamentos do motor':
+    'O motor apresenta vazamento de óleo ou fluido aparente?',
+  'Sistema de arrefecimento':
+    'O sistema de arrefecimento apresenta vazamento, superaquecimento, reservatório sujo ou ventoinha com falha?',
+  'Injeção / ignição':
+    'O veículo apresenta falhas de injeção, ignição, marcha lenta irregular ou luz de injeção acesa?',
+  'Injeção / TBI / ignição':
+    'A moto apresenta falhas de injeção, TBI, ignição, partida ou marcha lenta irregular?',
+  'Coxins do motor':
+    'Os coxins do motor estão quebrados, ressecados ou causando vibração excessiva?',
+  'Cabeçote / válvulas / comando':
+    'Há sinais de problema no cabeçote, válvulas, comando ou ruído interno no motor?',
+  'Cárter / tampa lateral / carcaça':
+    'Há dano no cárter, tampa lateral ou carcaça do motor?',
+  'Kit de embreagem':
+    'A embreagem apresenta desgaste, patinação, trepidação ou dificuldade de acionamento?',
+  'Câmbio manual / automático / CVT':
+    'O câmbio apresenta trancos, patinação, ruídos, vazamentos ou dificuldade nas trocas?',
+  'Atuador / cabo / hidráulico da embreagem':
+    'O sistema de acionamento da embreagem precisa de reparo?',
+  'Semi-eixos / juntas homocinéticas':
+    'Há ruídos, folgas ou danos em semi-eixos e juntas homocinéticas?',
+  'Retentores e vazamentos do câmbio':
+    'Há vazamento de óleo no câmbio ou nos retentores da transmissão?',
+  'Trambulador / alavanca / coxins da caixa':
+    'O trambulador, alavanca ou coxins da caixa apresentam folga, ruído ou dificuldade de engate?',
+  'Kit relação (corrente/coroa/pinhão)':
+    'O kit relação apresenta desgaste, corrente folgada, coroa ou pinhão gastos?',
+  'Cabo / atuador da embreagem':
+    'O cabo ou atuador da embreagem precisa de ajuste ou substituição?',
+  'Câmbio / seletores / pedal':
+    'O câmbio, seletores ou pedal de marcha apresentam falha, folga ou dificuldade de engate?',
+  'Retentores / vazamentos da transmissão':
+    'Há vazamentos ou sinais de desgaste nos retentores da transmissão?',
+  'Cubo / campana / rolamentos da transmissão':
+    'Há desgaste, folga ou ruído no cubo, campana ou rolamentos da transmissão?',
+  'Pneus de rodagem': 'Quantos pneus de rodagem precisam ser trocados?',
+  Estepe: 'O estepe está ausente, careca, vencido ou inutilizável?',
+  'Rodas / aros':
+    'Quantas rodas ou aros estão amassados, trincados ou danificados?',
+  Alinhamento: 'O veículo precisa de alinhamento?',
+  Balanceamento: 'Quantas rodas precisam de balanceamento?',
+  'Válvulas / bicos / TPMS': 'Há válvulas, bicos ou sensores TPMS danificados?',
+  'Pneu dianteiro': 'O pneu dianteiro precisa ser trocado?',
+  'Pneu traseiro': 'O pneu traseiro precisa ser trocado?',
+  'Câmara de ar / válvulas': 'Há câmara de ar ou válvulas danificadas?',
+  'Balanceamento / alinhamento de rodas':
+    'As rodas precisam de balanceamento ou alinhamento?',
+  'Rolamentos de roda': 'Há ruído, folga ou desgaste nos rolamentos de roda?',
+  'Bateria 12V':
+    'A bateria está fraca, ausente, descarregada ou sem condição de uso?',
+  'Alternador / carga': 'O alternador ou sistema de carga apresenta falha?',
+  'Motor de partida':
+    'O motor de partida apresenta falha ou dificuldade de acionamento?',
+  'Motor de partida / relé': 'O motor de partida ou relé apresenta falha?',
+  'Iluminação externa':
+    'Faróis, lanternas, setas ou luzes obrigatórias apresentam falha?',
+  'Iluminação / painel': 'Farol, setas, lanterna ou painel apresentam falha?',
+  'Vidros / travas / comandos elétricos':
+    'Vidros, travas ou comandos elétricos apresentam falha?',
+  'ECU / chicote / fusíveis / relés':
+    'Há falha em ECU, chicote, fusíveis, relés ou conectores elétricos?',
+  'Estator / regulador / retificador':
+    'O estator, regulador ou retificador apresenta falha no sistema de carga?',
+  'Chicote / fusíveis / conectores':
+    'Há chicote, fusíveis ou conectores danificados, oxidados ou cortados?',
+  'Sensores / painel de instrumentos':
+    'Sensores ou painel de instrumentos apresentam falha?',
+  'Para-choques e grades':
+    'Para-choques ou grades estão quebrados, desalinhados ou precisam de reparo?',
+  'Capô / tampa traseira / fechaduras':
+    'Capô, tampa traseira ou fechaduras apresentam amassados, desalinhamento ou falha?',
+  'Portas / paralamas / caixa de ar':
+    'Portas, paralamas ou caixa de ar apresentam amassados, ferrugem ou desalinhamento?',
+  'Para-brisa / vidros fixos':
+    'Para-brisa ou vidros fixos estão trincados, quebrados ou precisam de troca?',
+  'Retrovisores externos':
+    'Quantos retrovisores externos precisam de reparo ou substituição?',
+  'Estrutura frontal / traseira / longarinas':
+    'Há indício de dano estrutural em longarinas, estrutura frontal ou traseira?',
+  'Tanque de combustível':
+    'O tanque apresenta amassado, vazamento, ferrugem ou dano aparente?',
+  'Kit carenagem / laterais / rabeta':
+    'Carenagens, laterais ou rabeta apresentam quebras, trincas ou ausência de peças?',
+  'Conjunto frontal / farol / suporte':
+    'O conjunto frontal, farol ou suporte apresenta dano?',
+  'Retrovisores / manetes':
+    'Retrovisores ou manetes precisam de reparo ou substituição?',
+  'Pedaleiras / suportes / escape':
+    'Pedaleiras, suportes ou escapamento apresentam dano ou desalinhamento?',
+  'Quadro / berço / soldas aparentes':
+    'Há indícios de dano estrutural no quadro, berço ou soldas aparentes?',
+  'Painel / acabamento interno':
+    'Painel ou acabamento interno apresentam quebras, faltas ou mau estado?',
+  'Bancos / trilhos / regulagens':
+    'Bancos, trilhos ou regulagens apresentam danos ou falhas?',
+  'Forros / vedação / infiltração':
+    'Há forros danificados, vedação comprometida ou sinais de infiltração?',
+  'Ar-condicionado / ventilação':
+    'Ar-condicionado ou ventilação apresentam falha?',
+  'Painel de instrumentos / multimídia':
+    'Painel de instrumentos ou multimídia apresenta falha?',
+  'Chaves / telecomando / miolo':
+    'Chaves, telecomando ou miolo de ignição estão ausentes ou com defeito?',
+  'Banco / trava / base': 'Banco, trava ou base apresentam dano ou folga?',
+  'Painel / velocímetro':
+    'Painel ou velocímetro apresenta falha, quebra ou ausência de funcionamento?',
+  'Comutador de ignição / chave':
+    'Comutador de ignição ou chave apresenta falha ou ausência?',
+  'Acelerador / manoplas / punhos':
+    'Acelerador, manoplas ou punhos apresentam desgaste ou falha?',
+  'Comando de embreagem / manete':
+    'Comando de embreagem ou manete apresenta folga, quebra ou falha?',
+  'Comando de freio / pedal':
+    'Comando de freio ou pedal apresenta folga, quebra ou falha?',
+  'Amortecedores dianteiros':
+    'Os amortecedores dianteiros apresentam vazamento, ruído ou desgaste?',
+  'Amortecedores traseiros':
+    'Os amortecedores traseiros apresentam vazamento, ruído ou desgaste?',
+  'Bandejas / pivôs / buchas':
+    'Bandejas, pivôs ou buchas apresentam folga, ruído ou desgaste?',
+  'Molas / coxins / batentes':
+    'Molas, coxins ou batentes apresentam desgaste, quebra ou ruído?',
+  'Caixa / terminais / axiais de direção':
+    'Caixa de direção, terminais ou axiais apresentam folga, ruído ou vazamento?',
+  'Rolamentos de roda / cubos':
+    'Rolamentos de roda ou cubos apresentam ruído, folga ou desgaste?',
+  'Bengalas dianteiras':
+    'As bengalas dianteiras estão tortas, vazando ou danificadas?',
+  'Mesas / caixa de direção':
+    'Mesas ou caixa de direção apresentam folga, desalinhamento ou dano?',
+  'Amortecedor(es) traseiro(s)':
+    'Amortecedor traseiro apresenta vazamento, ruído ou desgaste?',
+  'Balança / buchas / quadro elástico':
+    'Balança, buchas ou quadro elástico apresentam folga ou desgaste?',
+  'Alinhamento de chassi': 'Há suspeita de chassi desalinhado ou torto?',
+  'Rolamentos da direção / rodas':
+    'Rolamentos da direção ou rodas apresentam folga, ruído ou desgaste?',
+  'Pastilhas de freio': 'As pastilhas de freio precisam ser trocadas?',
+  'Discos / tambores':
+    'Discos ou tambores apresentam desgaste, empeno ou trinca?',
+  'Pinças / cilindros / reparos':
+    'Pinças, cilindros ou reparos do freio apresentam falha ou vazamento?',
+  'Fluido / flexíveis / tubulação':
+    'Fluido, flexíveis ou tubulação de freio precisam de manutenção?',
+  'Freio de estacionamento':
+    'O freio de estacionamento apresenta falha ou regulagem ruim?',
+  'ABS / módulo / sensores':
+    'ABS, módulo ou sensores de freio apresentam falha?',
+  'Pastilhas dianteiras': 'As pastilhas dianteiras precisam ser trocadas?',
+  'Disco dianteiro': 'O disco dianteiro apresenta desgaste, empeno ou trinca?',
+  'Sistema traseiro (lona/pastilha)':
+    'O sistema de freio traseiro precisa de reparo?',
+  'Fluido / mangueiras / flexíveis':
+    'Fluido, mangueiras ou flexíveis de freio precisam de manutenção?',
+  'Pinça / cilindro mestre':
+    'Pinça ou cilindro mestre apresenta falha ou vazamento?',
+  'ABS / CBS / sensor de roda': 'ABS, CBS ou sensor de roda apresenta falha?',
+  'Transferência / ATPV-e / CRV-CRLV':
+    'Será necessário pagar transferência, ATPV-e, CRV ou CRLV?',
+  'Vistoria / laudo / ECV': 'Será necessário pagar vistoria, laudo ou ECV?',
+  'Licenciamento em atraso': 'Existe licenciamento em atraso?',
+  'Débitos de IPVA / multas':
+    'Existem débitos de IPVA, multas ou outras pendências financeiras?',
+  'Placas / tarjeta / lacre': 'Será necessário trocar placa, tarjeta ou lacre?',
+  'Placa / suporte / lacre': 'Será necessário trocar placa, suporte ou lacre?',
+  'Remarcação chassi / motor / 2ª via':
+    'Será necessário regularizar remarcação de chassi, motor ou segunda via de documento?',
+  'Airbags / luz SRS': 'Airbags, módulo SRS ou luz de airbag apresentam falha?',
+  'Cintos de segurança':
+    'Cintos de segurança apresentam falha, travamento ou ausência?',
+  'Encostos de cabeça / ancoragens':
+    'Encostos de cabeça ou ancoragens apresentam ausência ou dano?',
+  'Espelhos retrovisores obrigatórios':
+    'Espelhos retrovisores obrigatórios estão ausentes ou danificados?',
+  'Faróis / setas / lanternas obrigatórias':
+    'Faróis, setas ou lanternas obrigatórias apresentam falha?',
+  'Farol / setas / lanterna / luz de placa':
+    'Farol, setas, lanterna ou luz de placa apresentam falha?',
+  'Recall pendente crítico':
+    'Existe recall pendente que pode impedir licenciamento ou venda segura?',
+  'Quadro trincado / solda estrutural':
+    'Há quadro trincado, solda estrutural ou reparo estrutural aparente?',
+  Buzina: 'A buzina apresenta falha ou ausência de funcionamento?',
+  'Escapamento / ruído / protetor térmico':
+    'Escapamento, ruído ou protetor térmico apresenta problema?',
+  'Scanner OBD / diagnóstico':
+    'Será necessário realizar scanner OBD ou diagnóstico eletrônico?',
+  'Scanner / diagnóstico eletrônico':
+    'Será necessário realizar scanner ou diagnóstico eletrônico?',
+  'Laudo cautelar / procedência':
+    'Será necessário fazer laudo cautelar ou consulta de procedência?',
+  'Sinais de enchente / salinidade':
+    'Há sinais de enchente, salinidade, oxidação severa ou lama em componentes internos?',
+  'Sinais de enchente / oxidação severa':
+    'Há sinais de enchente, oxidação severa ou lama em componentes internos?',
+  'Guincho / remoção': 'Será necessário contratar guincho ou remoção?',
+  'Higienização / odor / detailing':
+    'Será necessário fazer higienização, remoção de odor ou detailing?',
+  'Higienização / lavagem técnica':
+    'Será necessário fazer higienização ou lavagem técnica?',
+  'Preparação estética para venda':
+    'Será necessário fazer preparação estética antes da revenda?',
+};
+
+const normalizedQuestionByName = new Map(
+  Object.entries(questionByName).map(([name, question]) => [
+    normalizeChecklistName(name),
+    question,
+  ]),
+);
+
+function normalizeChecklistName(name: string): string {
+  return name
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
+}
 
 function buildChecklistQuestion(itemName: string): string {
-  return `O item "${itemName}" apresenta problema, dano, desgaste ou pendencia?`;
+  return (
+    questionByName[itemName] ??
+    normalizedQuestionByName.get(normalizeChecklistName(itemName)) ??
+    `O item "${itemName}" apresenta problema, dano, desgaste ou pendência?`
+  );
+}
+
+async function seedChecklistTemplate(params: {
+  name: string;
+  vehicleType: VehicleType;
+  items: ChecklistItemSeed[];
+}): Promise<number> {
+  await prisma.checklistTemplate.updateMany({
+    where: {
+      vehicleType: params.vehicleType,
+      name: {
+        not: params.name,
+      },
+    },
+    data: {
+      isActive: false,
+    },
+  });
+
+  const checklistTemplate = await prisma.checklistTemplate.findFirst({
+    where: {
+      name: params.name,
+      vehicleType: params.vehicleType,
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  const template =
+    checklistTemplate ??
+    (await prisma.checklistTemplate.create({
+      data: {
+        name: params.name,
+        vehicleType: params.vehicleType,
+        isActive: true,
+      },
+      select: {
+        id: true,
+      },
+    }));
+
+  await prisma.checklistTemplate.update({
+    where: {
+      id: template.id,
+    },
+    data: {
+      isActive: true,
+    },
+  });
+
+  /**
+   * Checklist items are reference data. Replacing only the items from this
+   * template keeps local/dev databases synchronized with this source file.
+   */
+  await prisma.$transaction([
+    prisma.checklistTemplateItem.deleteMany({
+      where: {
+        templateId: template.id,
+      },
+    }),
+    prisma.checklistTemplateItem.createMany({
+      data: params.items.map(
+        ([
+          category,
+          name,
+          defaultEstimatedCost,
+          severity,
+          requiresQuantity,
+          isRequired,
+          order,
+        ]) => ({
+          templateId: template.id,
+          category,
+          name,
+          question: buildChecklistQuestion(name),
+          defaultEstimatedCost,
+          severity,
+          requiresQuantity,
+          isRequired,
+          order,
+        }),
+      ),
+    }),
+  ]);
+
+  return params.items.length;
 }
 
 async function main() {
@@ -838,69 +1736,28 @@ async function main() {
     }
   }
 
-  const checklistTemplate = await prisma.checklistTemplate.findFirst({
-    where: {
-      name: 'Checklist padrao moto - leilao',
-      vehicleType: VehicleType.MOTORCYCLE,
-    },
-    select: {
-      id: true,
-    },
-  });
-
-  const template =
-    checklistTemplate ??
-    (await prisma.checklistTemplate.create({
-      data: {
-        name: 'Checklist padrao moto - leilao',
+  const [carChecklistItemsCount, motorcycleChecklistItemsCount] =
+    await Promise.all([
+      seedChecklistTemplate({
+        name: 'Checklist padrão carro - leilão',
+        vehicleType: VehicleType.CAR,
+        items: carChecklistItems,
+      }),
+      seedChecklistTemplate({
+        name: 'Checklist padrão moto - leilão',
         vehicleType: VehicleType.MOTORCYCLE,
-        isActive: true,
-      },
-      select: {
-        id: true,
-      },
-    }));
-
-  /**
-   * The checklist items are reference data. Replacing them on every seed keeps
-   * local/dev databases synchronized with this source file.
-   */
-  await prisma.$transaction([
-    prisma.checklistTemplateItem.deleteMany({
-      where: {
-        templateId: template.id,
-      },
-    }),
-    prisma.checklistTemplateItem.createMany({
-      data: motorcycleChecklistItems.map(
-        ([
-          category,
-          name,
-          defaultEstimatedCost,
-          severity,
-          requiresQuantity,
-          isRequired,
-          order,
-        ]) => ({
-          templateId: template.id,
-          category,
-          name,
-          question: buildChecklistQuestion(name),
-          defaultEstimatedCost,
-          severity,
-          requiresQuantity,
-          isRequired,
-          order,
-        }),
-      ),
-    }),
-  ]);
+        items: motorcycleChecklistItems,
+      }),
+    ]);
 
   console.log('Seed executado com sucesso');
   console.log(`Admin: ${admin.email}`);
   console.log(`Usuario: ${user.email}`);
   console.log(`Veiculos criados/verificados: ${seedVehicles.length}`);
-  console.log(`Itens do checklist criados: ${motorcycleChecklistItems.length}`);
+  console.log(`Itens do checklist de carro criados: ${carChecklistItemsCount}`);
+  console.log(
+    `Itens do checklist de moto criados: ${motorcycleChecklistItemsCount}`,
+  );
 }
 
 main()

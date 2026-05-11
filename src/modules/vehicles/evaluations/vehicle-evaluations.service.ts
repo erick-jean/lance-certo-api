@@ -1,5 +1,5 @@
 import {
-  ConflictException,
+  BadRequestException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -7,6 +7,7 @@ import { CreateVehicleEvaluationDto } from './dto/create-vehicle-evaluation.dto'
 import { UpdateVehicleEvaluationDto } from './dto/update-vehicle-evaluation.dto';
 import { ResponseVehicleEvaluationDto } from './dto/response-vehicle-evaluation.dto';
 import { PrismaService } from 'src/database/prisma.service';
+import { ChecklistItemStatus } from 'generated/prisma/enums';
 
 @Injectable()
 export class VehicleEvaluationsService {
@@ -17,72 +18,116 @@ export class VehicleEvaluationsService {
     vehicleId: string,
     dto: CreateVehicleEvaluationDto,
   ): Promise<ResponseVehicleEvaluationDto> {
-    const vehicle = await this.prisma.vehicle.findFirst({
-      where: {
-        id: vehicleId,
-        userId,
-      },
-    });
-
-    if (!vehicle) {
-      throw new NotFoundException('Vehicle not found.');
-    }
-
-    const vehicleEvaluation = await this.prisma.vehicleEvaluation.findFirst({
-      where: { vehicleId },
-    });
-
-    if (vehicleEvaluation) {
-      throw new ConflictException(
-        'There is already a review registered for this vehicle.',
-      );
-    }
-
-    const checklistTemplate = await this.prisma.checklistTemplate.findFirst({
-      where: {
-        vehicleType: vehicle.type,
-        isActive: true,
-      },
-      include: {
-        items: {
-          orderBy: {
-            order: 'asc',
-          },
-        },
-      },
-    });
-
-    if (!checklistTemplate) {
-      throw new NotFoundException(
-        `Checklist template not found for vehicle type ${vehicle.type}.`,
-      );
-    }
-
-    const evaluation = await this.prisma.$transaction(async (tx) => {
-      const createdEvaluation = await tx.vehicleEvaluation.create({
-        data: {
-          vehicleId,
-          ...this.toEvaluationWritableData(dto),
+    return this.prisma.$transaction(async (tx) => {
+      /**
+       * Busca o veículo garantindo que ele pertence ao usuário autenticado.
+       * Isso evita que um usuário crie avaliação para veículo de outro usuário.
+       */
+      const vehicle = await tx.vehicle.findFirst({
+        where: {
+          id: vehicleId,
+          userId,
         },
       });
 
+      if (!vehicle) {
+        throw new NotFoundException('Veículo não encontrado');
+      }
+
+      /**
+       * Cada veículo pode ter apenas uma avaliação.
+       * Essa regra também é protegida no banco pelo @unique em vehicleId.
+       */
+      const existingEvaluation = await tx.vehicleEvaluation.findUnique({
+        where: { vehicleId: vehicle.id },
+      });
+
+      if (existingEvaluation) {
+        throw new BadRequestException('Este veículo já possui uma avaliação');
+      }
+
+      /**
+       * Busca o checklist padrão ativo de acordo com o tipo do veículo.
+       * Exemplo:
+       * - CAR -> Checklist padrão carro
+       * - MOTORCYCLE -> Checklist padrão moto
+       */
+      const template = await tx.checklistTemplate.findFirst({
+        where: {
+          vehicleType: vehicle.type,
+          isActive: true,
+        },
+        include: {
+          items: {
+            orderBy: { order: 'asc' },
+          },
+        },
+      });
+
+      if (!template) {
+        throw new BadRequestException(
+          `Nenhum checklist ativo encontrado para o tipo ${vehicle.type}`,
+        );
+      }
+
+      if (template.items.length === 0) {
+        throw new BadRequestException(
+          `Checklist ativo para o tipo ${vehicle.type} não possui itens`,
+        );
+      }
+
+      /**
+       * Cria a avaliação principal do veículo.
+       * Nesta etapa ainda não existem gastos nem respostas do checklist.
+       */
+      const evaluation = await tx.vehicleEvaluation.create({
+        data: {
+          vehicleId: vehicle.id,
+          desiredProfitMarginPercent: dto.desiredProfitMarginPercent,
+          safetyMarginPercent: dto.safetyMarginPercent,
+        },
+      });
+
+      /**
+       * Copia os itens do template para a avaliação.
+       *
+       * Importante:
+       * EvaluationChecklistItem é um snapshot do ChecklistTemplateItem.
+       * Assim, se o admin alterar o template no futuro, avaliações antigas
+       * continuam preservando as perguntas, custos e regras usadas na época.
+       */
       await tx.evaluationChecklistItem.createMany({
-        data: checklistTemplate.items.map((item) => ({
-          evaluationId: createdEvaluation.id,
+        data: template.items.map((item) => ({
+          evaluationId: evaluation.id,
           templateItemId: item.id,
+
           category: item.category,
           name: item.name,
-          status: 'NOT_CHECKED',
+          question: item.question,
+
+          severity: item.severity,
+          requiresQuantity: item.requiresQuantity,
+          isRequired: item.isRequired,
+          order: item.order,
+
+          status: ChecklistItemStatus.NOT_CHECKED,
+
           quantity: 1,
           estimatedUnitCost: item.defaultEstimatedCost,
           estimatedTotalCost: null,
+
+          notes: null,
+          answeredAt: null,
         })),
       });
 
-      return createdEvaluation;
+      /**
+       * A rota de criação retorna apenas o resumo da avaliação.
+       * O checklist fica pronto no banco e pode ser consultado em uma rota
+       * específica, evitando uma resposta gigante logo após o POST.
+       */
+      return new ResponseVehicleEvaluationDto(evaluation);
     });
-
-    return new ResponseVehicleEvaluationDto(evaluation);
   }
 
   async findOne(

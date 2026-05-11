@@ -47,7 +47,7 @@ export class VehicleEvaluationsController {
     @Req() req: AuthenticatedRequest,
     @Param('vehicleId', new ParseUUIDPipe()) vehicleId: string,
     @Body() createVehicleEvaluationDto: CreateVehicleEvaluationDto,
-  ): Promise<ResponseVehicleEvaluationDto> {
+  ): Promise<ResponseVehicleEvaluationDto | null> {
     return this.vehicleEvaluationsService.create(
       req.user.sub,
       vehicleId,
