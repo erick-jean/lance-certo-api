@@ -314,15 +314,14 @@ model ChecklistTemplate {
   @@map("checklist_templates")
 }
 
-
 model ChecklistTemplateItem {
   id String @id @default(uuid())
 
   templateId String
   template   ChecklistTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
 
-  category String
-  name     String
+  category String @db.VarChar(100)
+  name     String @db.VarChar(255)
 
   defaultEstimatedCost Decimal?          @db.Decimal(12, 2)
   severity             ChecklistSeverity @default(MEDIUM)
@@ -336,9 +335,11 @@ model ChecklistTemplateItem {
   updatedAt                DateTime                  @updatedAt
   evaluationChecklistItems EvaluationChecklistItem[]
 
-  @@index([templateId])
+  @@unique([templateId, name])
+  @@index([templateId, order])
   @@map("checklist_template_items")
 }
+
 
 model EvaluationChecklistItem {
   id String @id @default(uuid())
