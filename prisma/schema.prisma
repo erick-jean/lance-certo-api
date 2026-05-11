@@ -350,8 +350,16 @@ model EvaluationChecklistItem {
   templateItemId String?
   templateItem   ChecklistTemplateItem? @relation(fields: [templateItemId], references: [id], onDelete: SetNull)
 
-  category String @db.VarChar(100)
-  name     String @db.VarChar(255)
+  category String  @db.VarChar(100)
+  name     String  @db.VarChar(255)
+  question String? @db.VarChar(255)
+
+  severity ChecklistSeverity @default(MEDIUM)
+
+  requiresQuantity Boolean @default(false)
+  isRequired       Boolean @default(false)
+
+  order Int @default(0)
 
   status ChecklistItemStatus @default(NOT_CHECKED)
 
@@ -362,13 +370,16 @@ model EvaluationChecklistItem {
 
   notes String? @db.Text
 
+  answeredAt DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([evaluationId, name])
+  @@unique([evaluationId, templateItemId])
   @@index([evaluationId])
   @@index([templateItemId])
   @@index([evaluationId, status])
+  @@index([evaluationId, order])
   @@map("evaluation_checklist_items")
 }
 
