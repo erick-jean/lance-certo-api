@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ChecklistSeverity } from '../../../../../generated/prisma/enums';
+import { ChecklistSeverity } from '../../../../generated/prisma/enums';
 
 export class ResponseChecklistTemplateItemDto {
   constructor(partial: Partial<ResponseChecklistTemplateItemDto>) {

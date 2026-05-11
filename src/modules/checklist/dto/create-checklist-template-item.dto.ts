@@ -10,7 +10,7 @@ import {
   Min,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { ChecklistSeverity } from '../../../../../generated/prisma/enums';
+import { ChecklistSeverity } from '../../../../generated/prisma/enums';
 
 export class CreateChecklistTemplateItemDto {
   @ApiProperty({

@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { VehicleType } from '../../../../../generated/prisma/enums';
+import { VehicleType } from '../../../../generated/prisma/enums';
 
 type ChecklistTemplateResponseInput = {
   id: string;
