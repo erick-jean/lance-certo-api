@@ -296,7 +296,6 @@ enum ExpenseSource {
   DOCUMENTATION_RULE
 }
 
-// Templates de checklist por tipo de veículo
 model ChecklistTemplate {
   id String @id @default(uuid())
 
@@ -310,9 +309,11 @@ model ChecklistTemplate {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([vehicleType])
+  @@unique([vehicleType, name])
+  @@index([vehicleType, isActive])
   @@map("checklist_templates")
 }
+
 
 model ChecklistTemplateItem {
   id String @id @default(uuid())
