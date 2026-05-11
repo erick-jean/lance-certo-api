@@ -52,7 +52,7 @@ export class ChecklistController {
   @ApiOperation({ summary: 'Cria Template de Checklist' })
   @ApiCreatedResponse({ type: ResponseChecklistTemplateDto })
   @Throttle({ default: { limit: 20, ttl: 60_000, blockDuration: 120_000 } })
-  @Post('admin/checklist-templates')
+  @Post('checklist-templates')
   createChecklistTemplate(
     @Body() createChecklistTemplateDto: CreateChecklistTemplateDto,
   ): Promise<ResponseChecklistTemplateDto> {
@@ -64,7 +64,7 @@ export class ChecklistController {
   @ApiOperation({ summary: 'Busca todos os Template de Checklist' })
   @ApiOkResponse({ type: ResponseChecklistTemplateDto, isArray: true })
   @Throttle({ default: { limit: 60, ttl: 60_000, blockDuration: 60_000 } })
-  @Get('admin/checklist-templates')
+  @Get('checklist-templates')
   findAllChecklistTemplate(): Promise<ResponseChecklistTemplateDto[]> {
     return this.checklistService.findAllChecklistTemplate();
   }
@@ -73,7 +73,7 @@ export class ChecklistController {
   @ApiOkResponse({ type: ResponseChecklistTemplateDto })
   @ApiNotFoundResponse({ description: 'Template Checklist not found' })
   @Throttle({ default: { limit: 60, ttl: 60_000, blockDuration: 60_000 } })
-  @Get('admin/checklist-templates/:id')
+  @Get('checklist-templates/:id')
   findOneChecklistTemplate(
     @Param('id', new ParseUUIDPipe()) id: string,
   ): Promise<ResponseChecklistTemplateDto> {
@@ -84,7 +84,7 @@ export class ChecklistController {
   @ApiOkResponse({ type: ResponseChecklistTemplateDto })
   @ApiNotFoundResponse({ description: 'Template Checklist not found' })
   @Throttle({ default: { limit: 20, ttl: 60_000, blockDuration: 120_000 } })
-  @Patch('admin/checklist-templates/:id')
+  @Patch('checklist-templates/:id')
   updateChecklistTemplate(
     @Param('id', new ParseUUIDPipe()) id: string,
     @Body() updateChecklistDto: UpdateChecklistDto,
@@ -102,18 +102,20 @@ export class ChecklistController {
   @ApiNotFoundResponse({ description: 'Template Checklist not found' })
   @Throttle({ default: { limit: 10, ttl: 60_000, blockDuration: 300_000 } })
   @HttpCode(HttpStatus.NO_CONTENT)
-  @Delete('admin/checklist-templates/:id')
+  @Delete('checklist-templates/:id')
   removeChecklistTemplate(
     @Param('id', new ParseUUIDPipe()) id: string,
   ): Promise<void> {
     return this.checklistService.removeChecklistTemplate(id);
   }
 
+  // Busca itens de Checklist
+
   @ApiOperation({ summary: 'Cria Item de Checklist' })
   @Throttle({ default: { limit: 20, ttl: 60_000, blockDuration: 120_000 } })
   @ApiCreatedResponse({ type: ResponseChecklistTemplateItemDto })
   @ApiNotFoundResponse({ description: 'Template Checklist not found' })
-  @Post('admin/checklist-templates/:templateId/items')
+  @Post('checklist-templates/:templateId/items')
   createItemChecklist(
     @Param('templateId', new ParseUUIDPipe()) templateId: string,
     @Body() createChecklistTemplateItemDto: CreateChecklistTemplateItemDto,
@@ -124,11 +126,22 @@ export class ChecklistController {
     );
   }
 
+  @ApiOperation({ summary: 'Busca todos Itens de um Template Checklist' })
+  @ApiOkResponse({ type: ResponseChecklistTemplateItemDto, isArray: true })
+  @ApiNotFoundResponse({ description: 'Template Checklist not found' })
+  @Throttle({ default: { limit: 60, ttl: 60_000, blockDuration: 60_000 } })
+  @Get('checklist-templates/:templateId/items')
+  findAllItemChecklist(
+    @Param('templateId', new ParseUUIDPipe()) templateId: string,
+  ): Promise<ResponseChecklistTemplateItemDto[]> {
+    return this.checklistService.findAllItemChecklist(templateId);
+  }
+
   @ApiOperation({ summary: 'Busca item no Template de Checklist por id.' })
   @ApiOkResponse({ type: ResponseChecklistTemplateItemDto })
   @ApiNotFoundResponse({ description: 'Template Checklist item not found' })
   @Throttle({ default: { limit: 60, ttl: 60_000, blockDuration: 60_000 } })
-  @Get('admin/checklist-templates/:itemId/items')
+  @Get('checklist-template/:itemId/items')
   findOneItemChecklist(
     @Param('itemId', new ParseUUIDPipe()) itemId: string,
   ): Promise<ResponseChecklistTemplateItemDto> {
@@ -139,7 +152,7 @@ export class ChecklistController {
   @ApiOkResponse({ type: ResponseChecklistTemplateItemDto })
   @ApiNotFoundResponse({ description: 'Template Checklist item not found' })
   @Throttle({ default: { limit: 20, ttl: 60_000, blockDuration: 120_000 } })
-  @Patch('admin/checklist-template/:itemId/items')
+  @Patch('checklist-template/:itemId/items')
   updateItemChecklist(
     @Param('itemId', new ParseUUIDPipe()) itemId: string,
     @Body() updateChecklistTemplateItemDto: UpdateChecklistTemplateItemDto,
@@ -157,7 +170,7 @@ export class ChecklistController {
   @ApiNotFoundResponse({ description: 'Template Checklist item not found' })
   @Throttle({ default: { limit: 10, ttl: 60_000, blockDuration: 300_000 } })
   @HttpCode(HttpStatus.NO_CONTENT)
-  @Delete('admin/checklist-template/:itemId/items')
+  @Delete('checklist-template/:itemId/items')
   removeItemChecklist(
     @Param('itemId', new ParseUUIDPipe()) itemId: string,
   ): Promise<void> {
