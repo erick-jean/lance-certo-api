@@ -4,6 +4,8 @@ import {
   EvaluationRiskLevel,
 } from 'generated/prisma/enums';
 import { Prisma } from 'generated/prisma/client';
+import { ResponseEvaluationChecklistItemDto } from './response-evaluation-checklist-item.dto';
+import { ResponseEvaluationExpenseDto } from './response-evaluation-expense.dto';
 
 type ResponseEvalutionVehicleInput = {
   desiredProfitMarginPercent: Prisma.Decimal | null;
@@ -11,6 +13,12 @@ type ResponseEvalutionVehicleInput = {
   maxRecommendedBid: Prisma.Decimal | null;
   estimatedFinalCost: Prisma.Decimal | null;
   estimatedProfit: Prisma.Decimal | null;
+  evaluationChecklistItems?: ConstructorParameters<
+    typeof ResponseEvaluationChecklistItemDto
+  >[0][];
+  evaluationExpenses?: ConstructorParameters<
+    typeof ResponseEvaluationExpenseDto
+  >[0][];
 } & Omit<
   Partial<ResponseEvalutionVehicleDto>,
   | 'desiredProfitMarginPercent'
@@ -18,6 +26,8 @@ type ResponseEvalutionVehicleInput = {
   | 'maxRecommendedBid'
   | 'estimatedFinalCost'
   | 'estimatedProfit'
+  | 'evaluationChecklistItems'
+  | 'evaluationExpenses'
 >;
 
 export class ResponseEvalutionVehicleDto {
@@ -84,6 +94,21 @@ export class ResponseEvalutionVehicleDto {
   })
   updatedAt!: Date;
 
+  @ApiProperty({
+    type: () => [ResponseEvaluationChecklistItemDto],
+    required: false,
+  })
+  evaluationChecklistItems?: ResponseEvaluationChecklistItemDto[];
+
+  @ApiProperty({
+    type: () => [ResponseEvaluationExpenseDto],
+    required: false,
+  })
+  evaluationExpenses?: ResponseEvaluationExpenseDto[];
+
+  @ApiProperty({ required: false })
+  vehicle?: unknown;
+
   constructor(evaluation: ResponseEvalutionVehicleInput) {
     this.id = evaluation.id!;
     this.vehicleId = evaluation.vehicleId!;
@@ -118,5 +143,21 @@ export class ResponseEvalutionVehicleDto {
       evaluation.estimatedProfit === null
         ? null
         : Number(evaluation.estimatedProfit);
+
+    if (evaluation.evaluationChecklistItems) {
+      this.evaluationChecklistItems = evaluation.evaluationChecklistItems.map(
+        (item) => new ResponseEvaluationChecklistItemDto(item),
+      );
+    }
+
+    if (evaluation.evaluationExpenses) {
+      this.evaluationExpenses = evaluation.evaluationExpenses.map(
+        (expense) => new ResponseEvaluationExpenseDto(expense),
+      );
+    }
+
+    if (evaluation.vehicle) {
+      this.vehicle = evaluation.vehicle;
+    }
   }
 }
