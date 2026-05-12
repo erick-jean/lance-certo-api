@@ -23,10 +23,10 @@ import {
 } from '@nestjs/swagger';
 import { ResponseVehicleEvaluationDto } from './dto/response-vehicle-evaluation.dto';
 
-import { VehicleOwnerGuard } from '../guards/vehicle-owner/vehicle-owner.guard';
-import { AuthGuard } from '../../auth/auth.guard';
+import { VehicleOwnerGuard } from '../vehicles/guards/vehicle-owner/vehicle-owner.guard';
+import { AuthGuard } from '../auth/auth.guard';
 import { Throttle } from '@nestjs/throttler';
-import { AuthenticatedRequest } from '../../auth/interfaces/authenticated-request.interface';
+import { AuthenticatedRequest } from '../auth/interfaces/authenticated-request.interface';
 
 @ApiTags('Vehicle Evaluation / Avaliação do veículo')
 @ApiBearerAuth()

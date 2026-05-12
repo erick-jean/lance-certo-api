@@ -2,8 +2,8 @@ import { ApiProperty } from '@nestjs/swagger';
 import {
   EvaluationRecommendation,
   EvaluationRiskLevel,
-} from '../../../../../generated/prisma/enums';
-import { Prisma } from '../../../../../generated/prisma/client';
+} from 'generated/prisma/enums';
+import { Prisma } from 'generated/prisma/client';
 
 type ResponseVehicleEvaluationInput = {
   desiredProfitMarginPercent: Prisma.Decimal | null;
