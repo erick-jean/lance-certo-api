@@ -376,16 +376,10 @@ export class AuthService {
     };
   }
 
-  /**
-   * Hashes password reset tokens before lookup or persistence.
-   */
   private hashPasswordResetToken(token: string): string {
     return this.hashToken(token);
   }
 
-  /**
-   * Normalizes email addresses before persistence or lookup.
-   */
   private normalizeEmail(email: string): string {
     return email.trim().toLowerCase();
   }
@@ -457,7 +451,7 @@ export class AuthService {
   private sendPasswordResetLink(email: string, token: string): void {
     const resetLink = this.buildPasswordResetLink(token);
 
-    // TODO: substituir por um EmailService quando o envio SMTP/API estiver configurado.
+    // TODO: Replace this with EmailService once SMTP/API delivery is configured.
     if (process.env.NODE_ENV !== 'production') {
       console.log(`Password reset link for ${email}: ${resetLink}`);
     }

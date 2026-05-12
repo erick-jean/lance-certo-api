@@ -31,6 +31,10 @@ export class VehicleOwnerGuard implements CanActivate {
       throw new BadRequestException('Vehicle id is required.');
     }
 
+    /**
+     * Vehicle ownership is loaded from the database instead of trusting route
+     * parameters or request body data.
+     */
     const vehicle = await this.prisma.vehicle.findUnique({
       where: {
         id: vehicleId,

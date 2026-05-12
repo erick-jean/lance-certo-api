@@ -45,9 +45,6 @@ export class AuthController {
     private readonly configService: ConfigService,
   ) {}
 
-  /**
-   * Registers a new user and returns the public user representation.
-   */
   @Post('register')
   @Throttle({ default: { limit: 5, ttl: 60_000, blockDuration: 300_000 } })
   @ApiOperation({ summary: 'Registra um novo usuario' })
@@ -110,9 +107,6 @@ export class AuthController {
     };
   }
 
-  /**
-   * Starts the password recovery flow for the submitted email.
-   */
   @HttpCode(HttpStatus.OK)
   @Post('forgot-password')
   @Throttle({ default: { limit: 3, ttl: 300_000, blockDuration: 900_000 } })
@@ -136,9 +130,6 @@ export class AuthController {
     return this.authService.resetPassword(dto);
   }
 
-  /**
-   * Returns the profile associated with the bearer access token.
-   */
   @Get('me')
   @Throttle({ default: { limit: 60, ttl: 60_000, blockDuration: 60_000 } })
   @UseGuards(AuthGuard)
@@ -174,9 +165,6 @@ export class AuthController {
     return result;
   }
 
-  /**
-   * Reads the refresh token cookie or rejects the request when it is missing.
-   */
   private getRefreshTokenFromCookie(request: Request): string {
     const refreshToken = this.getOptionalRefreshTokenFromCookie(request);
 
@@ -208,9 +196,6 @@ export class AuthController {
     return value ? decodeURIComponent(value) : undefined;
   }
 
-  /**
-   * Writes the refresh token using secure cookie options.
-   */
   private setRefreshTokenCookie(
     response: Response,
     refreshToken: string,
@@ -233,9 +218,6 @@ export class AuthController {
     );
   }
 
-  /**
-   * Returns the configured refresh token cookie name.
-   */
   private getRefreshTokenCookieName(): string {
     return (
       this.configService.get<string>('REFRESH_TOKEN_COOKIE_NAME') ??
@@ -243,9 +225,6 @@ export class AuthController {
     );
   }
 
-  /**
-   * Builds the cookie options used for refresh token storage.
-   */
   private getRefreshTokenCookieOptions(): CookieOptions {
     return {
       httpOnly: true,

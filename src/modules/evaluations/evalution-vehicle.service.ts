@@ -1,4 +1,4 @@
-  import {
+import {
   BadRequestException,
   Injectable,
   NotFoundException,
@@ -21,6 +21,11 @@ import { UpdateEvaluationChecklistItemDto } from './dto/update-evaluation-checkl
 import { UpdateEvaluationExpenseDto } from './dto/update-evaluation-expense.dto';
 import { UpdateVehicleEvaluationDto } from './dto/update-vehicle-evaluation.dto';
 
+type EvaluationPrismaClient = Pick<
+  PrismaService,
+  'vehicleEvaluation' | 'evaluationExpense'
+>;
+
 @Injectable()
 export class EvalutionVehicleService {
   constructor(private readonly prisma: PrismaService) {}
@@ -30,7 +35,13 @@ export class EvalutionVehicleService {
     vehicleId: string,
     dto: CreateVehicleEvaluationDto,
   ): Promise<ResponseEvalutionVehicleDto> {
+    /**
+     * The evaluation and its checklist items must be created atomically.
+     */
     return this.prisma.$transaction(async (tx) => {
+      /**
+       * Scope the vehicle lookup by userId to prevent cross-user access.
+       */
       const vehicle = await tx.vehicle.findFirst({
         where: {
           id: vehicleId,
@@ -74,6 +85,10 @@ export class EvalutionVehicleService {
         );
       }
 
+      /**
+       * The evaluation is created before checklist items because they reference
+       * its id.
+       */
       const evaluation = await tx.vehicleEvaluation.create({
         data: {
           vehicleId: vehicle.id,
@@ -82,6 +97,10 @@ export class EvalutionVehicleService {
         },
       });
 
+      /**
+       * Snapshot the active checklist template into this evaluation.
+       * This preserves historical evaluation data even if the template changes later.
+       */
       await tx.evaluationChecklistItem.createMany({
         data: template.items.map((item) => ({
           evaluationId: evaluation.id,
@@ -152,6 +171,10 @@ export class EvalutionVehicleService {
         data: this.toEvaluationWritableData(dto),
       });
 
+      /**
+       * Financial results depend on margins, so the evaluation must be
+       * recalculated after margin changes.
+       */
       const recalculated = await this.recalculateEvaluation(tx, evaluation.id);
       return new ResponseEvalutionVehicleDto(recalculated);
     });
@@ -174,6 +197,10 @@ export class EvalutionVehicleService {
       throw new NotFoundException('Avaliação não encontrada');
     }
 
+    /**
+     * Deleting the evaluation cascades checklist items and expenses through
+     * database relations.
+     */
     await this.prisma.vehicleEvaluation.delete({
       where: {
         id: evaluation.id,
@@ -208,6 +235,9 @@ export class EvalutionVehicleService {
     dto: UpdateEvaluationChecklistItemDto,
   ): Promise<ResponseEvaluationChecklistItemDto> {
     return this.prisma.$transaction(async (tx) => {
+      /**
+       * Scope the checklist item through evaluation and vehicle ownership.
+       */
       const checklistItem = await tx.evaluationChecklistItem.findFirst({
         where: {
           id: checklistItemId,
@@ -231,6 +261,10 @@ export class EvalutionVehicleService {
         data: this.toChecklistItemWritableData(dto),
       });
 
+      /**
+       * Checklist answers drive derived expenses. Repair items create or update
+       * expenses; non-repair statuses remove them.
+       */
       if (updatedItem.status === ChecklistItemStatus.NEEDS_REPAIR) {
         const amount = this.resolveChecklistExpenseAmount(updatedItem);
 
@@ -268,6 +302,10 @@ export class EvalutionVehicleService {
         });
       }
 
+      /**
+       * Financial results depend on expenses, so the evaluation must be
+       * recalculated after checklist-derived expenses change.
+       */
       await this.recalculateEvaluation(tx, updatedItem.evaluationId);
       return new ResponseEvaluationChecklistItemDto(updatedItem);
     });
@@ -305,6 +343,9 @@ export class EvalutionVehicleService {
         vehicleId,
       );
 
+      /**
+       * Manual expenses are user-provided and are not tied to checklist answers.
+       */
       const expense = await tx.evaluationExpense.create({
         data: {
           evaluationId: evaluation.id,
@@ -317,6 +358,10 @@ export class EvalutionVehicleService {
         },
       });
 
+      /**
+       * Financial results depend on expenses, so the evaluation must be
+       * recalculated after manual expense changes.
+       */
       await this.recalculateEvaluation(tx, evaluation.id);
       return new ResponseEvaluationExpenseDto(expense);
     });
@@ -343,6 +388,10 @@ export class EvalutionVehicleService {
         data: this.toExpenseWritableData(dto),
       });
 
+      /**
+       * Financial results depend on expenses, so the evaluation must be
+       * recalculated after expense updates.
+       */
       await this.recalculateEvaluation(tx, updatedExpense.evaluationId);
       return new ResponseEvaluationExpenseDto(updatedExpense);
     });
@@ -367,15 +416,22 @@ export class EvalutionVehicleService {
         },
       });
 
+      /**
+       * Financial results depend on expenses, so the evaluation must be
+       * recalculated after expense deletion.
+       */
       await this.recalculateEvaluation(tx, expense.evaluationId);
     });
   }
 
   private async findEvaluationOrThrow(
-    tx: any,
+    tx: EvaluationPrismaClient,
     userId: string,
     vehicleId: string,
   ) {
+    /**
+     * Scope the evaluation lookup by userId to prevent cross-user access.
+     */
     const evaluation = await tx.vehicleEvaluation.findFirst({
       where: {
         vehicleId,
@@ -396,11 +452,14 @@ export class EvalutionVehicleService {
   }
 
   private async findExpenseOrThrow(
-    tx: any,
+    tx: EvaluationPrismaClient,
     userId: string,
     vehicleId: string,
     expenseId: string,
   ) {
+    /**
+     * Scope the expense through evaluation and vehicle ownership.
+     */
     const expense = await tx.evaluationExpense.findFirst({
       where: {
         id: expenseId,
@@ -424,7 +483,14 @@ export class EvalutionVehicleService {
     return expense;
   }
 
-  private async recalculateEvaluation(tx: any, evaluationId: string) {
+  private async recalculateEvaluation(
+    tx: EvaluationPrismaClient,
+    evaluationId: string,
+  ) {
+    /**
+     * Recalculation uses the latest vehicle values, checklist status and all
+     * expenses to keep the evaluation summary consistent.
+     */
     const evaluation = await tx.vehicleEvaluation.findUnique({
       where: {
         id: evaluationId,
@@ -572,6 +638,10 @@ export class EvalutionVehicleService {
     estimatedUnitCost: Prisma.Decimal | null;
     estimatedTotalCost: Prisma.Decimal | null;
   }) {
+    /**
+     * Checklist expenses prefer explicit total cost; otherwise quantity and
+     * unit cost are multiplied.
+     */
     const total = this.toNumber(item.estimatedTotalCost);
 
     if (total > 0) {
@@ -582,6 +652,9 @@ export class EvalutionVehicleService {
   }
 
   private toNumber(value: Prisma.Decimal | number | string | null | undefined) {
+    /**
+     * Prisma Decimal values are converted to numbers for financial formulas.
+     */
     return value === null || value === undefined ? 0 : Number(value);
   }
 

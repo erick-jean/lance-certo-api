@@ -9,9 +9,6 @@ import helmet from 'helmet';
 import { AppModule } from './app.module';
 import { join } from 'path';
 
-/**
- * Bootstraps the Nest application, global validation, CORS and Swagger docs.
- */
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 

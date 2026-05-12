@@ -59,24 +59,6 @@ export class VehiclesService {
     userId: string,
     createVehicleDto: CreateVehicleDto,
   ): Promise<ResponseVehicleDto> {
-    /**
-     * Checks if a vehicle with the same plate
-     * already exists for the user.
-     */
-    // if (createVehicleDto.plate) {
-    //   const vehicleAlreadyExists = await this.prisma.vehicle.findFirst({
-    //     where: {
-    //       userId,
-    //       plate: createVehicleDto.plate,
-    //     },
-    //   });
-
-    //   if (vehicleAlreadyExists) {
-    //      throw new ConflictException(
-    //       'Já existe um veículo cadastrado com esta placa.',
-    //     );
-    //   }
-    // }
     const vehicle = await this.prisma.vehicle.create({
       data: {
         ...this.toVehicleWritableData(createVehicleDto),
@@ -89,8 +71,8 @@ export class VehiclesService {
   /**
    * Returns paginated vehicles owned by a user.
    *
-   * The `userId` filter is always enforced server-side so users cannot list
-   * vehicles that belong to another account.
+   * The user scope is enforced server-side so users cannot list vehicles from
+   * another account.
    */
   async findAll(
     userId: string,
@@ -133,6 +115,9 @@ export class VehiclesService {
     userId: string,
     vehicleId: string,
   ): Promise<ResponseVehicleDto> {
+    /**
+     * Scope the vehicle lookup by userId to prevent cross-user access.
+     */
     const vehicle = await this.prisma.vehicle.findFirst({
       where: { userId, id: vehicleId },
     });
@@ -168,6 +153,10 @@ export class VehiclesService {
   }
 
   async remove(userId: string, vehicleId: string): Promise<void> {
+    /**
+     * Image files live outside the database, so filenames are loaded before
+     * deleting the vehicle record.
+     */
     const vehicle = await this.prisma.vehicle.findFirst({
       where: {
         id: vehicleId,

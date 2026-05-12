@@ -19,9 +19,6 @@ import { UsersService } from './users.service';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  /**
-   * Returns a user profile by email for the owner or admin users.
-   */
   @Get(':email')
   @Throttle({ default: { limit: 30, ttl: 60_000, blockDuration: 60_000 } })
   @ApiOkResponse({ type: UserResponseDto })

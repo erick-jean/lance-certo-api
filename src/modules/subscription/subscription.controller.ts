@@ -35,9 +35,6 @@ export class SubscriptionController {
     private readonly configService: ConfigService,
   ) {}
 
-  /**
-   * Returns the current plan for the authenticated user.
-   */
   @Get()
   @Throttle({ default: { limit: 60, ttl: 60_000, blockDuration: 60_000 } })
   @UseGuards(AuthGuard)
@@ -50,9 +47,6 @@ export class SubscriptionController {
     return this.subscriptionService.findCurrent(request.user.sub);
   }
 
-  /**
-   * Starts the checkout flow for the authenticated user.
-   */
   @Post('checkout')
   @Throttle({ default: { limit: 10, ttl: 60_000, blockDuration: 300_000 } })
   @UseGuards(AuthGuard)
@@ -63,9 +57,6 @@ export class SubscriptionController {
     return this.subscriptionService.checkout(request.user.sub);
   }
 
-  /**
-   * Cancels renewal for the authenticated user's subscription.
-   */
   @Post('cancel')
   @Throttle({ default: { limit: 5, ttl: 60_000, blockDuration: 300_000 } })
   @UseGuards(AuthGuard)
@@ -78,9 +69,6 @@ export class SubscriptionController {
     return this.subscriptionService.cancel(request.user.sub);
   }
 
-  /**
-   * Receives trusted payment gateway events.
-   */
   @HttpCode(HttpStatus.OK)
   @Post('webhook')
   @Throttle({ default: { limit: 60, ttl: 60_000, blockDuration: 300_000 } })

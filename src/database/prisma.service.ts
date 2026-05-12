@@ -17,16 +17,10 @@ export class PrismaService
     super({ adapter });
   }
 
-  /**
-   * Opens the Prisma database connection when the Nest module starts.
-   */
   async onModuleInit() {
     await this.$connect();
   }
 
-  /**
-   * Closes the Prisma database connection during graceful shutdown.
-   */
   async onModuleDestroy() {
     await this.$disconnect();
   }

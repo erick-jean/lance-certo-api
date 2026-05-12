@@ -50,7 +50,6 @@ export class ResponseVehicleDto {
   @ApiProperty({ example: 'c1a2b3d4-uuid' })
   userId!: string;
 
-  // Dados do veículo
   @ApiProperty({ example: 'QWE1A23' })
   plate?: string | null;
 
@@ -95,7 +94,6 @@ export class ResponseVehicleDto {
   @ApiProperty({ example: 45200 })
   mileage?: number | null;
 
-  // Valores de mercado
   @ApiProperty({ example: '014082-0' })
   fipeCode?: string | null;
 
@@ -106,7 +104,6 @@ export class ResponseVehicleDto {
   marketValue!: number | null;
 
   @ApiProperty({ example: 'Copart' })
-  // Informações do leilão
   auctioneer?: string | null;
 
   @ApiProperty({
@@ -162,21 +159,13 @@ export class ResponseVehicleDto {
 
   constructor(vehicle: ResponseVehicleInput) {
     /**
-     * Copia automaticamente todas as propriedades
-     * do objeto "vehicle" para esta instância da classe.
-     *
-     * Exemplo:
-     * vehicle.id -> this.id
-     * vehicle.brand -> this.brand
+     * Copying first preserves the Prisma shape, then Decimal fields are
+     * normalized for JSON responses.
      */
     Object.assign(this, vehicle);
 
     /**
-     * Prisma retorna campos Decimal como objeto Decimal.
-     * Aqui convertemos para number para a API retornar
-     * valores numéricos normais em JSON.
-     *
-     * Se o valor for null/undefined, retorna null.
+     * Prisma Decimal values are converted to numbers for API responses.
      */
     this.fipeValue = this.toNullableNumber(vehicle.fipeValue);
 

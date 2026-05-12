@@ -109,8 +109,6 @@ export class ChecklistController {
     return this.checklistService.removeChecklistTemplate(id);
   }
 
-  // Busca itens de Checklist
-
   @ApiOperation({ summary: 'Cria Item de Checklist' })
   @Throttle({ default: { limit: 20, ttl: 60_000, blockDuration: 120_000 } })
   @ApiCreatedResponse({ type: ResponseChecklistTemplateItemDto })

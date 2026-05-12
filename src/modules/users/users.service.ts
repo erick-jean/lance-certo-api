@@ -11,15 +11,15 @@ import { UserResponseDto } from './dto/user-response.dto';
 export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
 
-  /**
-   * Finds a user by email and returns only public profile fields.
-   */
   async findOne(
     email: string,
     requester: JwtPayload,
   ): Promise<UserResponseDto> {
     const normalizedEmail = email.trim().toLowerCase();
 
+    /**
+     * Non-admin users may only fetch their own profile.
+     */
     if (
       requester.role !== 'admin' &&
       requester.email.trim().toLowerCase() !== normalizedEmail

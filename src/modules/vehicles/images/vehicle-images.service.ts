@@ -55,6 +55,10 @@ export class VehicleImagesService {
     try {
       await mkdir(VEHICLE_IMAGE_UPLOAD_DIR, { recursive: true });
 
+      /**
+       * Files are written before database records; any failure rolls back the
+       * filesystem side effects tracked in writtenFilePaths.
+       */
       for (const imageFile of imageFiles) {
         await writeFile(imageFile.path, imageFile.buffer, { flag: 'wx' });
         writtenFilePaths.push(imageFile.path);
@@ -162,6 +166,10 @@ export class VehicleImagesService {
       );
     }
 
+    /**
+     * MIME type alone is client-controlled, so the file signature is validated
+     * before persisting the upload.
+     */
     if (!this.hasValidImageSignature(file.buffer, file.mimetype)) {
       throw new BadRequestException('Invalid image content.');
     }

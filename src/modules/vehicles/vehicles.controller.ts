@@ -45,9 +45,6 @@ import { VehicleOwnerGuard } from './guards/vehicle-owner/vehicle-owner.guard';
 export class VehiclesController {
   constructor(private readonly vehiclesService: VehiclesService) {}
 
-  /**
-   * Lists vehicles owned by the authenticated user with pagination and filters.
-   */
   @ApiOperation({ summary: 'Lista veiculos do usuario autenticado' })
   @ApiOkResponse({
     description: 'Lista paginada de veiculos retornada com sucesso',
@@ -65,12 +62,6 @@ export class VehiclesController {
     return this.vehiclesService.findAll(req.user.sub, query);
   }
 
-  /**
-   * Creates a new vehicle for the authenticated user.
-   *
-   * This endpoint allows the authenticated user to register
-   * a new vehicle in the system.
-   */
   @ApiOperation({ summary: 'Cadastra novo veículo.' })
   @ApiCreatedResponse({ type: ResponseVehicleDto })
   @ApiBadRequestResponse({ description: 'Invalid vehicle payload' })
@@ -83,9 +74,6 @@ export class VehiclesController {
     return this.vehiclesService.create(req.user.sub, createVehicleDto);
   }
 
-  /**
-   * Busca um veículo específico pelo ID, garantindo que o usuário autenticado tenha acesso a ele.
-   */
   @ApiOperation({ summary: 'Busca veículo específico.' })
   @ApiOkResponse({ type: ResponseVehicleDto })
   @ApiNotFoundResponse({ description: 'Vehicle not found' })

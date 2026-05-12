@@ -1,5 +1,3 @@
-// Run with: npx prisma db seed
-
 import 'dotenv/config';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { HashService } from '../common/hash/hash.service';
