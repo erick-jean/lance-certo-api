@@ -3,21 +3,21 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { CreateVehicleEvaluationDto } from './dto/create-vehicle-evaluation.dto';
-import { UpdateVehicleEvaluationDto } from './dto/update-vehicle-evaluation.dto';
-import { ResponseVehicleEvaluationDto } from './dto/response-vehicle-evaluation.dto';
+import { CreateEvalutionVehicleDto } from './dto/create-evalution-vehicle.dto';
+import { UpdateEvalutionVehicleDto } from './dto/update-evalution-vehicle.dto';
+import { ResponseEvalutionVehicleDto } from './dto/response-evalution-vehicle.dto';
 import { PrismaService } from 'src/database/prisma.service';
 import { ChecklistItemStatus } from 'generated/prisma/enums';
 
 @Injectable()
-export class VehicleEvaluationsService {
+export class EvalutionVehicleService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(
     userId: string,
     vehicleId: string,
-    dto: CreateVehicleEvaluationDto,
-  ): Promise<ResponseVehicleEvaluationDto> {
+    dto: CreateEvalutionVehicleDto,
+  ): Promise<ResponseEvalutionVehicleDto> {
     return this.prisma.$transaction(async (tx) => {
       /**
        * Busca o veículo garantindo que ele pertence ao usuário autenticado.
@@ -126,14 +126,14 @@ export class VehicleEvaluationsService {
        * O checklist fica pronto no banco e pode ser consultado em uma rota
        * específica, evitando uma resposta gigante logo após o POST.
        */
-      return new ResponseVehicleEvaluationDto(evaluation);
+      return new ResponseEvalutionVehicleDto(evaluation);
     });
   }
 
   async findOne(
     userId: string,
     vehicleId: string,
-  ): Promise<ResponseVehicleEvaluationDto> {
+  ): Promise<ResponseEvalutionVehicleDto> {
     const evaluation = await this.prisma.vehicleEvaluation.findFirst({
       where: {
         vehicleId,
@@ -147,14 +147,14 @@ export class VehicleEvaluationsService {
       throw new NotFoundException('Vehicle evaluation not found.');
     }
 
-    return new ResponseVehicleEvaluationDto(evaluation);
+    return new ResponseEvalutionVehicleDto(evaluation);
   }
 
   async update(
     userId: string,
     vehicleId: string,
-    updateVehicleEvaluationDto: UpdateVehicleEvaluationDto,
-  ): Promise<ResponseVehicleEvaluationDto> {
+    updateEvalutionVehicleDto: UpdateEvalutionVehicleDto,
+  ): Promise<ResponseEvalutionVehicleDto> {
     const evaluation = await this.prisma.vehicleEvaluation.findFirst({
       where: {
         vehicleId,
@@ -175,10 +175,10 @@ export class VehicleEvaluationsService {
       where: {
         id: evaluation.id,
       },
-      data: this.toEvaluationWritableData(updateVehicleEvaluationDto),
+      data: this.toEvaluationWritableData(updateEvalutionVehicleDto),
     });
 
-    return new ResponseVehicleEvaluationDto(updatedEvaluation);
+    return new ResponseEvalutionVehicleDto(updatedEvaluation);
   }
 
   async remove(userId: string, vehicleId: string): Promise<void> {
@@ -210,7 +210,7 @@ export class VehicleEvaluationsService {
   }
 
   private toEvaluationWritableData(
-    dto: CreateVehicleEvaluationDto | UpdateVehicleEvaluationDto,
+    dto: CreateEvalutionVehicleDto | UpdateEvalutionVehicleDto,
   ) {
     return {
       desiredProfitMarginPercent: dto.desiredProfitMarginPercent,

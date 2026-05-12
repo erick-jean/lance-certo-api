@@ -1,7 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNumber, IsOptional, Min } from 'class-validator';
 
-export class CreateVehicleEvaluationDto {
+export class CreateEvalutionVehicleDto {
   @ApiPropertyOptional({ example: 15, nullable: true })
   @IsOptional()
   @IsNumber()

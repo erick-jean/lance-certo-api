@@ -5,14 +5,14 @@ import {
 } from 'generated/prisma/enums';
 import { Prisma } from 'generated/prisma/client';
 
-type ResponseVehicleEvaluationInput = {
+type ResponseEvalutionVehicleInput = {
   desiredProfitMarginPercent: Prisma.Decimal | null;
   safetyMarginPercent: Prisma.Decimal | null;
   maxRecommendedBid: Prisma.Decimal | null;
   estimatedFinalCost: Prisma.Decimal | null;
   estimatedProfit: Prisma.Decimal | null;
 } & Omit<
-  Partial<ResponseVehicleEvaluationDto>,
+  Partial<ResponseEvalutionVehicleDto>,
   | 'desiredProfitMarginPercent'
   | 'safetyMarginPercent'
   | 'maxRecommendedBid'
@@ -20,7 +20,7 @@ type ResponseVehicleEvaluationInput = {
   | 'estimatedProfit'
 >;
 
-export class ResponseVehicleEvaluationDto {
+export class ResponseEvalutionVehicleDto {
   @ApiProperty({ example: 'c1a2b3d4-uuid' })
   id!: string;
 
@@ -84,7 +84,7 @@ export class ResponseVehicleEvaluationDto {
   })
   updatedAt!: Date;
 
-  constructor(evaluation: ResponseVehicleEvaluationInput) {
+  constructor(evaluation: ResponseEvalutionVehicleInput) {
     this.id = evaluation.id!;
     this.vehicleId = evaluation.vehicleId!;
     this.riskLevel = evaluation.riskLevel ?? null;

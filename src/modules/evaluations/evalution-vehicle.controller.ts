@@ -10,9 +10,9 @@ import {
   UseGuards,
   Req,
 } from '@nestjs/common';
-import { VehicleEvaluationsService } from './vehicle-evaluations.service';
-import { CreateVehicleEvaluationDto } from './dto/create-vehicle-evaluation.dto';
-import { UpdateVehicleEvaluationDto } from './dto/update-vehicle-evaluation.dto';
+import { EvalutionVehicleService } from './evalution-vehicle.service';
+import { CreateEvalutionVehicleDto } from './dto/create-evalution-vehicle.dto';
+import { UpdateEvalutionVehicleDto } from './dto/update-evalution-vehicle.dto';
 import {
   ApiBearerAuth,
   ApiCreatedResponse,
@@ -21,7 +21,7 @@ import {
   ApiTooManyRequestsResponse,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { ResponseVehicleEvaluationDto } from './dto/response-vehicle-evaluation.dto';
+import { ResponseEvalutionVehicleDto } from './dto/response-evalution-vehicle.dto';
 
 import { VehicleOwnerGuard } from '../vehicles/guards/vehicle-owner/vehicle-owner.guard';
 import { AuthGuard } from '../auth/auth.guard';
@@ -34,24 +34,24 @@ import { AuthenticatedRequest } from '../auth/interfaces/authenticated-request.i
 @ApiTooManyRequestsResponse({ description: 'Too many requests' })
 @UseGuards(AuthGuard, VehicleOwnerGuard)
 @Controller('vehicles')
-export class VehicleEvaluationsController {
+export class EvalutionVehicleController {
   constructor(
-    private readonly vehicleEvaluationsService: VehicleEvaluationsService,
+    private readonly evalutionVehicleService: EvalutionVehicleService,
   ) {}
 
-  @ApiCreatedResponse({ type: ResponseVehicleEvaluationDto })
+  @ApiCreatedResponse({ type: ResponseEvalutionVehicleDto })
   @Post(':vehicleId/evaluation')
   @Throttle({ default: { limit: 10, ttl: 60_000, blockDuration: 120_000 } })
   @ApiOperation({ summary: 'Cria avaliação do veiculo.' })
   create(
     @Req() req: AuthenticatedRequest,
     @Param('vehicleId', new ParseUUIDPipe()) vehicleId: string,
-    @Body() createVehicleEvaluationDto: CreateVehicleEvaluationDto,
-  ): Promise<ResponseVehicleEvaluationDto | null> {
-    return this.vehicleEvaluationsService.create(
+    @Body() createEvalutionVehicleDto: CreateEvalutionVehicleDto,
+  ): Promise<ResponseEvalutionVehicleDto | null> {
+    return this.evalutionVehicleService.create(
       req.user.sub,
       vehicleId,
-      createVehicleEvaluationDto,
+      createEvalutionVehicleDto,
     );
   }
 
@@ -61,8 +61,8 @@ export class VehicleEvaluationsController {
   findOne(
     @Req() req: AuthenticatedRequest,
     @Param('vehicleId', new ParseUUIDPipe()) vehicleId: string,
-  ): Promise<ResponseVehicleEvaluationDto> {
-    return this.vehicleEvaluationsService.findOne(req.user.sub, vehicleId);
+  ): Promise<ResponseEvalutionVehicleDto> {
+    return this.evalutionVehicleService.findOne(req.user.sub, vehicleId);
   }
 
   @ApiOperation({ summary: 'Atualiza avaliação do veículo.' })
@@ -71,12 +71,12 @@ export class VehicleEvaluationsController {
   update(
     @Req() req: AuthenticatedRequest,
     @Param('vehicleId', new ParseUUIDPipe()) vehicleId: string,
-    @Body() updateVehicleEvaluationDto: UpdateVehicleEvaluationDto,
-  ): Promise<ResponseVehicleEvaluationDto> {
-    return this.vehicleEvaluationsService.update(
+    @Body() updateEvalutionVehicleDto: UpdateEvalutionVehicleDto,
+  ): Promise<ResponseEvalutionVehicleDto> {
+    return this.evalutionVehicleService.update(
       req.user.sub,
       vehicleId,
-      updateVehicleEvaluationDto,
+      updateEvalutionVehicleDto,
     );
   }
 
@@ -87,14 +87,14 @@ export class VehicleEvaluationsController {
     @Req() req: AuthenticatedRequest,
     @Param('vehicleId', new ParseUUIDPipe()) vehicleId: string,
   ): Promise<void> {
-    return this.vehicleEvaluationsService.remove(req.user.sub, vehicleId);
+    return this.evalutionVehicleService.remove(req.user.sub, vehicleId);
   }
 
   // @ApiOperation({ summary: 'Recalcula lance recomendado.' })
   // @Post('/vehicles/:vehicleId/evaluation/recalculate')
-  // recalculate(@Body() createVehicleEvaluationDto: CreateVehicleEvaluationDto) {
-  //   return this.vehicleEvaluationsService.recalculate(
-  //     createVehicleEvaluationDto,
+  // recalculate(@Body() createEvalutionVehicleDto: CreateEvalutionVehicleDto) {
+  //   return this.evalutionVehicleService.recalculate(
+  //     createEvalutionVehicleDto,
   //   );
   // }
 }

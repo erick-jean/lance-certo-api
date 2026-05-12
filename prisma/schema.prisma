@@ -236,7 +236,7 @@ model VehicleEvaluation {
   @@index([vehicleId])
   @@index([riskLevel])
   @@index([recommendation])
-  @@map("vehicle_evaluations")
+  @@map("evalution_vehicle")
 }
 
 enum EvaluationRiskLevel {

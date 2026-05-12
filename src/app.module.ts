@@ -10,7 +10,7 @@ import { SubscriptionModule } from './modules/subscription/subscription.module';
 import { validateEnv } from './config/env.validation';
 import { VehiclesModule } from './modules/vehicles/vehicles.module';
 import { ChecklistModule } from './modules/checklist/checklist.module';
-import { VehicleEvaluationsModule } from './modules/vehicle-evaluations/vehicle-evaluations.module';
+import { EvalutionVehicleModule } from './modules/evaluations/evalution-vehicle.module';
 
 @Module({
   imports: [
@@ -30,7 +30,7 @@ import { VehicleEvaluationsModule } from './modules/vehicle-evaluations/vehicle-
     AuthModule,
     SubscriptionModule,
     VehiclesModule,
-    VehicleEvaluationsModule,
+    EvalutionVehicleModule,
     ChecklistModule,
   ],
   providers: [
