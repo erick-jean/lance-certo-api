@@ -82,15 +82,12 @@ export class VehicleEvaluationsService {
     userRole?: string,
   ): Promise<ResponseVehicleEvaluationDto> {
     /**
-     * The evaluation and its checklist items must be created atomically.
+     * The evaluation and checklist snapshot must be created atomically.
      */
     return this.prisma.$transaction(async (tx) => {
       const userPlan = await this.findUserPlanOrThrow(tx, userId);
       const effectivePlan = this.resolveFeaturePlan(userPlan);
 
-      /**
-       * Scope the vehicle lookup by userId to prevent cross-user access.
-       */
       const vehicle = await this.findVehicleOwnedByUserOrThrow(
         tx,
         userId,
@@ -141,10 +138,6 @@ export class VehicleEvaluationsService {
         );
       }
 
-      /**
-       * The evaluation is created before checklist items because they reference
-       * its id.
-       */
       const marginData = this.resolveInitialMarginData(effectivePlan, dto);
       const evaluation = await tx.vehicleEvaluation.create({
         data: {
@@ -155,8 +148,7 @@ export class VehicleEvaluationsService {
       });
 
       /**
-       * Snapshot the active checklist template into this evaluation.
-       * This preserves historical evaluation data even if the template changes later.
+       * Snapshot the template so later template changes do not rewrite history.
        */
       await this.createChecklistSnapshot(
         tx,
@@ -164,7 +156,7 @@ export class VehicleEvaluationsService {
         availableTemplateItems,
       );
 
-      // Recalculate immediately so a newly created evaluation is returned with consistent summary fields.
+      // Recalculate immediately so the response includes consistent summary fields.
       const recalculated = await this.recalculateEvaluationFinancials(
         tx,
         evaluation.id,
@@ -292,9 +284,6 @@ export class VehicleEvaluationsService {
     userRole?: string,
   ): Promise<ResponseEvaluationChecklistItemDto> {
     return this.prisma.$transaction(async (tx) => {
-      /**
-       * Scope the checklist item through evaluation and vehicle ownership.
-       */
       const checklistItem = await this.findChecklistItemForUserVehicleOrThrow(
         tx,
         userId,
@@ -317,8 +306,7 @@ export class VehicleEvaluationsService {
       await this.syncChecklistDerivedExpense(tx, updatedItem);
 
       /**
-       * Financial results depend on expenses, so the evaluation must be
-       * recalculated after checklist-derived expenses change.
+       * Checklist-derived expenses affect financial results.
        */
       await this.recalculateEvaluationFinancials(tx, updatedItem.evaluationId);
       return new ResponseEvaluationChecklistItemDto(updatedItem);
@@ -368,7 +356,8 @@ export class VehicleEvaluationsService {
       );
 
       /**
-       * Manual expenses are user-provided and are not tied to checklist answers.
+       * MVP decision: EvaluationExpense is reused for post-purchase financial control.
+       * A dedicated VehicleExpense table can be introduced later if estimated vs actual comparison becomes required.
        */
       const expense = await tx.evaluationExpense.create({
         data: {

@@ -197,10 +197,6 @@ export class ResponseVehicleDto {
   updatedAt!: Date | null;
 
   constructor(vehicle: ResponseVehicleInput) {
-    /**
-     * Copying first preserves the Prisma shape, then Decimal fields are
-     * normalized for JSON responses.
-     */
     Object.assign(this, vehicle);
 
     /**
