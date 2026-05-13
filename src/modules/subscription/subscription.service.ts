@@ -24,14 +24,18 @@ export class SubscriptionService {
    * If a premium plan is already expired, the state is normalized back to free
    * before responding.
    */
-  async findCurrent(userId: string): Promise<SubscriptionResponseDto> {
+  async findCurrentSubscription(
+    userId: string,
+  ): Promise<SubscriptionResponseDto> {
     const user = await this.findUserSubscription(userId);
     const normalizedUser = await this.normalizeExpiredSubscription(user);
 
     return this.toSubscriptionResponse(normalizedUser);
   }
 
-  async findUsage(userId: string): Promise<SubscriptionUsageResponseDto> {
+  async findSubscriptionUsage(
+    userId: string,
+  ): Promise<SubscriptionUsageResponseDto> {
     const user = await this.findUserSubscription(userId);
     const normalizedUser = await this.normalizeExpiredSubscription(user);
     const effectivePlan = resolveEffectivePlan(normalizedUser);
@@ -106,14 +110,14 @@ export class SubscriptionService {
   /**
    * Applies a trusted payment gateway event to the user's subscription state.
    */
-  async handleWebhook(
+  async applySubscriptionWebhookEvent(
     dto: SubscriptionWebhookDto,
   ): Promise<MessageResponseDto> {
     await this.findUserSubscription(dto.userId);
 
     const planExpiresAt = dto.planExpiresAt
       ? new Date(dto.planExpiresAt)
-      : this.getDefaultPremiumExpiration();
+      : this.calculateDefaultPremiumExpiration();
 
     switch (dto.event) {
       case 'payment_approved':
@@ -216,7 +220,7 @@ export class SubscriptionService {
     };
   }
 
-  private getDefaultPremiumExpiration(): Date {
+  private calculateDefaultPremiumExpiration(): Date {
     const expiresAt = new Date();
     expiresAt.setMonth(expiresAt.getMonth() + 1);
     return expiresAt;

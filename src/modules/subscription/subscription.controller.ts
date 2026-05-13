@@ -45,7 +45,7 @@ export class SubscriptionController {
   findCurrent(
     @Req() request: AuthenticatedRequest,
   ): Promise<SubscriptionResponseDto> {
-    return this.subscriptionService.findCurrent(request.user.sub);
+    return this.subscriptionService.findCurrentSubscription(request.user.sub);
   }
 
   @Get('usage')
@@ -57,7 +57,7 @@ export class SubscriptionController {
   usage(
     @Req() request: AuthenticatedRequest,
   ): Promise<SubscriptionUsageResponseDto> {
-    return this.subscriptionService.findUsage(request.user.sub);
+    return this.subscriptionService.findSubscriptionUsage(request.user.sub);
   }
 
   @Post('checkout')
@@ -92,7 +92,7 @@ export class SubscriptionController {
     @Body() dto: SubscriptionWebhookDto,
   ): Promise<MessageResponseDto> {
     this.validateWebhookSecret(webhookSecret);
-    return this.subscriptionService.handleWebhook(dto);
+    return this.subscriptionService.applySubscriptionWebhookEvent(dto);
   }
 
   private validateWebhookSecret(webhookSecret: string | undefined): void {

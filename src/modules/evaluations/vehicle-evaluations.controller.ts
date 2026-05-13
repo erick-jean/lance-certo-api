@@ -75,7 +75,7 @@ export class VehicleEvaluationsController {
     @Req() req: AuthenticatedRequest,
     @Param('vehicleId', new ParseUUIDPipe()) vehicleId: string,
   ): Promise<ResponseVehicleEvaluationDto> {
-    return this.vehicleEvaluationsService.findEvaluationByVehicleId(
+    return this.vehicleEvaluationsService.findEvaluationForVehicle(
       req.user.sub,
       vehicleId,
       req.user.role,
@@ -108,7 +108,7 @@ export class VehicleEvaluationsController {
     @Req() req: AuthenticatedRequest,
     @Param('vehicleId', new ParseUUIDPipe()) vehicleId: string,
   ): Promise<void> {
-    return this.vehicleEvaluationsService.deleteEvaluationByVehicleId(
+    return this.vehicleEvaluationsService.deleteEvaluationForVehicle(
       req.user.sub,
       vehicleId,
       req.user.role,
@@ -123,7 +123,7 @@ export class VehicleEvaluationsController {
     @Req() req: AuthenticatedRequest,
     @Param('vehicleId', new ParseUUIDPipe()) vehicleId: string,
   ): Promise<ResponseEvaluationChecklistItemDto[]> {
-    return this.vehicleEvaluationsService.getChecklistByVehicleId(
+    return this.vehicleEvaluationsService.listChecklistForVehicle(
       req.user.sub,
       vehicleId,
       req.user.role,

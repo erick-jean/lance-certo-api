@@ -17,7 +17,9 @@ import { DashboardSummaryResponseDto } from './dto/dashboard-summary-response.dt
 export class DashboardService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getSummary(userId: string): Promise<DashboardSummaryResponseDto> {
+  async getDashboardSummary(
+    userId: string,
+  ): Promise<DashboardSummaryResponseDto> {
     const user = await this.findUserPlanOrThrow(userId);
     const effectivePlan =
       user.role === 'admin' ? 'premium' : resolveEffectivePlan(user);
@@ -62,7 +64,9 @@ export class DashboardService {
     };
   }
 
-  async getFinancial(userId: string): Promise<DashboardFinancialResponseDto> {
+  async getFinancialDashboard(
+    userId: string,
+  ): Promise<DashboardFinancialResponseDto> {
     const user = await this.findUserPlanOrThrow(userId);
 
     if (user.role !== 'admin' && resolveEffectivePlan(user) !== 'premium') {

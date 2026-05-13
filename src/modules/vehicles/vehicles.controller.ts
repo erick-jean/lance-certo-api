@@ -95,7 +95,7 @@ export class VehiclesController {
     @Param('vehicleId', new ParseUUIDPipe()) vehicleId: string,
     @Req() req: AuthenticatedRequest,
   ): Promise<ResponseVehicleDto> {
-    return this.vehiclesService.findUserVehicleById(
+    return this.vehiclesService.findVehicleForUser(
       req.user.sub,
       vehicleId,
       req.user.role,
@@ -175,7 +175,7 @@ export class VehiclesController {
     @Body() updateVehicleDto: UpdateVehicleDto,
     @Req() req: AuthenticatedRequest,
   ): Promise<ResponseVehicleDto> {
-    return this.vehiclesService.updateUserVehicle(
+    return this.vehiclesService.updateVehicleForUser(
       req.user.sub,
       vehicleId,
       updateVehicleDto,
@@ -194,7 +194,7 @@ export class VehiclesController {
     @Req() req: AuthenticatedRequest,
     @Param('vehicleId', new ParseUUIDPipe()) vehicleId: string,
   ): Promise<void> {
-    return this.vehiclesService.deleteUserVehicle(
+    return this.vehiclesService.deleteVehicleForUser(
       req.user.sub,
       vehicleId,
       req.user.role,

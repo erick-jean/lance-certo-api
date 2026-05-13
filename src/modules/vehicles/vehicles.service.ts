@@ -97,11 +97,11 @@ export class VehiclesService {
         createVehicleDto,
         userRole,
       );
-      await this.ensureVehicleLimit(tx, userId);
+      await this.ensureFreePlanVehicleLimit(tx, userId);
 
       return tx.vehicle.create({
         data: {
-          ...this.toVehicleWritableData(createVehicleDto),
+          ...this.buildVehicleWritableData(createVehicleDto),
           userId,
         },
       });
@@ -153,7 +153,7 @@ export class VehiclesService {
     };
   }
 
-  async findUserVehicleById(
+  async findVehicleForUser(
     userId: string,
     vehicleId: string,
     userRole?: string,
@@ -167,7 +167,7 @@ export class VehiclesService {
     return new ResponseVehicleDto(vehicle);
   }
 
-  async updateUserVehicle(
+  async updateVehicleForUser(
     userId: string,
     vehicleId: string,
     updateVehicleDto: UpdateVehicleDto,
@@ -191,7 +191,7 @@ export class VehiclesService {
         where: {
           id: vehicle.id,
         },
-        data: this.toVehicleWritableData(updateVehicleDto),
+        data: this.buildVehicleWritableData(updateVehicleDto),
       });
 
       return new ResponseVehicleDto(updatedVehicle);
@@ -204,7 +204,7 @@ export class VehiclesService {
     }
   }
 
-  async deleteUserVehicle(
+  async deleteVehicleForUser(
     userId: string,
     vehicleId: string,
     userRole?: string,
@@ -393,7 +393,7 @@ export class VehiclesService {
     }
   }
 
-  private async ensureVehicleLimit(
+  private async ensureFreePlanVehicleLimit(
     prisma: VehiclePrismaClient,
     userId: string,
   ): Promise<void> {
@@ -455,7 +455,7 @@ export class VehiclesService {
     };
   }
 
-  private toVehicleWritableData(
+  private buildVehicleWritableData(
     dto: CreateVehicleDto | UpdateVehicleDto,
   ): VehicleWritableData {
     return {

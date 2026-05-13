@@ -85,7 +85,7 @@ export class VehicleEvaluationsService {
      * The evaluation and its checklist items must be created atomically.
      */
     return this.prisma.$transaction(async (tx) => {
-      const userPlan = await this.getUserPlan(tx, userId);
+      const userPlan = await this.findUserPlanOrThrow(tx, userId);
       const effectivePlan = this.resolveFeaturePlan(userPlan);
 
       /**
@@ -158,7 +158,7 @@ export class VehicleEvaluationsService {
        * Snapshot the active checklist template into this evaluation.
        * This preserves historical evaluation data even if the template changes later.
        */
-      await this.createChecklistSnapshotForEvaluation(
+      await this.createChecklistSnapshot(
         tx,
         evaluation.id,
         availableTemplateItems,
@@ -174,7 +174,7 @@ export class VehicleEvaluationsService {
     });
   }
 
-  async findEvaluationByVehicleId(
+  async findEvaluationForVehicle(
     userId: string,
     vehicleId: string,
     userRole?: string,
@@ -207,7 +207,7 @@ export class VehicleEvaluationsService {
     userRole?: string,
   ): Promise<ResponseVehicleEvaluationDto> {
     return this.prisma.$transaction(async (tx) => {
-      const userPlan = await this.getUserPlan(tx, userId);
+      const userPlan = await this.findUserPlanOrThrow(tx, userId);
       this.ensurePremiumFeature(
         userPlan,
         'Plano premium necessário para personalizar margens.',
@@ -239,7 +239,7 @@ export class VehicleEvaluationsService {
     });
   }
 
-  async deleteEvaluationByVehicleId(
+  async deleteEvaluationForVehicle(
     userId: string,
     vehicleId: string,
     userRole?: string,
@@ -262,7 +262,7 @@ export class VehicleEvaluationsService {
     });
   }
 
-  async getChecklistByVehicleId(
+  async listChecklistForVehicle(
     userId: string,
     vehicleId: string,
     userRole?: string,
@@ -330,7 +330,7 @@ export class VehicleEvaluationsService {
     vehicleId: string,
     userRole?: string,
   ): Promise<ResponseEvaluationExpenseDto[]> {
-    const userPlan = await this.getUserPlan(this.prisma, userId);
+    const userPlan = await this.findUserPlanOrThrow(this.prisma, userId);
     this.ensurePremiumFeature(userPlan, PREMIUM_EXPENSES_REQUIRED_MESSAGE);
 
     const evaluation = await this.findEvaluationForUserVehicleOrThrow(
@@ -357,7 +357,7 @@ export class VehicleEvaluationsService {
     userRole?: string,
   ): Promise<ResponseEvaluationExpenseDto> {
     return this.prisma.$transaction(async (tx) => {
-      const userPlan = await this.getUserPlan(tx, userId);
+      const userPlan = await this.findUserPlanOrThrow(tx, userId);
       this.ensurePremiumFeature(userPlan, PREMIUM_EXPENSES_REQUIRED_MESSAGE);
 
       const evaluation = await this.findEvaluationForUserVehicleOrThrow(
@@ -399,7 +399,7 @@ export class VehicleEvaluationsService {
     userRole?: string,
   ): Promise<ResponseEvaluationExpenseDto> {
     return this.prisma.$transaction(async (tx) => {
-      const userPlan = await this.getUserPlan(tx, userId);
+      const userPlan = await this.findUserPlanOrThrow(tx, userId);
       this.ensurePremiumFeature(userPlan, PREMIUM_EXPENSES_REQUIRED_MESSAGE);
 
       const expense = await this.findExpenseForUserVehicleOrThrow(
@@ -437,7 +437,7 @@ export class VehicleEvaluationsService {
     userRole?: string,
   ): Promise<void> {
     await this.prisma.$transaction(async (tx) => {
-      const userPlan = await this.getUserPlan(tx, userId);
+      const userPlan = await this.findUserPlanOrThrow(tx, userId);
       this.ensurePremiumFeature(userPlan, PREMIUM_EXPENSES_REQUIRED_MESSAGE);
 
       const expense = await this.findExpenseForUserVehicleOrThrow(
@@ -463,7 +463,10 @@ export class VehicleEvaluationsService {
     });
   }
 
-  private async getUserPlan(tx: EvaluationPrismaClient, userId: string) {
+  private async findUserPlanOrThrow(
+    tx: EvaluationPrismaClient,
+    userId: string,
+  ) {
     const user = await tx.user.findUnique({
       where: { id: userId },
       select: {
@@ -613,7 +616,7 @@ export class VehicleEvaluationsService {
     return expense;
   }
 
-  private async createChecklistSnapshotForEvaluation(
+  private async createChecklistSnapshot(
     tx: EvaluationPrismaClient,
     evaluationId: string,
     checklistTemplateItems: ChecklistTemplateItemSnapshotSource[],

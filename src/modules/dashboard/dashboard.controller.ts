@@ -29,7 +29,7 @@ export class DashboardController {
   getSummary(
     @Req() request: AuthenticatedRequest,
   ): Promise<DashboardSummaryResponseDto> {
-    return this.dashboardService.getSummary(request.user.sub);
+    return this.dashboardService.getDashboardSummary(request.user.sub);
   }
 
   @ApiOperation({ summary: 'Busca resumo financeiro do dashboard.' })
@@ -43,6 +43,6 @@ export class DashboardController {
   getFinancial(
     @Req() request: AuthenticatedRequest,
   ): Promise<DashboardFinancialResponseDto> {
-    return this.dashboardService.getFinancial(request.user.sub);
+    return this.dashboardService.getFinancialDashboard(request.user.sub);
   }
 }
