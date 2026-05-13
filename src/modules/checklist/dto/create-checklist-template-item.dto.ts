@@ -72,6 +72,15 @@ export class CreateChecklistTemplateItemDto {
   isRequired?: boolean;
 
   @ApiPropertyOptional({
+    example: false,
+    default: false,
+    description: 'Indica se o item é exclusivo do plano premium.',
+  })
+  @IsBoolean()
+  @IsOptional()
+  isPremiumOnly?: boolean;
+
+  @ApiPropertyOptional({
     example: 1,
     default: 0,
   })

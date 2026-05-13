@@ -37,6 +37,11 @@ type ResponseVehicleInput = {
   yardAddress?: string | null;
   auctionInitialBid?: DecimalLike;
   auctionCurrentBid?: DecimalLike;
+  purchasePrice?: DecimalLike;
+  purchasedAt?: Date | null;
+  soldPrice?: DecimalLike;
+  soldAt?: Date | null;
+  damageType?: VehicleDamageType | null;
   status?: VehicleStatus | null;
   notes?: string | null;
   createdAt?: Date | null;
@@ -134,6 +139,28 @@ export class ResponseVehicleDto {
   @ApiProperty({ example: 92000.0 })
   auctionCurrentBid!: number | null;
 
+  @ApiProperty({ example: 18500, nullable: true })
+  purchasePrice!: number | null;
+
+  @ApiProperty({
+    example: '2026-05-13T10:00:00.000Z',
+    nullable: true,
+    type: String,
+    format: 'date-time',
+  })
+  purchasedAt!: Date | null;
+
+  @ApiProperty({ example: 29000, nullable: true })
+  soldPrice!: number | null;
+
+  @ApiProperty({
+    example: '2026-05-20T10:00:00.000Z',
+    nullable: true,
+    type: String,
+    format: 'date-time',
+  })
+  soldAt!: Date | null;
+
   @ApiProperty({
     enum: VehicleDamageType,
     example: VehicleDamageType.NONE,
@@ -174,6 +201,10 @@ export class ResponseVehicleDto {
     this.auctionInitialBid = this.toNullableNumber(vehicle.auctionInitialBid);
 
     this.auctionCurrentBid = this.toNullableNumber(vehicle.auctionCurrentBid);
+
+    this.purchasePrice = this.toNullableNumber(vehicle.purchasePrice);
+
+    this.soldPrice = this.toNullableNumber(vehicle.soldPrice);
   }
 
   private toNullableNumber(value: DecimalLike): number | null {

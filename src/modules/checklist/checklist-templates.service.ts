@@ -253,6 +253,7 @@ export class ChecklistService {
       severity: dto.severity,
       requiresQuantity: dto.requiresQuantity,
       isRequired: dto.isRequired,
+      isPremiumOnly: dto.isPremiumOnly,
       order: dto.order,
     };
   }
@@ -268,6 +269,7 @@ export class ChecklistService {
       severity: dto.severity,
       requiresQuantity: dto.requiresQuantity,
       isRequired: dto.isRequired,
+      isPremiumOnly: dto.isPremiumOnly,
       order: dto.order,
     };
   }

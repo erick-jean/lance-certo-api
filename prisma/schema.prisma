@@ -118,6 +118,11 @@ model Vehicle {
   auctionInitialBid Decimal? @db.Decimal(12, 2)
   auctionCurrentBid Decimal? @db.Decimal(12, 2)
 
+  purchasePrice Decimal? @db.Decimal(12, 2)
+  purchasedAt   DateTime?
+  soldPrice     Decimal? @db.Decimal(12, 2)
+  soldAt        DateTime?
+
   damageType VehicleDamageType @default(NONE)
 
   // Workflow state
@@ -324,6 +329,7 @@ model ChecklistTemplateItem {
 
   requiresQuantity Boolean @default(false)
   isRequired       Boolean @default(false)
+  isPremiumOnly    Boolean @default(false)
 
   order Int @default(0)
 

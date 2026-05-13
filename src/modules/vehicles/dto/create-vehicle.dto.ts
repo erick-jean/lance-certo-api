@@ -174,6 +174,44 @@ export class CreateVehicleDto {
   auctionCurrentBid?: number | null;
 
   @ApiPropertyOptional({
+    example: 18500,
+    description: 'Valor efetivo pago no arremate.',
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  purchasePrice?: number | null;
+
+  @ApiPropertyOptional({
+    example: '2026-05-13T10:00:00.000Z',
+    type: String,
+    format: 'date-time',
+  })
+  @IsOptional()
+  @IsDateString()
+  purchasedAt?: string | null;
+
+  @ApiPropertyOptional({
+    example: 29000,
+    description: 'Valor efetivo da venda.',
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  soldPrice?: number | null;
+
+  @ApiPropertyOptional({
+    example: '2026-05-20T10:00:00.000Z',
+    type: String,
+    format: 'date-time',
+  })
+  @IsOptional()
+  @IsDateString()
+  soldAt?: string | null;
+
+  @ApiPropertyOptional({
     enum: VehicleDamageType,
     example: VehicleDamageType.NONE,
   })

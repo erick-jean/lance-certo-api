@@ -24,6 +24,7 @@ import { MessageResponseDto } from '../auth/dto/message-response.dto';
 import { AuthenticatedRequest } from '../auth/interfaces/authenticated-request.interface';
 import { CheckoutResponseDto } from './dto/checkout-response.dto';
 import { SubscriptionResponseDto } from './dto/subscription-response.dto';
+import { SubscriptionUsageResponseDto } from './dto/subscription-usage-response.dto';
 import { SubscriptionWebhookDto } from './dto/subscription-webhook.dto';
 import { SubscriptionService } from './subscription.service';
 
@@ -45,6 +46,18 @@ export class SubscriptionController {
     @Req() request: AuthenticatedRequest,
   ): Promise<SubscriptionResponseDto> {
     return this.subscriptionService.findCurrent(request.user.sub);
+  }
+
+  @Get('usage')
+  @Throttle({ default: { limit: 60, ttl: 60_000, blockDuration: 60_000 } })
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Retorna uso atual e limites do plano.' })
+  @ApiOkResponse({ type: SubscriptionUsageResponseDto })
+  usage(
+    @Req() request: AuthenticatedRequest,
+  ): Promise<SubscriptionUsageResponseDto> {
+    return this.subscriptionService.findUsage(request.user.sub);
   }
 
   @Post('checkout')

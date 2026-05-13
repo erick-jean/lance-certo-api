@@ -40,6 +40,9 @@ export class ResponseChecklistTemplateItemDto {
   @ApiProperty({ example: true })
   isRequired!: boolean;
 
+  @ApiProperty({ example: false })
+  isPremiumOnly!: boolean;
+
   @ApiProperty({ example: 1 })
   order!: number;
 

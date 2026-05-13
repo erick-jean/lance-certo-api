@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -12,6 +13,7 @@ import {
   ExpenseSource,
 } from 'generated/prisma/enums';
 import { Prisma } from 'generated/prisma/client';
+import { PlanName, resolveEffectivePlan } from 'src/common/plans/plan-limits';
 import { PrismaService } from 'src/database/prisma.service';
 import { CreateEvaluationExpenseDto } from './dto/create-evaluation-expense.dto';
 import { CreateVehicleEvaluationDto } from './dto/create-vehicle-evaluation.dto';
@@ -24,6 +26,7 @@ import { UpdateVehicleEvaluationDto } from './dto/update-vehicle-evaluation.dto'
 
 type EvaluationPrismaClient = Pick<
   PrismaService,
+  | 'user'
   | 'vehicle'
   | 'vehicleEvaluation'
   | 'checklistTemplate'
@@ -39,9 +42,22 @@ type ChecklistTemplateItemSnapshotSource = {
   severity: ChecklistSeverity;
   requiresQuantity: boolean;
   isRequired: boolean;
+  isPremiumOnly: boolean;
   order: number;
   defaultEstimatedCost: Prisma.Decimal | null;
 };
+
+type UserPlanSource = {
+  role: string;
+  plan: string;
+  planStatus: string;
+  planExpiresAt: Date | null;
+};
+
+const FREE_DEFAULT_DESIRED_PROFIT_MARGIN_PERCENT = 15;
+const FREE_DEFAULT_SAFETY_MARGIN_PERCENT = 5;
+const PREMIUM_EXPENSES_REQUIRED_MESSAGE =
+  'Plano premium necessário para gerenciar despesas da avaliação.';
 
 type EvaluationChecklistItemExpenseSource = {
   evaluationId: string;
@@ -67,6 +83,9 @@ export class VehicleEvaluationsService {
      * The evaluation and its checklist items must be created atomically.
      */
     return this.prisma.$transaction(async (tx) => {
+      const userPlan = await this.getUserPlan(tx, userId);
+      const effectivePlan = this.resolveFeaturePlan(userPlan);
+
       /**
        * Scope the vehicle lookup by userId to prevent cross-user access.
        */
@@ -108,15 +127,27 @@ export class VehicleEvaluationsService {
         );
       }
 
+      const availableTemplateItems =
+        effectivePlan === 'premium'
+          ? template.items
+          : template.items.filter((item) => !item.isPremiumOnly);
+
+      if (availableTemplateItems.length === 0) {
+        throw new BadRequestException(
+          'Checklist disponível para seu plano não possui itens.',
+        );
+      }
+
       /**
        * The evaluation is created before checklist items because they reference
        * its id.
        */
+      const marginData = this.resolveInitialMarginData(effectivePlan, dto);
       const evaluation = await tx.vehicleEvaluation.create({
         data: {
           vehicleId: vehicle.id,
-          desiredProfitMarginPercent: dto.desiredProfitMarginPercent,
-          safetyMarginPercent: dto.safetyMarginPercent,
+          desiredProfitMarginPercent: marginData.desiredProfitMarginPercent,
+          safetyMarginPercent: marginData.safetyMarginPercent,
         },
       });
 
@@ -127,7 +158,7 @@ export class VehicleEvaluationsService {
       await this.createChecklistSnapshotForEvaluation(
         tx,
         evaluation.id,
-        template.items,
+        availableTemplateItems,
       );
 
       return new ResponseVehicleEvaluationDto(evaluation);
@@ -167,6 +198,12 @@ export class VehicleEvaluationsService {
     dto: UpdateVehicleEvaluationDto,
   ): Promise<ResponseVehicleEvaluationDto> {
     return this.prisma.$transaction(async (tx) => {
+      const userPlan = await this.getUserPlan(tx, userId);
+      this.ensurePremiumFeature(
+        userPlan,
+        'Plano premium necessário para personalizar margens.',
+      );
+
       const evaluation = await this.findEvaluationForUserVehicleOrThrow(
         tx,
         userId,
@@ -276,6 +313,9 @@ export class VehicleEvaluationsService {
     userId: string,
     vehicleId: string,
   ): Promise<ResponseEvaluationExpenseDto[]> {
+    const userPlan = await this.getUserPlan(this.prisma, userId);
+    this.ensurePremiumFeature(userPlan, PREMIUM_EXPENSES_REQUIRED_MESSAGE);
+
     const evaluation = await this.findEvaluationForUserVehicleOrThrow(
       this.prisma,
       userId,
@@ -298,6 +338,9 @@ export class VehicleEvaluationsService {
     dto: CreateEvaluationExpenseDto,
   ): Promise<ResponseEvaluationExpenseDto> {
     return this.prisma.$transaction(async (tx) => {
+      const userPlan = await this.getUserPlan(tx, userId);
+      this.ensurePremiumFeature(userPlan, PREMIUM_EXPENSES_REQUIRED_MESSAGE);
+
       const evaluation = await this.findEvaluationForUserVehicleOrThrow(
         tx,
         userId,
@@ -335,6 +378,9 @@ export class VehicleEvaluationsService {
     dto: UpdateEvaluationExpenseDto,
   ): Promise<ResponseEvaluationExpenseDto> {
     return this.prisma.$transaction(async (tx) => {
+      const userPlan = await this.getUserPlan(tx, userId);
+      this.ensurePremiumFeature(userPlan, PREMIUM_EXPENSES_REQUIRED_MESSAGE);
+
       const expense = await this.findExpenseForUserVehicleOrThrow(
         tx,
         userId,
@@ -368,6 +414,9 @@ export class VehicleEvaluationsService {
     expenseId: string,
   ): Promise<void> {
     await this.prisma.$transaction(async (tx) => {
+      const userPlan = await this.getUserPlan(tx, userId);
+      this.ensurePremiumFeature(userPlan, PREMIUM_EXPENSES_REQUIRED_MESSAGE);
+
       const expense = await this.findExpenseForUserVehicleOrThrow(
         tx,
         userId,
@@ -388,6 +437,54 @@ export class VehicleEvaluationsService {
        */
       await this.recalculateEvaluationFinancials(tx, expense.evaluationId);
     });
+  }
+
+  private async getUserPlan(tx: EvaluationPrismaClient, userId: string) {
+    const user = await tx.user.findUnique({
+      where: { id: userId },
+      select: {
+        plan: true,
+        planStatus: true,
+        planExpiresAt: true,
+        role: true,
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException('Usuário não encontrado');
+    }
+
+    return user;
+  }
+
+  private resolveFeaturePlan(user: UserPlanSource): PlanName {
+    return user.role === 'admin' ? 'premium' : resolveEffectivePlan(user);
+  }
+
+  private ensurePremiumFeature(
+    user: UserPlanSource,
+    forbiddenMessage: string,
+  ): void {
+    if (this.resolveFeaturePlan(user) !== 'premium') {
+      throw new ForbiddenException(forbiddenMessage);
+    }
+  }
+
+  private resolveInitialMarginData(
+    effectivePlan: PlanName,
+    dto: CreateVehicleEvaluationDto,
+  ) {
+    if (effectivePlan === 'premium') {
+      return {
+        desiredProfitMarginPercent: dto.desiredProfitMarginPercent,
+        safetyMarginPercent: dto.safetyMarginPercent,
+      };
+    }
+
+    return {
+      desiredProfitMarginPercent: FREE_DEFAULT_DESIRED_PROFIT_MARGIN_PERCENT,
+      safetyMarginPercent: FREE_DEFAULT_SAFETY_MARGIN_PERCENT,
+    };
   }
 
   private async findVehicleOwnedByUserOrThrow(

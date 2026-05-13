@@ -15,6 +15,7 @@ import {
 import {
   ApiBearerAuth,
   ApiCreatedResponse,
+  ApiForbiddenResponse,
   ApiNoContentResponse,
   ApiOkResponse,
   ApiOperation,
@@ -23,6 +24,8 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
+import { RequirePlan } from 'src/common/decorators/require-plan.decorator';
+import { PlanGuard } from 'src/common/guards/plan.guard';
 import { AuthGuard } from '../auth/auth.guard';
 import { AuthenticatedRequest } from '../auth/interfaces/authenticated-request.interface';
 import { VehicleOwnerGuard } from '../vehicles/guards/vehicle-owner/vehicle-owner.guard';
@@ -142,7 +145,12 @@ export class VehicleEvaluationsController {
 
   @ApiOperation({ summary: 'Lista gastos da avaliação do veículo.' })
   @ApiOkResponse({ type: [ResponseEvaluationExpenseDto] })
+  @ApiForbiddenResponse({
+    description: 'Plano premium necessário para acessar este recurso.',
+  })
   @Get(':vehicleId/evaluation/expenses')
+  @RequirePlan('premium')
+  @UseGuards(AuthGuard, VehicleOwnerGuard, PlanGuard)
   @Throttle({ default: { limit: 60, ttl: 60_000, blockDuration: 60_000 } })
   findExpensesByVehicleId(
     @Req() req: AuthenticatedRequest,
@@ -156,7 +164,12 @@ export class VehicleEvaluationsController {
 
   @ApiOperation({ summary: 'Cria gasto manual na avaliação do veículo.' })
   @ApiCreatedResponse({ type: ResponseEvaluationExpenseDto })
+  @ApiForbiddenResponse({
+    description: 'Plano premium necessário para acessar este recurso.',
+  })
   @Post(':vehicleId/evaluation/expenses')
+  @RequirePlan('premium')
+  @UseGuards(AuthGuard, VehicleOwnerGuard, PlanGuard)
   @Throttle({ default: { limit: 20, ttl: 60_000, blockDuration: 120_000 } })
   createExpense(
     @Req() req: AuthenticatedRequest,
@@ -172,7 +185,12 @@ export class VehicleEvaluationsController {
 
   @ApiOperation({ summary: 'Atualiza gasto da avaliação do veículo.' })
   @ApiOkResponse({ type: ResponseEvaluationExpenseDto })
+  @ApiForbiddenResponse({
+    description: 'Plano premium necessário para acessar este recurso.',
+  })
   @Patch(':vehicleId/evaluation/expenses/:expenseId')
+  @RequirePlan('premium')
+  @UseGuards(AuthGuard, VehicleOwnerGuard, PlanGuard)
   @Throttle({ default: { limit: 30, ttl: 60_000, blockDuration: 120_000 } })
   updateExpense(
     @Req() req: AuthenticatedRequest,
@@ -190,7 +208,12 @@ export class VehicleEvaluationsController {
 
   @ApiOperation({ summary: 'Remove gasto da avaliação do veículo.' })
   @ApiNoContentResponse({ description: 'Vehicle evaluation expense removed' })
+  @ApiForbiddenResponse({
+    description: 'Plano premium necessário para acessar este recurso.',
+  })
   @Delete(':vehicleId/evaluation/expenses/:expenseId')
+  @RequirePlan('premium')
+  @UseGuards(AuthGuard, VehicleOwnerGuard, PlanGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   @Throttle({ default: { limit: 20, ttl: 60_000, blockDuration: 120_000 } })
   removeExpense(

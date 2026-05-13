@@ -1,8 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import {
+  PLAN_LIMITS,
+  resolveEffectivePlan,
+} from 'src/common/plans/plan-limits';
 import { PrismaService } from 'src/database/prisma.service';
 import { CheckoutResponseDto } from './dto/checkout-response.dto';
 import { SubscriptionResponseDto } from './dto/subscription-response.dto';
+import { SubscriptionUsageResponseDto } from './dto/subscription-usage-response.dto';
 import { SubscriptionWebhookDto } from './dto/subscription-webhook.dto';
 import { MessageResponseDto } from '../auth/dto/message-response.dto';
 
@@ -24,6 +29,32 @@ export class SubscriptionService {
     const normalizedUser = await this.normalizeExpiredSubscription(user);
 
     return this.toSubscriptionResponse(normalizedUser);
+  }
+
+  async findUsage(userId: string): Promise<SubscriptionUsageResponseDto> {
+    const user = await this.findUserSubscription(userId);
+    const normalizedUser = await this.normalizeExpiredSubscription(user);
+    const effectivePlan = resolveEffectivePlan(normalizedUser);
+    const limits = PLAN_LIMITS[effectivePlan];
+    const vehicles = await this.prisma.vehicle.count({
+      where: { userId },
+    });
+    const remainingVehicles =
+      limits.maxVehicles === null
+        ? null
+        : Math.max(limits.maxVehicles - vehicles, 0);
+
+    return {
+      plan: normalizedUser.plan,
+      planStatus: normalizedUser.planStatus,
+      planExpiresAt: normalizedUser.planExpiresAt,
+      effectivePlan,
+      limits,
+      usage: {
+        vehicles,
+        remainingVehicles,
+      },
+    };
   }
 
   /**
@@ -175,10 +206,13 @@ export class SubscriptionService {
   private toSubscriptionResponse(
     user: Awaited<ReturnType<SubscriptionService['findUserSubscription']>>,
   ): SubscriptionResponseDto {
+    const effectivePlan = resolveEffectivePlan(user);
+
     return {
       plan: user.plan,
       planStatus: user.planStatus,
       planExpiresAt: user.planExpiresAt,
+      limits: PLAN_LIMITS[effectivePlan],
     };
   }
 
