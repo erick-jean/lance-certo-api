@@ -63,6 +63,7 @@ export class VehicleEvaluationsController {
       req.user.sub,
       vehicleId,
       dto,
+      req.user.role,
     );
   }
 
@@ -77,6 +78,7 @@ export class VehicleEvaluationsController {
     return this.vehicleEvaluationsService.findEvaluationByVehicleId(
       req.user.sub,
       vehicleId,
+      req.user.role,
     );
   }
 
@@ -93,6 +95,7 @@ export class VehicleEvaluationsController {
       req.user.sub,
       vehicleId,
       dto,
+      req.user.role,
     );
   }
 
@@ -108,6 +111,7 @@ export class VehicleEvaluationsController {
     return this.vehicleEvaluationsService.deleteEvaluationByVehicleId(
       req.user.sub,
       vehicleId,
+      req.user.role,
     );
   }
 
@@ -122,6 +126,7 @@ export class VehicleEvaluationsController {
     return this.vehicleEvaluationsService.getChecklistByVehicleId(
       req.user.sub,
       vehicleId,
+      req.user.role,
     );
   }
 
@@ -140,6 +145,7 @@ export class VehicleEvaluationsController {
       vehicleId,
       checklistItemId,
       dto,
+      req.user.role,
     );
   }
 
@@ -159,6 +165,7 @@ export class VehicleEvaluationsController {
     return this.vehicleEvaluationsService.listEvaluationExpenses(
       req.user.sub,
       vehicleId,
+      req.user.role,
     );
   }
 
@@ -180,6 +187,7 @@ export class VehicleEvaluationsController {
       req.user.sub,
       vehicleId,
       dto,
+      req.user.role,
     );
   }
 
@@ -203,6 +211,7 @@ export class VehicleEvaluationsController {
       vehicleId,
       expenseId,
       dto,
+      req.user.role,
     );
   }
 
@@ -225,6 +234,7 @@ export class VehicleEvaluationsController {
       req.user.sub,
       vehicleId,
       expenseId,
+      req.user.role,
     );
   }
 }

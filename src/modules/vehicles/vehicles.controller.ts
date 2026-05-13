@@ -95,7 +95,11 @@ export class VehiclesController {
     @Param('vehicleId', new ParseUUIDPipe()) vehicleId: string,
     @Req() req: AuthenticatedRequest,
   ): Promise<ResponseVehicleDto> {
-    return this.vehiclesService.findUserVehicleById(req.user.sub, vehicleId);
+    return this.vehiclesService.findUserVehicleById(
+      req.user.sub,
+      vehicleId,
+      req.user.role,
+    );
   }
 
   @ApiOperation({ summary: 'Marca veículo como arrematado.' })
@@ -190,6 +194,10 @@ export class VehiclesController {
     @Req() req: AuthenticatedRequest,
     @Param('vehicleId', new ParseUUIDPipe()) vehicleId: string,
   ): Promise<void> {
-    return this.vehiclesService.deleteUserVehicle(req.user.sub, vehicleId);
+    return this.vehiclesService.deleteUserVehicle(
+      req.user.sub,
+      vehicleId,
+      req.user.role,
+    );
   }
 }

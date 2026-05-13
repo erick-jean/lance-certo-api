@@ -7,8 +7,8 @@ import {
   PLAN_LIMITS,
   resolveEffectivePlan,
 } from 'src/common/plans/plan-limits';
+import { roundMoney, toNumber } from 'src/common/finance/vehicle-finance.util';
 import { PrismaService } from 'src/database/prisma.service';
-import { Prisma } from '../../../generated/prisma/client';
 import { VehicleStatus } from '../../../generated/prisma/enums';
 import { DashboardFinancialResponseDto } from './dto/dashboard-financial-response.dto';
 import { DashboardSummaryResponseDto } from './dto/dashboard-summary-response.dto';
@@ -98,11 +98,11 @@ export class DashboardService {
     const soldProfitMargins: number[] = [];
 
     for (const vehicle of vehicles) {
-      const purchasePrice = this.toNumber(vehicle.purchasePrice);
-      const soldPrice = this.toNumber(vehicle.soldPrice);
+      const purchasePrice = toNumber(vehicle.purchasePrice);
+      const soldPrice = toNumber(vehicle.soldPrice);
       const vehicleExpenses = vehicle.evaluation
         ? vehicle.evaluation.evaluationExpenses.reduce(
-            (sum, expense) => sum + this.toNumber(expense.amount),
+            (sum, expense) => sum + toNumber(expense.amount),
             0,
           )
         : 0;
@@ -136,10 +136,10 @@ export class DashboardService {
     return {
       totalPurchasedVehicles,
       totalSoldVehicles,
-      totalInvested: this.roundMoney(totalInvested),
-      totalExpenses: this.roundMoney(totalExpenses),
-      totalSold: this.roundMoney(totalSold),
-      totalProfit: this.roundMoney(totalProfit),
+      totalInvested: roundMoney(totalInvested),
+      totalExpenses: roundMoney(totalExpenses),
+      totalSold: roundMoney(totalSold),
+      totalProfit: roundMoney(totalProfit),
       averageProfitMargin:
         soldProfitMargins.length === 0
           ? null
@@ -168,13 +168,5 @@ export class DashboardService {
     }
 
     return user;
-  }
-
-  private toNumber(value: Prisma.Decimal | number | string | null | undefined) {
-    return value === null || value === undefined ? 0 : Number(value);
-  }
-
-  private roundMoney(value: number): number {
-    return Number(value.toFixed(2));
   }
 }

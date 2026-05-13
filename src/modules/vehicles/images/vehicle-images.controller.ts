@@ -57,6 +57,7 @@ export class VehicleImagesController {
     return this.vehicleImagesService.listUserVehicleImages(
       req.user.sub,
       vehicleId,
+      req.user.role,
     );
   }
 
@@ -82,7 +83,7 @@ export class VehicleImagesController {
   @Post()
   @Throttle({ default: { limit: 10, ttl: 60_000, blockDuration: 120_000 } })
   @UseInterceptors(
-    FilesInterceptor('images', 6, {
+    FilesInterceptor('images', 10, {
       storage: memoryStorage(),
       fileFilter: (_req, file, callback) => {
         const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
@@ -90,7 +91,7 @@ export class VehicleImagesController {
         if (!allowedTypes.includes(file.mimetype)) {
           return callback(
             new BadRequestException(
-              'Only JPEG, PNG and WEBP images are allowed.',
+              'Somente imagens JPEG, PNG e WEBP são permitidas.',
             ),
             false,
           );
@@ -109,13 +110,14 @@ export class VehicleImagesController {
     @UploadedFiles() files: Express.Multer.File[],
   ): Promise<VehicleImageResponseDto[]> {
     if (!files || files.length === 0) {
-      throw new BadRequestException('At least one image is required.');
+      throw new BadRequestException('Envie pelo menos uma imagem.');
     }
 
     return this.vehicleImagesService.addImagesToUserVehicle(
       req.user.sub,
       vehicleId,
       files,
+      req.user.role,
     );
   }
 
@@ -134,6 +136,7 @@ export class VehicleImagesController {
       req.user.sub,
       vehicleId,
       imageId,
+      req.user.role,
     );
   }
 }

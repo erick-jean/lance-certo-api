@@ -7,6 +7,7 @@ import {
 import { randomUUID } from 'crypto';
 import { mkdir, unlink, writeFile } from 'fs/promises';
 import { join } from 'path';
+import { ownerScope } from 'src/common/access/owner-scope.util';
 import { PrismaService } from 'src/database/prisma.service';
 import { VehicleImageResponseDto } from './dto/response-vehicle-image.dto';
 
@@ -27,9 +28,13 @@ export class VehicleImagesService {
     userId: string,
     vehicleId: string,
     files: Express.Multer.File[],
+    userRole?: string,
   ): Promise<VehicleImageResponseDto[]> {
     const vehicle = await this.prisma.vehicle.findFirst({
-      where: { userId, id: vehicleId },
+      where: {
+        id: vehicleId,
+        ...ownerScope(userId, userRole),
+      },
       select: {
         _count: {
           select: {
@@ -40,12 +45,12 @@ export class VehicleImagesService {
     });
 
     if (!vehicle) {
-      throw new NotFoundException('Vehicle not found.');
+      throw new NotFoundException('Veículo não encontrado.');
     }
 
     if (vehicle._count.images + files.length > MAX_VEHICLE_IMAGES) {
       throw new BadRequestException(
-        `A vehicle can have at most ${MAX_VEHICLE_IMAGES} images.`,
+        `Cada veículo pode ter no máximo ${MAX_VEHICLE_IMAGES} imagens.`,
       );
     }
 
@@ -82,16 +87,22 @@ export class VehicleImagesService {
         throw error;
       }
 
-      throw new InternalServerErrorException('Could not save images.');
+      throw new InternalServerErrorException(
+        'Não foi possível salvar imagens.',
+      );
     }
   }
 
   async listUserVehicleImages(
     userId: string,
     vehicleId: string,
+    userRole?: string,
   ): Promise<VehicleImageResponseDto[]> {
     const vehicle = await this.prisma.vehicle.findFirst({
-      where: { userId, id: vehicleId },
+      where: {
+        id: vehicleId,
+        ...ownerScope(userId, userRole),
+      },
       select: {
         images: {
           orderBy: {
@@ -102,7 +113,7 @@ export class VehicleImagesService {
     });
 
     if (!vehicle) {
-      throw new NotFoundException('Vehicle not found.');
+      throw new NotFoundException('Veículo não encontrado.');
     }
 
     return vehicle.images.map((image) => new VehicleImageResponseDto(image));
@@ -112,14 +123,13 @@ export class VehicleImagesService {
     userId: string,
     vehicleId: string,
     imageId: string,
+    userRole?: string,
   ): Promise<void> {
     const image = await this.prisma.vehicleImage.findFirst({
       where: {
         id: imageId,
         vehicleId,
-        vehicle: {
-          userId,
-        },
+        vehicle: ownerScope(userId, userRole),
       },
       select: {
         id: true,
@@ -128,7 +138,7 @@ export class VehicleImagesService {
     });
 
     if (!image) {
-      throw new NotFoundException('Vehicle image not found.');
+      throw new NotFoundException('Imagem do veículo não encontrada.');
     }
 
     await this.prisma.vehicleImage.delete({
@@ -157,12 +167,12 @@ export class VehicleImagesService {
     url: string;
   } {
     if (!file.buffer || file.buffer.length === 0) {
-      throw new BadRequestException('Invalid image file.');
+      throw new BadRequestException('Arquivo de imagem inválido.');
     }
 
     if (!this.isAllowedVehicleImageMimeType(file.mimetype)) {
       throw new BadRequestException(
-        'Only JPEG, PNG and WEBP images are allowed.',
+        'Somente imagens JPEG, PNG e WEBP são permitidas.',
       );
     }
 
@@ -171,7 +181,7 @@ export class VehicleImagesService {
      * before persisting the upload.
      */
     if (!this.hasValidImageSignature(file.buffer, file.mimetype)) {
-      throw new BadRequestException('Invalid image content.');
+      throw new BadRequestException('Conteúdo da imagem inválido.');
     }
 
     const filename = `${randomUUID()}${

@@ -13,6 +13,7 @@ import {
   ExpenseSource,
 } from 'generated/prisma/enums';
 import { Prisma } from 'generated/prisma/client';
+import { ownerScope } from 'src/common/access/owner-scope.util';
 import { PlanName, resolveEffectivePlan } from 'src/common/plans/plan-limits';
 import { PrismaService } from 'src/database/prisma.service';
 import { CreateEvaluationExpenseDto } from './dto/create-evaluation-expense.dto';
@@ -78,6 +79,7 @@ export class VehicleEvaluationsService {
     userId: string,
     vehicleId: string,
     dto: CreateVehicleEvaluationDto,
+    userRole?: string,
   ): Promise<ResponseVehicleEvaluationDto> {
     /**
      * The evaluation and its checklist items must be created atomically.
@@ -93,6 +95,7 @@ export class VehicleEvaluationsService {
         tx,
         userId,
         vehicleId,
+        userRole,
       );
 
       const existingEvaluation = await tx.vehicleEvaluation.findUnique({
@@ -161,20 +164,25 @@ export class VehicleEvaluationsService {
         availableTemplateItems,
       );
 
-      return new ResponseVehicleEvaluationDto(evaluation);
+      // Recalculate immediately so a newly created evaluation is returned with consistent summary fields.
+      const recalculated = await this.recalculateEvaluationFinancials(
+        tx,
+        evaluation.id,
+      );
+
+      return new ResponseVehicleEvaluationDto(recalculated);
     });
   }
 
   async findEvaluationByVehicleId(
     userId: string,
     vehicleId: string,
+    userRole?: string,
   ): Promise<ResponseVehicleEvaluationDto> {
     const evaluation = await this.prisma.vehicleEvaluation.findFirst({
       where: {
         vehicleId,
-        vehicle: {
-          userId,
-        },
+        vehicle: ownerScope(userId, userRole),
       },
       include: {
         vehicle: true,
@@ -196,6 +204,7 @@ export class VehicleEvaluationsService {
     userId: string,
     vehicleId: string,
     dto: UpdateVehicleEvaluationDto,
+    userRole?: string,
   ): Promise<ResponseVehicleEvaluationDto> {
     return this.prisma.$transaction(async (tx) => {
       const userPlan = await this.getUserPlan(tx, userId);
@@ -208,6 +217,7 @@ export class VehicleEvaluationsService {
         tx,
         userId,
         vehicleId,
+        userRole,
       );
 
       await tx.vehicleEvaluation.update({
@@ -232,11 +242,13 @@ export class VehicleEvaluationsService {
   async deleteEvaluationByVehicleId(
     userId: string,
     vehicleId: string,
+    userRole?: string,
   ): Promise<void> {
     const evaluation = await this.findEvaluationForUserVehicleOrThrow(
       this.prisma,
       userId,
       vehicleId,
+      userRole,
     );
 
     /**
@@ -253,11 +265,13 @@ export class VehicleEvaluationsService {
   async getChecklistByVehicleId(
     userId: string,
     vehicleId: string,
+    userRole?: string,
   ): Promise<ResponseEvaluationChecklistItemDto[]> {
     const evaluation = await this.findEvaluationForUserVehicleOrThrow(
       this.prisma,
       userId,
       vehicleId,
+      userRole,
     );
 
     const items = await this.prisma.evaluationChecklistItem.findMany({
@@ -275,6 +289,7 @@ export class VehicleEvaluationsService {
     vehicleId: string,
     checklistItemId: string,
     dto: UpdateEvaluationChecklistItemDto,
+    userRole?: string,
   ): Promise<ResponseEvaluationChecklistItemDto> {
     return this.prisma.$transaction(async (tx) => {
       /**
@@ -285,6 +300,7 @@ export class VehicleEvaluationsService {
         userId,
         vehicleId,
         checklistItemId,
+        userRole,
       );
 
       const updatedItem = await tx.evaluationChecklistItem.update({
@@ -312,6 +328,7 @@ export class VehicleEvaluationsService {
   async listEvaluationExpenses(
     userId: string,
     vehicleId: string,
+    userRole?: string,
   ): Promise<ResponseEvaluationExpenseDto[]> {
     const userPlan = await this.getUserPlan(this.prisma, userId);
     this.ensurePremiumFeature(userPlan, PREMIUM_EXPENSES_REQUIRED_MESSAGE);
@@ -320,6 +337,7 @@ export class VehicleEvaluationsService {
       this.prisma,
       userId,
       vehicleId,
+      userRole,
     );
 
     const expenses = await this.prisma.evaluationExpense.findMany({
@@ -336,6 +354,7 @@ export class VehicleEvaluationsService {
     userId: string,
     vehicleId: string,
     dto: CreateEvaluationExpenseDto,
+    userRole?: string,
   ): Promise<ResponseEvaluationExpenseDto> {
     return this.prisma.$transaction(async (tx) => {
       const userPlan = await this.getUserPlan(tx, userId);
@@ -345,6 +364,7 @@ export class VehicleEvaluationsService {
         tx,
         userId,
         vehicleId,
+        userRole,
       );
 
       /**
@@ -376,6 +396,7 @@ export class VehicleEvaluationsService {
     vehicleId: string,
     expenseId: string,
     dto: UpdateEvaluationExpenseDto,
+    userRole?: string,
   ): Promise<ResponseEvaluationExpenseDto> {
     return this.prisma.$transaction(async (tx) => {
       const userPlan = await this.getUserPlan(tx, userId);
@@ -386,6 +407,7 @@ export class VehicleEvaluationsService {
         userId,
         vehicleId,
         expenseId,
+        userRole,
       );
       this.ensureManualExpense(expense);
 
@@ -412,6 +434,7 @@ export class VehicleEvaluationsService {
     userId: string,
     vehicleId: string,
     expenseId: string,
+    userRole?: string,
   ): Promise<void> {
     await this.prisma.$transaction(async (tx) => {
       const userPlan = await this.getUserPlan(tx, userId);
@@ -422,6 +445,7 @@ export class VehicleEvaluationsService {
         userId,
         vehicleId,
         expenseId,
+        userRole,
       );
       this.ensureManualExpense(expense);
 
@@ -491,11 +515,12 @@ export class VehicleEvaluationsService {
     tx: EvaluationPrismaClient,
     userId: string,
     vehicleId: string,
+    userRole?: string,
   ) {
     const vehicle = await tx.vehicle.findFirst({
       where: {
         id: vehicleId,
-        userId,
+        ...ownerScope(userId, userRole),
       },
     });
 
@@ -510,6 +535,7 @@ export class VehicleEvaluationsService {
     tx: EvaluationPrismaClient,
     userId: string,
     vehicleId: string,
+    userRole?: string,
   ) {
     /**
      * Scope the evaluation lookup by userId to prevent cross-user access.
@@ -517,9 +543,7 @@ export class VehicleEvaluationsService {
     const evaluation = await tx.vehicleEvaluation.findFirst({
       where: {
         vehicleId,
-        vehicle: {
-          userId,
-        },
+        vehicle: ownerScope(userId, userRole),
       },
       select: {
         id: true,
@@ -538,15 +562,14 @@ export class VehicleEvaluationsService {
     userId: string,
     vehicleId: string,
     checklistItemId: string,
+    userRole?: string,
   ) {
     const checklistItem = await tx.evaluationChecklistItem.findFirst({
       where: {
         id: checklistItemId,
         evaluation: {
           vehicleId,
-          vehicle: {
-            userId,
-          },
+          vehicle: ownerScope(userId, userRole),
         },
       },
     });
@@ -563,6 +586,7 @@ export class VehicleEvaluationsService {
     userId: string,
     vehicleId: string,
     expenseId: string,
+    userRole?: string,
   ) {
     /**
      * Scope the expense through evaluation and vehicle ownership.
@@ -572,9 +596,7 @@ export class VehicleEvaluationsService {
         id: expenseId,
         evaluation: {
           vehicleId,
-          vehicle: {
-            userId,
-          },
+          vehicle: ownerScope(userId, userRole),
         },
       },
       select: {

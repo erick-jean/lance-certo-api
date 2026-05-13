@@ -139,7 +139,7 @@ export class ChecklistController {
   @ApiOkResponse({ type: ResponseChecklistTemplateItemDto })
   @ApiNotFoundResponse({ description: 'Template Checklist item not found' })
   @Throttle({ default: { limit: 60, ttl: 60_000, blockDuration: 60_000 } })
-  @Get('checklist-template/:itemId/items')
+  @Get('checklist-template-items/:itemId')
   findOneItemChecklist(
     @Param('itemId', new ParseUUIDPipe()) itemId: string,
   ): Promise<ResponseChecklistTemplateItemDto> {
@@ -150,7 +150,7 @@ export class ChecklistController {
   @ApiOkResponse({ type: ResponseChecklistTemplateItemDto })
   @ApiNotFoundResponse({ description: 'Template Checklist item not found' })
   @Throttle({ default: { limit: 20, ttl: 60_000, blockDuration: 120_000 } })
-  @Patch('checklist-template/:itemId/items')
+  @Patch('checklist-template-items/:itemId')
   updateItemChecklist(
     @Param('itemId', new ParseUUIDPipe()) itemId: string,
     @Body() updateChecklistTemplateItemDto: UpdateChecklistTemplateItemDto,
@@ -168,10 +168,62 @@ export class ChecklistController {
   @ApiNotFoundResponse({ description: 'Template Checklist item not found' })
   @Throttle({ default: { limit: 10, ttl: 60_000, blockDuration: 300_000 } })
   @HttpCode(HttpStatus.NO_CONTENT)
-  @Delete('checklist-template/:itemId/items')
+  @Delete('checklist-template-items/:itemId')
   removeItemChecklist(
     @Param('itemId', new ParseUUIDPipe()) itemId: string,
   ): Promise<void> {
+    return this.checklistService.deleteChecklistTemplateItem(itemId);
+  }
+
+  @ApiOperation({
+    summary: 'Busca item no Template de Checklist por id.',
+    deprecated: true,
+  })
+  @ApiOkResponse({ type: ResponseChecklistTemplateItemDto })
+  @ApiNotFoundResponse({ description: 'Template Checklist item not found' })
+  @Throttle({ default: { limit: 60, ttl: 60_000, blockDuration: 60_000 } })
+  @Get('checklist-template/:itemId/items')
+  findOneItemChecklistLegacy(
+    @Param('itemId', new ParseUUIDPipe()) itemId: string,
+  ): Promise<ResponseChecklistTemplateItemDto> {
+    // TODO: remove this legacy route after one release cycle.
+    return this.checklistService.findChecklistTemplateItemById(itemId);
+  }
+
+  @ApiOperation({
+    summary: 'Atualiza item de Template de Checklist.',
+    deprecated: true,
+  })
+  @ApiOkResponse({ type: ResponseChecklistTemplateItemDto })
+  @ApiNotFoundResponse({ description: 'Template Checklist item not found' })
+  @Throttle({ default: { limit: 20, ttl: 60_000, blockDuration: 120_000 } })
+  @Patch('checklist-template/:itemId/items')
+  updateItemChecklistLegacy(
+    @Param('itemId', new ParseUUIDPipe()) itemId: string,
+    @Body() updateChecklistTemplateItemDto: UpdateChecklistTemplateItemDto,
+  ): Promise<ResponseChecklistTemplateItemDto> {
+    // TODO: remove this legacy route after one release cycle.
+    return this.checklistService.updateChecklistTemplateItem(
+      itemId,
+      updateChecklistTemplateItemDto,
+    );
+  }
+
+  @ApiOperation({
+    summary: 'Remove item de Template de Checklist.',
+    deprecated: true,
+  })
+  @ApiNoContentResponse({
+    description: 'Template Checklist item removed successfully',
+  })
+  @ApiNotFoundResponse({ description: 'Template Checklist item not found' })
+  @Throttle({ default: { limit: 10, ttl: 60_000, blockDuration: 300_000 } })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Delete('checklist-template/:itemId/items')
+  removeItemChecklistLegacy(
+    @Param('itemId', new ParseUUIDPipe()) itemId: string,
+  ): Promise<void> {
+    // TODO: remove this legacy route after one release cycle.
     return this.checklistService.deleteChecklistTemplateItem(itemId);
   }
 }

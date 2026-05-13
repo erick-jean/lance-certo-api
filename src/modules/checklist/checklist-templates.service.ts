@@ -1,4 +1,12 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import {
+  isRecordNotFoundError,
+  isUniqueConstraintError,
+} from 'src/common/errors/prisma-error.util';
 import { PrismaService } from 'src/database/prisma.service';
 import { Prisma } from '../../../generated/prisma/client';
 import { CreateChecklistTemplateItemDto } from './dto/create-checklist-template-item.dto';
@@ -20,18 +28,26 @@ export class ChecklistService {
   async createChecklistTemplate(
     dto: CreateChecklistTemplateDto,
   ): Promise<ResponseChecklistTemplateDto> {
-    const checklistTemplate = await this.prisma.checklistTemplate.create({
-      data: this.toChecklistTemplateCreateData(dto),
-      include: {
-        _count: {
-          select: {
-            items: true,
+    try {
+      const checklistTemplate = await this.prisma.checklistTemplate.create({
+        data: this.toChecklistTemplateCreateData(dto),
+        include: {
+          _count: {
+            select: {
+              items: true,
+            },
           },
         },
-      },
-    });
+      });
 
-    return new ResponseChecklistTemplateDto(checklistTemplate);
+      return new ResponseChecklistTemplateDto(checklistTemplate);
+    } catch (error) {
+      if (isUniqueConstraintError(error)) {
+        throw new ConflictException('Template de checklist já cadastrado.');
+      }
+
+      throw error;
+    }
   }
 
   async listChecklistTemplates(): Promise<ResponseChecklistTemplateDto[]> {
@@ -98,7 +114,7 @@ export class ChecklistService {
 
       return new ResponseChecklistTemplateDto(checklistTemplate);
     } catch (error) {
-      if (!this.isRecordNotFoundError(error)) {
+      if (!isRecordNotFoundError(error)) {
         throw error;
       }
 
@@ -112,7 +128,7 @@ export class ChecklistService {
         where: { id },
       });
     } catch (error) {
-      if (!this.isRecordNotFoundError(error)) {
+      if (!isRecordNotFoundError(error)) {
         throw error;
       }
 
@@ -132,15 +148,23 @@ export class ChecklistService {
       throw new NotFoundException('Checklist template not found');
     }
 
-    const checklistTemplateItem =
-      await this.prisma.checklistTemplateItem.create({
-        data: {
-          templateId,
-          ...this.toChecklistTemplateItemCreateData(dto),
-        },
-      });
+    try {
+      const checklistTemplateItem =
+        await this.prisma.checklistTemplateItem.create({
+          data: {
+            templateId,
+            ...this.toChecklistTemplateItemCreateData(dto),
+          },
+        });
 
-    return new ResponseChecklistTemplateItemDto(checklistTemplateItem);
+      return new ResponseChecklistTemplateItemDto(checklistTemplateItem);
+    } catch (error) {
+      if (isUniqueConstraintError(error)) {
+        throw new ConflictException('Item de checklist já cadastrado.');
+      }
+
+      throw error;
+    }
   }
 
   async findChecklistTemplateItemById(
@@ -192,7 +216,7 @@ export class ChecklistService {
 
       return new ResponseChecklistTemplateItemDto(itemChecklist);
     } catch (error) {
-      if (!this.isRecordNotFoundError(error)) {
+      if (!isRecordNotFoundError(error)) {
         throw error;
       }
 
@@ -206,7 +230,7 @@ export class ChecklistService {
         where: { id: itemId },
       });
     } catch (error) {
-      if (!this.isRecordNotFoundError(error)) {
+      if (!isRecordNotFoundError(error)) {
         throw error;
       }
 
@@ -272,16 +296,5 @@ export class ChecklistService {
       isPremiumOnly: dto.isPremiumOnly,
       order: dto.order,
     };
-  }
-
-  private isRecordNotFoundError(error: unknown): boolean {
-    /**
-     * Prisma throws P2025 for update/delete operations when the target record
-     * does not exist. Mapping it here keeps HTTP responses consistent.
-     */
-    return (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === 'P2025'
-    );
   }
 }

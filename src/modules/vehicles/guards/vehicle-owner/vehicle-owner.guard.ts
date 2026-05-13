@@ -28,7 +28,7 @@ export class VehicleOwnerGuard implements CanActivate {
     const vehicleId = request.params.vehicleId;
 
     if (!vehicleId) {
-      throw new BadRequestException('Vehicle id is required.');
+      throw new BadRequestException('Id do veículo é obrigatório.');
     }
 
     /**
@@ -45,7 +45,7 @@ export class VehicleOwnerGuard implements CanActivate {
     });
 
     if (!vehicle) {
-      throw new NotFoundException('Vehicle not found.');
+      throw new NotFoundException('Veículo não encontrado.');
     }
 
     const isOwner = vehicle.userId === userId;
@@ -53,7 +53,7 @@ export class VehicleOwnerGuard implements CanActivate {
 
     if (!isOwner && !isAdmin) {
       throw new ForbiddenException(
-        'You do not have permission to access this vehicle.',
+        'Você não tem permissão para acessar este veículo.',
       );
     }
 

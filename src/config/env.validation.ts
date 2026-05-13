@@ -12,6 +12,8 @@ const requiredEnvVars = [
   'SUBSCRIPTION_WEBHOOK_SECRET',
 ] as const;
 
+const optionalUrlEnvVars = ['CORS_ORIGIN'] as const;
+
 export function validateEnv(config: Env): Env {
   for (const key of requiredEnvVars) {
     if (!config[key]) {
@@ -43,10 +45,33 @@ export function validateEnv(config: Env): Env {
     throw new Error('SWAGGER_ENABLED must be true or false');
   }
 
+  if (
+    config.NODE_ENV &&
+    !['development', 'test', 'production'].includes(config.NODE_ENV)
+  ) {
+    throw new Error('NODE_ENV must be development, test or production');
+  }
+
   try {
     new URL(config.APP_FRONTEND_URL ?? '');
   } catch {
     throw new Error('APP_FRONTEND_URL must be a valid URL');
+  }
+
+  for (const key of optionalUrlEnvVars) {
+    const value = config[key];
+
+    if (!value) {
+      continue;
+    }
+
+    for (const origin of value.split(',').map((origin) => origin.trim())) {
+      try {
+        new URL(origin);
+      } catch {
+        throw new Error(`${key} must contain valid comma-separated URLs`);
+      }
+    }
   }
 
   return config;

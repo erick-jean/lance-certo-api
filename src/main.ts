@@ -12,6 +12,10 @@ import { join } from 'path';
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
+  /**
+   * Public upload serving is acceptable for MVP vehicle images, but
+   * private/signed access should be used before storing sensitive documents.
+   */
   app.useStaticAssets(join(process.cwd(), 'uploads'), {
     prefix: '/uploads',
   });
@@ -28,7 +32,7 @@ async function bootstrap() {
   app.use(json({ limit: '100kb' }));
   app.use(urlencoded({ extended: true, limit: '100kb' }));
   app.enableCors({
-    origin: configService.get<string>('APP_FRONTEND_URL'),
+    origin: getAllowedCorsOrigins(configService),
     credentials: true,
   });
   app.enableShutdownHooks();
@@ -68,3 +72,14 @@ async function bootstrap() {
 }
 
 void bootstrap();
+
+function getAllowedCorsOrigins(configService: ConfigService): string[] {
+  const configuredOrigins =
+    configService.get<string>('CORS_ORIGIN') ??
+    configService.getOrThrow<string>('APP_FRONTEND_URL');
+
+  return configuredOrigins
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+}

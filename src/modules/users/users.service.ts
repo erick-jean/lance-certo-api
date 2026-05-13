@@ -6,6 +6,10 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { HashService } from 'src/common/hash/hash.service';
+import {
+  isRecordNotFoundError,
+  isUniqueConstraintError,
+} from 'src/common/errors/prisma-error.util';
 import { PrismaService } from 'src/database/prisma.service';
 import { Prisma } from '../../../generated/prisma/client';
 import { ChangeMyPasswordDto } from './dto/change-my-password.dto';
@@ -59,11 +63,11 @@ export class UsersService {
 
       return this.toResponse(updatedUser);
     } catch (error) {
-      if (this.isRecordNotFoundError(error)) {
+      if (isRecordNotFoundError(error)) {
         throw new NotFoundException('Usuário não encontrado');
       }
 
-      if (this.isUniqueConstraintError(error)) {
+      if (isUniqueConstraintError(error)) {
         throw new ConflictException('Email já cadastrado');
       }
 
@@ -162,11 +166,11 @@ export class UsersService {
 
       return this.toResponse(updatedUser);
     } catch (error) {
-      if (this.isRecordNotFoundError(error)) {
+      if (isRecordNotFoundError(error)) {
         throw new NotFoundException('Usuário não encontrado');
       }
 
-      if (this.isUniqueConstraintError(error)) {
+      if (isUniqueConstraintError(error)) {
         throw new ConflictException('Email já cadastrado');
       }
 
@@ -279,19 +283,5 @@ export class UsersService {
 
   private normalizeEmail(email: string): string {
     return email.trim().toLowerCase();
-  }
-
-  private isUniqueConstraintError(error: unknown): boolean {
-    return (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === 'P2002'
-    );
-  }
-
-  private isRecordNotFoundError(error: unknown): boolean {
-    return (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === 'P2025'
-    );
   }
 }

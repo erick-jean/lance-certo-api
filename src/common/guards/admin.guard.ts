@@ -20,7 +20,7 @@ export class AdminGuard implements CanActivate {
      * query string or request body.
      */
     if (request.user.role !== 'admin') {
-      throw new ForbiddenException('Admin access required.');
+      throw new ForbiddenException('Acesso administrativo necessário.');
     }
 
     return true;

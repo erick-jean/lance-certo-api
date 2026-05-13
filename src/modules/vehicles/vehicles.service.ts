@@ -1,9 +1,16 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { ownerScope } from 'src/common/access/owner-scope.util';
+import {
+  isRecordNotFoundError,
+  isSerializableConflict,
+} from 'src/common/errors/prisma-error.util';
+import { calculateVehicleFinancialSummary } from 'src/common/finance/vehicle-finance.util';
 import {
   PLAN_LIMITS,
   resolveEffectivePlan,
@@ -67,6 +74,10 @@ type VehicleWritableData = Omit<
   'id' | 'userId' | 'createdAt' | 'updatedAt'
 >;
 
+type VehiclePrismaClient = Pick<PrismaService, 'user' | 'vehicle'>;
+
+const SERIALIZABLE_TRANSACTION_MAX_RETRIES = 3;
+
 @Injectable()
 export class VehiclesService {
   constructor(
@@ -79,19 +90,23 @@ export class VehiclesService {
     createVehicleDto: CreateVehicleDto,
     userRole?: string,
   ): Promise<ResponseVehicleDto> {
-    await this.ensureVehicleLimit(userId);
-    await this.ensurePremiumForFinancialVehicleData(
-      userId,
-      createVehicleDto,
-      userRole,
-    );
-
-    const vehicle = await this.prisma.vehicle.create({
-      data: {
-        ...this.toVehicleWritableData(createVehicleDto),
+    const vehicle = await this.runSerializableTransaction(async (tx) => {
+      await this.ensurePremiumForFinancialVehicleData(
+        tx,
         userId,
-      },
+        createVehicleDto,
+        userRole,
+      );
+      await this.ensureVehicleLimit(tx, userId);
+
+      return tx.vehicle.create({
+        data: {
+          ...this.toVehicleWritableData(createVehicleDto),
+          userId,
+        },
+      });
     });
+
     return new ResponseVehicleDto(vehicle);
   }
 
@@ -141,17 +156,14 @@ export class VehiclesService {
   async findUserVehicleById(
     userId: string,
     vehicleId: string,
+    userRole?: string,
   ): Promise<ResponseVehicleDto> {
-    /**
-     * Scope the vehicle lookup by userId to prevent cross-user access.
-     */
-    const vehicle = await this.prisma.vehicle.findFirst({
-      where: { userId, id: vehicleId },
-    });
+    const vehicle = await this.findVehicleForUserOrAdminOrThrow(
+      userId,
+      vehicleId,
+      userRole,
+    );
 
-    if (!vehicle) {
-      throw new NotFoundException('Vehicle not found.');
-    }
     return new ResponseVehicleDto(vehicle);
   }
 
@@ -162,41 +174,49 @@ export class VehiclesService {
     userRole?: string,
   ): Promise<ResponseVehicleDto> {
     await this.ensurePremiumForFinancialVehicleData(
+      this.prisma,
       userId,
       updateVehicleDto,
+      userRole,
+    );
+
+    const vehicle = await this.findVehicleForUserOrAdminOrThrow(
+      userId,
+      vehicleId,
       userRole,
     );
 
     try {
       const updatedVehicle = await this.prisma.vehicle.update({
         where: {
-          id: vehicleId,
-          userId,
+          id: vehicle.id,
         },
         data: this.toVehicleWritableData(updateVehicleDto),
       });
 
       return new ResponseVehicleDto(updatedVehicle);
     } catch (error) {
-      if (this.isRecordNotFoundError(error)) {
-        throw new NotFoundException('Vehicle not found.');
+      if (isRecordNotFoundError(error)) {
+        throw new NotFoundException('Veículo não encontrado.');
       }
 
       throw error;
     }
   }
 
-  async deleteUserVehicle(userId: string, vehicleId: string): Promise<void> {
+  async deleteUserVehicle(
+    userId: string,
+    vehicleId: string,
+    userRole?: string,
+  ): Promise<void> {
     /**
      * Image files live outside the database, so filenames are loaded before
      * deleting the vehicle record.
      */
     const vehicle = await this.prisma.vehicle.findFirst({
-      where: {
-        id: vehicleId,
-        userId,
-      },
+      where: this.buildVehicleOwnerWhere(userId, vehicleId, userRole),
       select: {
+        id: true,
         images: {
           select: {
             filename: true,
@@ -206,18 +226,17 @@ export class VehiclesService {
     });
 
     if (!vehicle) {
-      throw new NotFoundException('Vehicle not found.');
+      throw new NotFoundException('Veículo não encontrado.');
     }
 
     const deleteResult = await this.prisma.vehicle.deleteMany({
       where: {
-        id: vehicleId,
-        userId,
+        id: vehicle.id,
       },
     });
 
     if (deleteResult.count === 0) {
-      throw new NotFoundException('Vehicle not found.');
+      throw new NotFoundException('Veículo não encontrado.');
     }
 
     await this.vehicleImagesService.removeFiles(
@@ -231,7 +250,7 @@ export class VehiclesService {
     dto: PurchaseVehicleDto,
     userRole?: string,
   ): Promise<ResponseVehicleDto> {
-    await this.ensurePremiumAccess(userId, userRole);
+    await this.ensurePremiumAccess(this.prisma, userId, userRole);
     await this.findVehicleForUserOrAdminOrThrow(userId, vehicleId, userRole);
 
     const vehicle = await this.prisma.vehicle.update({
@@ -254,7 +273,7 @@ export class VehiclesService {
     dto: SellVehicleDto,
     userRole?: string,
   ): Promise<ResponseVehicleDto> {
-    await this.ensurePremiumAccess(userId, userRole);
+    await this.ensurePremiumAccess(this.prisma, userId, userRole);
     const vehicle = await this.findVehicleForUserOrAdminOrThrow(
       userId,
       vehicleId,
@@ -286,7 +305,7 @@ export class VehiclesService {
     vehicleId: string,
     userRole?: string,
   ): Promise<VehicleFinancialSummaryDto> {
-    await this.ensurePremiumAccess(userId, userRole);
+    await this.ensurePremiumAccess(this.prisma, userId, userRole);
 
     const vehicle = await this.prisma.vehicle.findFirst({
       where: this.buildVehicleOwnerWhere(userId, vehicleId, userRole),
@@ -300,10 +319,10 @@ export class VehiclesService {
     });
 
     if (!vehicle) {
-      throw new NotFoundException('Vehicle not found.');
+      throw new NotFoundException('Veículo não encontrado.');
     }
 
-    return this.buildFinancialSummary(vehicle);
+    return calculateVehicleFinancialSummary(vehicle);
   }
 
   private toResponse(vehicle: VehicleListItem): ResponseVehicleDto {
@@ -320,13 +339,14 @@ export class VehiclesService {
     });
 
     if (!vehicle) {
-      throw new NotFoundException('Vehicle not found.');
+      throw new NotFoundException('Veículo não encontrado.');
     }
 
     return vehicle;
   }
 
   private async ensurePremiumAccess(
+    prisma: Pick<PrismaService, 'user'>,
     userId: string,
     userRole?: string,
   ): Promise<void> {
@@ -334,7 +354,7 @@ export class VehiclesService {
       return;
     }
 
-    const user = await this.prisma.user.findUnique({
+    const user = await prisma.user.findUnique({
       where: { id: userId },
       select: {
         plan: true,
@@ -355,6 +375,7 @@ export class VehiclesService {
   }
 
   private async ensurePremiumForFinancialVehicleData(
+    prisma: Pick<PrismaService, 'user'>,
     userId: string,
     dto: CreateVehicleDto | UpdateVehicleDto,
     userRole?: string,
@@ -368,12 +389,15 @@ export class VehiclesService {
       dto.status === VehicleStatus.SOLD;
 
     if (hasFinancialData) {
-      await this.ensurePremiumAccess(userId, userRole);
+      await this.ensurePremiumAccess(prisma, userId, userRole);
     }
   }
 
-  private async ensureVehicleLimit(userId: string): Promise<void> {
-    const user = await this.prisma.user.findUnique({
+  private async ensureVehicleLimit(
+    prisma: VehiclePrismaClient,
+    userId: string,
+  ): Promise<void> {
+    const user = await prisma.user.findUnique({
       where: { id: userId },
       select: {
         plan: true,
@@ -391,7 +415,7 @@ export class VehiclesService {
       return;
     }
 
-    const currentVehiclesCount = await this.prisma.vehicle.count({
+    const currentVehiclesCount = await prisma.vehicle.count({
       where: { userId },
     });
     const maxVehicles = PLAN_LIMITS.free.maxVehicles;
@@ -410,67 +434,8 @@ export class VehiclesService {
   ): Prisma.VehicleWhereInput {
     return {
       id: vehicleId,
-      ...(userRole === 'admin' ? {} : { userId }),
+      ...ownerScope(userId, userRole),
     };
-  }
-
-  private buildFinancialSummary(vehicle: {
-    id: string;
-    purchasePrice: Prisma.Decimal | null;
-    purchasedAt: Date | null;
-    soldPrice: Prisma.Decimal | null;
-    soldAt: Date | null;
-    evaluation?: {
-      evaluationExpenses: {
-        amount: Prisma.Decimal;
-      }[];
-    } | null;
-  }): VehicleFinancialSummaryDto {
-    const purchasePrice = this.toNullableNumber(vehicle.purchasePrice);
-    const soldPrice = this.toNullableNumber(vehicle.soldPrice);
-    const totalExpenses = vehicle.evaluation
-      ? vehicle.evaluation.evaluationExpenses.reduce(
-          (sum, expense) => sum + this.toNumber(expense.amount),
-          0,
-        )
-      : 0;
-    const totalInvestment =
-      this.toNumber(vehicle.purchasePrice) + totalExpenses;
-    const grossProfit = soldPrice === null ? null : soldPrice - totalInvestment;
-    const profitMarginPercent =
-      grossProfit === null || totalInvestment <= 0
-        ? null
-        : (grossProfit / totalInvestment) * 100;
-
-    return {
-      vehicleId: vehicle.id,
-      purchasePrice,
-      purchasedAt: vehicle.purchasedAt,
-      totalExpenses: this.roundMoney(totalExpenses),
-      totalInvestment: this.roundMoney(totalInvestment),
-      soldPrice,
-      soldAt: vehicle.soldAt,
-      grossProfit: grossProfit === null ? null : this.roundMoney(grossProfit),
-      profitMarginPercent:
-        profitMarginPercent === null
-          ? null
-          : Number(profitMarginPercent.toFixed(2)),
-      isSold: soldPrice !== null && vehicle.soldAt !== null,
-    };
-  }
-
-  private toNumber(value: Prisma.Decimal | number | string | null | undefined) {
-    return value === null || value === undefined ? 0 : Number(value);
-  }
-
-  private toNullableNumber(
-    value: Prisma.Decimal | number | string | null | undefined,
-  ) {
-    return value === null || value === undefined ? null : Number(value);
-  }
-
-  private roundMoney(value: number): number {
-    return Number(value.toFixed(2));
   }
 
   private buildFindAllWhere(
@@ -527,10 +492,29 @@ export class VehiclesService {
     };
   }
 
-  private isRecordNotFoundError(error: unknown): boolean {
-    return (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === 'P2025'
-    );
+  private async runSerializableTransaction<T>(
+    callback: (tx: Prisma.TransactionClient) => Promise<T>,
+  ): Promise<T> {
+    for (
+      let attempt = 1;
+      attempt <= SERIALIZABLE_TRANSACTION_MAX_RETRIES;
+      attempt++
+    ) {
+      try {
+        // Serializable isolation prevents concurrent free-plan requests from bypassing the vehicle limit.
+        return await this.prisma.$transaction(callback, {
+          isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+        });
+      } catch (error) {
+        if (
+          !isSerializableConflict(error) ||
+          attempt === SERIALIZABLE_TRANSACTION_MAX_RETRIES
+        ) {
+          throw error;
+        }
+      }
+    }
+
+    throw new ConflictException('Tente novamente em alguns instantes.');
   }
 }

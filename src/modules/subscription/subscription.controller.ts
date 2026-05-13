@@ -100,8 +100,9 @@ export class SubscriptionController {
       'SUBSCRIPTION_WEBHOOK_SECRET',
     );
 
+    // TODO: replace shared-secret webhook verification with provider signature verification before production.
     if (!this.secureEquals(webhookSecret, expectedSecret)) {
-      throw new UnauthorizedException('Invalid webhook secret');
+      throw new UnauthorizedException('Segredo do webhook inválido');
     }
   }
 

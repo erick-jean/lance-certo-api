@@ -13,6 +13,10 @@ import {
   VehicleType,
 } from '../../generated/prisma/client';
 
+if (process.env.NODE_ENV === 'production') {
+  throw new Error('Seed cannot run in production.');
+}
+
 const adapter = new PrismaPg({
   connectionString: process.env.DATABASE_URL!,
 });
@@ -1669,10 +1673,18 @@ async function seedChecklistTemplate(params: {
 
 async function main() {
   const hashService = new HashService();
+  const adminSeedPassword = resolveSeedPassword(
+    'ADMIN_SEED_PASSWORD',
+    seedUsers[0].password,
+  );
+  const userSeedPassword = resolveSeedPassword(
+    'USER_SEED_PASSWORD',
+    seedUsers[1].password,
+  );
 
   const [adminPassword, userPassword] = await Promise.all([
-    hashService.hash(seedUsers[0].password),
-    hashService.hash(seedUsers[1].password),
+    hashService.hash(adminSeedPassword),
+    hashService.hash(userSeedPassword),
   ]);
 
   const admin = await prisma.user.upsert({
@@ -1756,6 +1768,20 @@ async function main() {
   console.log(
     `Itens do checklist de moto criados: ${motorcycleChecklistItemsCount}`,
   );
+}
+
+function resolveSeedPassword(envKey: string, developmentFallback: string) {
+  const configuredPassword = process.env[envKey];
+
+  if (configuredPassword) {
+    return configuredPassword;
+  }
+
+  if (['development', 'test', undefined].includes(process.env.NODE_ENV)) {
+    return developmentFallback;
+  }
+
+  throw new Error(`${envKey} is required outside development/test.`);
 }
 
 main()

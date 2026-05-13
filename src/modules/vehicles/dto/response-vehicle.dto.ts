@@ -7,7 +7,6 @@ import {
   VehicleStatus,
   VehicleType,
 } from '../../../../generated/prisma/enums';
-import { IsEnum, IsOptional } from 'class-validator';
 
 type DecimalLike = number | { toString(): string } | null | undefined;
 
@@ -165,8 +164,6 @@ export class ResponseVehicleDto {
     enum: VehicleDamageType,
     example: VehicleDamageType.NONE,
   })
-  @IsOptional()
-  @IsEnum(VehicleDamageType)
   damageType?: VehicleDamageType;
 
   @ApiProperty({

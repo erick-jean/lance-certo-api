@@ -7,6 +7,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { createHash, randomBytes } from 'crypto';
+import { isUniqueConstraintError } from 'src/common/errors/prisma-error.util';
 import { HashService } from 'src/common/hash/hash.service';
 import { PrismaService } from 'src/database/prisma.service';
 import { Prisma } from '../../../generated/prisma/client';
@@ -45,7 +46,7 @@ export class AuthService {
     });
 
     if (userExists) {
-      throw new ConflictException('Email already registered');
+      throw new ConflictException('Este e-mail já está em uso.');
     }
 
     try {
@@ -76,8 +77,8 @@ export class AuthService {
 
       return new ResponseUserDto(user);
     } catch (error) {
-      if (this.isUniqueConstraintError(error)) {
-        throw new ConflictException('Email already registered');
+      if (isUniqueConstraintError(error)) {
+        throw new ConflictException('Este e-mail já está em uso.');
       }
 
       throw error;
@@ -105,7 +106,7 @@ export class AuthService {
     });
 
     if (!user || !user.isActive) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException('Credenciais inválidas');
     }
 
     const passwordMatches = await this.hashService.compare(
@@ -114,7 +115,7 @@ export class AuthService {
     );
 
     if (!passwordMatches) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException('Credenciais inválidas');
     }
 
     await this.prisma.user.update({
@@ -314,7 +315,7 @@ export class AuthService {
     });
 
     if (!storedRefreshToken || !storedRefreshToken.user.isActive) {
-      throw new UnauthorizedException('Invalid refresh token');
+      throw new UnauthorizedException('Refresh token inválido');
     }
 
     const payload: JwtPayload = {
@@ -338,7 +339,7 @@ export class AuthService {
       });
 
       if (revokedTokens.count !== 1) {
-        throw new UnauthorizedException('Invalid refresh token');
+        throw new UnauthorizedException('Refresh token inválido');
       }
 
       return this.issueAuthTokens(payload, tx);
@@ -368,7 +369,7 @@ export class AuthService {
     });
 
     if (revokedTokens.count !== 1) {
-      throw new UnauthorizedException('Invalid refresh token');
+      throw new UnauthorizedException('Refresh token inválido');
     }
 
     return {
@@ -465,12 +466,5 @@ export class AuthService {
     return {
       message: 'Se o email existir, enviaremos um link de recuperacao.',
     };
-  }
-
-  private isUniqueConstraintError(error: unknown): boolean {
-    return (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === 'P2002'
-    );
   }
 }
