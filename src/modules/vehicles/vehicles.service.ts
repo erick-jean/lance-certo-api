@@ -55,7 +55,7 @@ export class VehiclesService {
     private readonly vehicleImagesService: VehicleImagesService,
   ) {}
 
-  async create(
+  async createVehicleForUser(
     userId: string,
     createVehicleDto: CreateVehicleDto,
   ): Promise<ResponseVehicleDto> {
@@ -74,7 +74,7 @@ export class VehiclesService {
    * The user scope is enforced server-side so users cannot list vehicles from
    * another account.
    */
-  async findAll(
+  async listUserVehicles(
     userId: string,
     query: FindVehiclesQueryDto,
   ): Promise<PaginatedVehicleResponseDto> {
@@ -111,7 +111,7 @@ export class VehiclesService {
     };
   }
 
-  async findOne(
+  async findUserVehicleById(
     userId: string,
     vehicleId: string,
   ): Promise<ResponseVehicleDto> {
@@ -128,7 +128,7 @@ export class VehiclesService {
     return new ResponseVehicleDto(vehicle);
   }
 
-  async update(
+  async updateUserVehicle(
     userId: string,
     vehicleId: string,
     updateVehicleDto: UpdateVehicleDto,
@@ -152,7 +152,7 @@ export class VehiclesService {
     }
   }
 
-  async remove(userId: string, vehicleId: string): Promise<void> {
+  async deleteUserVehicle(userId: string, vehicleId: string): Promise<void> {
     /**
      * Image files live outside the database, so filenames are loaded before
      * deleting the vehicle record.
@@ -175,14 +175,14 @@ export class VehiclesService {
       throw new NotFoundException('Vehicle not found.');
     }
 
-    const result = await this.prisma.vehicle.deleteMany({
+    const deleteResult = await this.prisma.vehicle.deleteMany({
       where: {
         id: vehicleId,
         userId,
       },
     });
 
-    if (result.count === 0) {
+    if (deleteResult.count === 0) {
       throw new NotFoundException('Vehicle not found.');
     }
 

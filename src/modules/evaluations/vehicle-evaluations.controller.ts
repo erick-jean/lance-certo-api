@@ -30,11 +30,11 @@ import { CreateEvaluationExpenseDto } from './dto/create-evaluation-expense.dto'
 import { CreateVehicleEvaluationDto } from './dto/create-vehicle-evaluation.dto';
 import { ResponseEvaluationChecklistItemDto } from './dto/response-evaluation-checklist-item.dto';
 import { ResponseEvaluationExpenseDto } from './dto/response-evaluation-expense.dto';
-import { ResponseEvalutionVehicleDto } from './dto/response-evalution-vehicle.dto';
+import { ResponseVehicleEvaluationDto } from './dto/response-vehicle-evaluation.dto';
 import { UpdateEvaluationChecklistItemDto } from './dto/update-evaluation-checklist-item.dto';
 import { UpdateEvaluationExpenseDto } from './dto/update-evaluation-expense.dto';
 import { UpdateVehicleEvaluationDto } from './dto/update-vehicle-evaluation.dto';
-import { EvalutionVehicleService } from './evalution-vehicle.service';
+import { VehicleEvaluationsService } from './vehicle-evaluations.service';
 
 @ApiTags('Vehicle Evaluation / Avaliacao do veiculo')
 @ApiBearerAuth()
@@ -44,45 +44,49 @@ import { EvalutionVehicleService } from './evalution-vehicle.service';
 @Controller('vehicles')
 export class VehicleEvaluationsController {
   constructor(
-    private readonly evalutionVehicleService: EvalutionVehicleService,
+    private readonly vehicleEvaluationsService: VehicleEvaluationsService,
   ) {}
 
   @ApiOperation({ summary: 'Cria avaliação do veículo.' })
-  @ApiCreatedResponse({ type: ResponseEvalutionVehicleDto })
+  @ApiCreatedResponse({ type: ResponseVehicleEvaluationDto })
   @Post(':vehicleId/evaluation')
   @Throttle({ default: { limit: 10, ttl: 60_000, blockDuration: 120_000 } })
   create(
     @Req() req: AuthenticatedRequest,
     @Param('vehicleId', new ParseUUIDPipe()) vehicleId: string,
     @Body() dto: CreateVehicleEvaluationDto,
-  ): Promise<ResponseEvalutionVehicleDto> {
-    return this.evalutionVehicleService.create(req.user.sub, vehicleId, dto);
+  ): Promise<ResponseVehicleEvaluationDto> {
+    return this.vehicleEvaluationsService.createEvaluationForVehicle(
+      req.user.sub,
+      vehicleId,
+      dto,
+    );
   }
 
   @ApiOperation({ summary: 'Busca avaliação do veículo.' })
-  @ApiOkResponse({ type: ResponseEvalutionVehicleDto })
+  @ApiOkResponse({ type: ResponseVehicleEvaluationDto })
   @Get(':vehicleId/evaluation')
   @Throttle({ default: { limit: 60, ttl: 60_000, blockDuration: 60_000 } })
   findByVehicleId(
     @Req() req: AuthenticatedRequest,
     @Param('vehicleId', new ParseUUIDPipe()) vehicleId: string,
-  ): Promise<ResponseEvalutionVehicleDto> {
-    return this.evalutionVehicleService.findByVehicleId(
+  ): Promise<ResponseVehicleEvaluationDto> {
+    return this.vehicleEvaluationsService.findEvaluationByVehicleId(
       req.user.sub,
       vehicleId,
     );
   }
 
   @ApiOperation({ summary: 'Atualiza avaliação do veículo.' })
-  @ApiOkResponse({ type: ResponseEvalutionVehicleDto })
+  @ApiOkResponse({ type: ResponseVehicleEvaluationDto })
   @Patch(':vehicleId/evaluation')
   @Throttle({ default: { limit: 20, ttl: 60_000, blockDuration: 120_000 } })
   updateByVehicleId(
     @Req() req: AuthenticatedRequest,
     @Param('vehicleId', new ParseUUIDPipe()) vehicleId: string,
     @Body() dto: UpdateVehicleEvaluationDto,
-  ): Promise<ResponseEvalutionVehicleDto> {
-    return this.evalutionVehicleService.updateByVehicleId(
+  ): Promise<ResponseVehicleEvaluationDto> {
+    return this.vehicleEvaluationsService.updateEvaluationMargins(
       req.user.sub,
       vehicleId,
       dto,
@@ -98,7 +102,7 @@ export class VehicleEvaluationsController {
     @Req() req: AuthenticatedRequest,
     @Param('vehicleId', new ParseUUIDPipe()) vehicleId: string,
   ): Promise<void> {
-    return this.evalutionVehicleService.removeByVehicleId(
+    return this.vehicleEvaluationsService.deleteEvaluationByVehicleId(
       req.user.sub,
       vehicleId,
     );
@@ -112,7 +116,7 @@ export class VehicleEvaluationsController {
     @Req() req: AuthenticatedRequest,
     @Param('vehicleId', new ParseUUIDPipe()) vehicleId: string,
   ): Promise<ResponseEvaluationChecklistItemDto[]> {
-    return this.evalutionVehicleService.findChecklistByVehicleId(
+    return this.vehicleEvaluationsService.getChecklistByVehicleId(
       req.user.sub,
       vehicleId,
     );
@@ -128,7 +132,7 @@ export class VehicleEvaluationsController {
     @Param('checklistItemId', new ParseUUIDPipe()) checklistItemId: string,
     @Body() dto: UpdateEvaluationChecklistItemDto,
   ): Promise<ResponseEvaluationChecklistItemDto> {
-    return this.evalutionVehicleService.updateChecklistItem(
+    return this.vehicleEvaluationsService.updateChecklistItemAnswer(
       req.user.sub,
       vehicleId,
       checklistItemId,
@@ -144,7 +148,7 @@ export class VehicleEvaluationsController {
     @Req() req: AuthenticatedRequest,
     @Param('vehicleId', new ParseUUIDPipe()) vehicleId: string,
   ): Promise<ResponseEvaluationExpenseDto[]> {
-    return this.evalutionVehicleService.findExpensesByVehicleId(
+    return this.vehicleEvaluationsService.listEvaluationExpenses(
       req.user.sub,
       vehicleId,
     );
@@ -159,7 +163,7 @@ export class VehicleEvaluationsController {
     @Param('vehicleId', new ParseUUIDPipe()) vehicleId: string,
     @Body() dto: CreateEvaluationExpenseDto,
   ): Promise<ResponseEvaluationExpenseDto> {
-    return this.evalutionVehicleService.createExpense(
+    return this.vehicleEvaluationsService.createManualEvaluationExpense(
       req.user.sub,
       vehicleId,
       dto,
@@ -176,7 +180,7 @@ export class VehicleEvaluationsController {
     @Param('expenseId', new ParseUUIDPipe()) expenseId: string,
     @Body() dto: UpdateEvaluationExpenseDto,
   ): Promise<ResponseEvaluationExpenseDto> {
-    return this.evalutionVehicleService.updateExpense(
+    return this.vehicleEvaluationsService.updateManualEvaluationExpense(
       req.user.sub,
       vehicleId,
       expenseId,
@@ -194,7 +198,7 @@ export class VehicleEvaluationsController {
     @Param('vehicleId', new ParseUUIDPipe()) vehicleId: string,
     @Param('expenseId', new ParseUUIDPipe()) expenseId: string,
   ): Promise<void> {
-    return this.evalutionVehicleService.removeExpense(
+    return this.vehicleEvaluationsService.deleteManualEvaluationExpense(
       req.user.sub,
       vehicleId,
       expenseId,

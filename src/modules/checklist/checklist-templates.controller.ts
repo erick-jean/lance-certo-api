@@ -66,7 +66,7 @@ export class ChecklistController {
   @Throttle({ default: { limit: 60, ttl: 60_000, blockDuration: 60_000 } })
   @Get('checklist-templates')
   findAllChecklistTemplate(): Promise<ResponseChecklistTemplateDto[]> {
-    return this.checklistService.findAllChecklistTemplate();
+    return this.checklistService.listChecklistTemplates();
   }
 
   @ApiOperation({ summary: 'Busca Template de Checklist por id.' })
@@ -77,7 +77,7 @@ export class ChecklistController {
   findOneChecklistTemplate(
     @Param('id', new ParseUUIDPipe()) id: string,
   ): Promise<ResponseChecklistTemplateDto> {
-    return this.checklistService.findOneChecklistTemplate(id);
+    return this.checklistService.findChecklistTemplateById(id);
   }
 
   @ApiOperation({ summary: 'Atualiza Template de Checklist.' })
@@ -106,7 +106,7 @@ export class ChecklistController {
   removeChecklistTemplate(
     @Param('id', new ParseUUIDPipe()) id: string,
   ): Promise<void> {
-    return this.checklistService.removeChecklistTemplate(id);
+    return this.checklistService.deleteChecklistTemplate(id);
   }
 
   @ApiOperation({ summary: 'Cria Item de Checklist' })
@@ -118,7 +118,7 @@ export class ChecklistController {
     @Param('templateId', new ParseUUIDPipe()) templateId: string,
     @Body() createChecklistTemplateItemDto: CreateChecklistTemplateItemDto,
   ): Promise<ResponseChecklistTemplateItemDto> {
-    return this.checklistService.createItemChecklist(
+    return this.checklistService.createChecklistTemplateItem(
       templateId,
       createChecklistTemplateItemDto,
     );
@@ -132,7 +132,7 @@ export class ChecklistController {
   findAllItemChecklist(
     @Param('templateId', new ParseUUIDPipe()) templateId: string,
   ): Promise<ResponseChecklistTemplateItemDto[]> {
-    return this.checklistService.findAllItemChecklist(templateId);
+    return this.checklistService.listChecklistTemplateItems(templateId);
   }
 
   @ApiOperation({ summary: 'Busca item no Template de Checklist por id.' })
@@ -143,7 +143,7 @@ export class ChecklistController {
   findOneItemChecklist(
     @Param('itemId', new ParseUUIDPipe()) itemId: string,
   ): Promise<ResponseChecklistTemplateItemDto> {
-    return this.checklistService.findOneItemChecklist(itemId);
+    return this.checklistService.findChecklistTemplateItemById(itemId);
   }
 
   @ApiOperation({ summary: 'Atualiza item de Template de Checklist.' })
@@ -155,7 +155,7 @@ export class ChecklistController {
     @Param('itemId', new ParseUUIDPipe()) itemId: string,
     @Body() updateChecklistTemplateItemDto: UpdateChecklistTemplateItemDto,
   ): Promise<ResponseChecklistTemplateItemDto> {
-    return this.checklistService.updateItemChecklist(
+    return this.checklistService.updateChecklistTemplateItem(
       itemId,
       updateChecklistTemplateItemDto,
     );
@@ -172,6 +172,6 @@ export class ChecklistController {
   removeItemChecklist(
     @Param('itemId', new ParseUUIDPipe()) itemId: string,
   ): Promise<void> {
-    return this.checklistService.removeItemChecklist(itemId);
+    return this.checklistService.deleteChecklistTemplateItem(itemId);
   }
 }

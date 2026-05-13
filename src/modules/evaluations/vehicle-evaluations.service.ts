@@ -4,6 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import {
+  ChecklistSeverity,
   ChecklistItemStatus,
   EvaluationRecommendation,
   EvaluationRiskLevel,
@@ -16,25 +17,52 @@ import { CreateEvaluationExpenseDto } from './dto/create-evaluation-expense.dto'
 import { CreateVehicleEvaluationDto } from './dto/create-vehicle-evaluation.dto';
 import { ResponseEvaluationChecklistItemDto } from './dto/response-evaluation-checklist-item.dto';
 import { ResponseEvaluationExpenseDto } from './dto/response-evaluation-expense.dto';
-import { ResponseEvalutionVehicleDto } from './dto/response-evalution-vehicle.dto';
+import { ResponseVehicleEvaluationDto } from './dto/response-vehicle-evaluation.dto';
 import { UpdateEvaluationChecklistItemDto } from './dto/update-evaluation-checklist-item.dto';
 import { UpdateEvaluationExpenseDto } from './dto/update-evaluation-expense.dto';
 import { UpdateVehicleEvaluationDto } from './dto/update-vehicle-evaluation.dto';
 
 type EvaluationPrismaClient = Pick<
   PrismaService,
-  'vehicleEvaluation' | 'evaluationExpense'
+  | 'vehicle'
+  | 'vehicleEvaluation'
+  | 'checklistTemplate'
+  | 'evaluationChecklistItem'
+  | 'evaluationExpense'
 >;
 
+type ChecklistTemplateItemSnapshotSource = {
+  id: string;
+  category: string;
+  name: string;
+  question: string | null;
+  severity: ChecklistSeverity;
+  requiresQuantity: boolean;
+  isRequired: boolean;
+  order: number;
+  defaultEstimatedCost: Prisma.Decimal | null;
+};
+
+type EvaluationChecklistItemExpenseSource = {
+  evaluationId: string;
+  name: string;
+  quantity: number;
+  estimatedUnitCost: Prisma.Decimal | null;
+  estimatedTotalCost: Prisma.Decimal | null;
+  isRequired: boolean;
+  notes: string | null;
+  status: ChecklistItemStatus;
+};
+
 @Injectable()
-export class EvalutionVehicleService {
+export class VehicleEvaluationsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(
+  async createEvaluationForVehicle(
     userId: string,
     vehicleId: string,
     dto: CreateVehicleEvaluationDto,
-  ): Promise<ResponseEvalutionVehicleDto> {
+  ): Promise<ResponseVehicleEvaluationDto> {
     /**
      * The evaluation and its checklist items must be created atomically.
      */
@@ -42,16 +70,11 @@ export class EvalutionVehicleService {
       /**
        * Scope the vehicle lookup by userId to prevent cross-user access.
        */
-      const vehicle = await tx.vehicle.findFirst({
-        where: {
-          id: vehicleId,
-          userId,
-        },
-      });
-
-      if (!vehicle) {
-        throw new NotFoundException('Veículo não encontrado');
-      }
+      const vehicle = await this.findVehicleOwnedByUserOrThrow(
+        tx,
+        userId,
+        vehicleId,
+      );
 
       const existingEvaluation = await tx.vehicleEvaluation.findUnique({
         where: { vehicleId: vehicle.id },
@@ -101,34 +124,20 @@ export class EvalutionVehicleService {
        * Snapshot the active checklist template into this evaluation.
        * This preserves historical evaluation data even if the template changes later.
        */
-      await tx.evaluationChecklistItem.createMany({
-        data: template.items.map((item) => ({
-          evaluationId: evaluation.id,
-          templateItemId: item.id,
-          category: item.category,
-          name: item.name,
-          question: item.question,
-          severity: item.severity,
-          requiresQuantity: item.requiresQuantity,
-          isRequired: item.isRequired,
-          order: item.order,
-          status: ChecklistItemStatus.NOT_CHECKED,
-          quantity: 1,
-          estimatedUnitCost: item.defaultEstimatedCost,
-          estimatedTotalCost: null,
-          notes: null,
-          answeredAt: null,
-        })),
-      });
+      await this.createChecklistSnapshotForEvaluation(
+        tx,
+        evaluation.id,
+        template.items,
+      );
 
-      return new ResponseEvalutionVehicleDto(evaluation);
+      return new ResponseVehicleEvaluationDto(evaluation);
     });
   }
 
-  async findByVehicleId(
+  async findEvaluationByVehicleId(
     userId: string,
     vehicleId: string,
-  ): Promise<ResponseEvalutionVehicleDto> {
+  ): Promise<ResponseVehicleEvaluationDto> {
     const evaluation = await this.prisma.vehicleEvaluation.findFirst({
       where: {
         vehicleId,
@@ -149,16 +158,16 @@ export class EvalutionVehicleService {
       throw new NotFoundException('Avaliação não encontrada');
     }
 
-    return new ResponseEvalutionVehicleDto(evaluation);
+    return new ResponseVehicleEvaluationDto(evaluation);
   }
 
-  async updateByVehicleId(
+  async updateEvaluationMargins(
     userId: string,
     vehicleId: string,
     dto: UpdateVehicleEvaluationDto,
-  ): Promise<ResponseEvalutionVehicleDto> {
+  ): Promise<ResponseVehicleEvaluationDto> {
     return this.prisma.$transaction(async (tx) => {
-      const evaluation = await this.findEvaluationOrThrow(
+      const evaluation = await this.findEvaluationForUserVehicleOrThrow(
         tx,
         userId,
         vehicleId,
@@ -175,27 +184,23 @@ export class EvalutionVehicleService {
        * Financial results depend on margins, so the evaluation must be
        * recalculated after margin changes.
        */
-      const recalculated = await this.recalculateEvaluation(tx, evaluation.id);
-      return new ResponseEvalutionVehicleDto(recalculated);
+      const recalculated = await this.recalculateEvaluationFinancials(
+        tx,
+        evaluation.id,
+      );
+      return new ResponseVehicleEvaluationDto(recalculated);
     });
   }
 
-  async removeByVehicleId(userId: string, vehicleId: string): Promise<void> {
-    const evaluation = await this.prisma.vehicleEvaluation.findFirst({
-      where: {
-        vehicleId,
-        vehicle: {
-          userId,
-        },
-      },
-      select: {
-        id: true,
-      },
-    });
-
-    if (!evaluation) {
-      throw new NotFoundException('Avaliação não encontrada');
-    }
+  async deleteEvaluationByVehicleId(
+    userId: string,
+    vehicleId: string,
+  ): Promise<void> {
+    const evaluation = await this.findEvaluationForUserVehicleOrThrow(
+      this.prisma,
+      userId,
+      vehicleId,
+    );
 
     /**
      * Deleting the evaluation cascades checklist items and expenses through
@@ -208,11 +213,11 @@ export class EvalutionVehicleService {
     });
   }
 
-  async findChecklistByVehicleId(
+  async getChecklistByVehicleId(
     userId: string,
     vehicleId: string,
   ): Promise<ResponseEvaluationChecklistItemDto[]> {
-    const evaluation = await this.findEvaluationOrThrow(
+    const evaluation = await this.findEvaluationForUserVehicleOrThrow(
       this.prisma,
       userId,
       vehicleId,
@@ -228,7 +233,7 @@ export class EvalutionVehicleService {
     return items.map((item) => new ResponseEvaluationChecklistItemDto(item));
   }
 
-  async updateChecklistItem(
+  async updateChecklistItemAnswer(
     userId: string,
     vehicleId: string,
     checklistItemId: string,
@@ -238,21 +243,12 @@ export class EvalutionVehicleService {
       /**
        * Scope the checklist item through evaluation and vehicle ownership.
        */
-      const checklistItem = await tx.evaluationChecklistItem.findFirst({
-        where: {
-          id: checklistItemId,
-          evaluation: {
-            vehicleId,
-            vehicle: {
-              userId,
-            },
-          },
-        },
-      });
-
-      if (!checklistItem) {
-        throw new NotFoundException('Item do checklist não encontrado');
-      }
+      const checklistItem = await this.findChecklistItemForUserVehicleOrThrow(
+        tx,
+        userId,
+        vehicleId,
+        checklistItemId,
+      );
 
       const updatedItem = await tx.evaluationChecklistItem.update({
         where: {
@@ -265,57 +261,22 @@ export class EvalutionVehicleService {
        * Checklist answers drive derived expenses. Repair items create or update
        * expenses; non-repair statuses remove them.
        */
-      if (updatedItem.status === ChecklistItemStatus.NEEDS_REPAIR) {
-        const amount = this.resolveChecklistExpenseAmount(updatedItem);
-
-        await tx.evaluationExpense.upsert({
-          where: {
-            evaluationId_name_source: {
-              evaluationId: updatedItem.evaluationId,
-              name: updatedItem.name,
-              source: ExpenseSource.CHECKLIST,
-            },
-          },
-          create: {
-            evaluationId: updatedItem.evaluationId,
-            category: ExpenseCategory.REPAIR,
-            source: ExpenseSource.CHECKLIST,
-            name: updatedItem.name,
-            amount,
-            isRequired: updatedItem.isRequired,
-            notes: updatedItem.notes,
-          },
-          update: {
-            category: ExpenseCategory.REPAIR,
-            amount,
-            isRequired: updatedItem.isRequired,
-            notes: updatedItem.notes,
-          },
-        });
-      } else {
-        await tx.evaluationExpense.deleteMany({
-          where: {
-            evaluationId: updatedItem.evaluationId,
-            source: ExpenseSource.CHECKLIST,
-            name: updatedItem.name,
-          },
-        });
-      }
+      await this.syncChecklistDerivedExpense(tx, updatedItem);
 
       /**
        * Financial results depend on expenses, so the evaluation must be
        * recalculated after checklist-derived expenses change.
        */
-      await this.recalculateEvaluation(tx, updatedItem.evaluationId);
+      await this.recalculateEvaluationFinancials(tx, updatedItem.evaluationId);
       return new ResponseEvaluationChecklistItemDto(updatedItem);
     });
   }
 
-  async findExpensesByVehicleId(
+  async listEvaluationExpenses(
     userId: string,
     vehicleId: string,
   ): Promise<ResponseEvaluationExpenseDto[]> {
-    const evaluation = await this.findEvaluationOrThrow(
+    const evaluation = await this.findEvaluationForUserVehicleOrThrow(
       this.prisma,
       userId,
       vehicleId,
@@ -331,13 +292,13 @@ export class EvalutionVehicleService {
     return expenses.map((expense) => new ResponseEvaluationExpenseDto(expense));
   }
 
-  async createExpense(
+  async createManualEvaluationExpense(
     userId: string,
     vehicleId: string,
     dto: CreateEvaluationExpenseDto,
   ): Promise<ResponseEvaluationExpenseDto> {
     return this.prisma.$transaction(async (tx) => {
-      const evaluation = await this.findEvaluationOrThrow(
+      const evaluation = await this.findEvaluationForUserVehicleOrThrow(
         tx,
         userId,
         vehicleId,
@@ -362,24 +323,25 @@ export class EvalutionVehicleService {
        * Financial results depend on expenses, so the evaluation must be
        * recalculated after manual expense changes.
        */
-      await this.recalculateEvaluation(tx, evaluation.id);
+      await this.recalculateEvaluationFinancials(tx, evaluation.id);
       return new ResponseEvaluationExpenseDto(expense);
     });
   }
 
-  async updateExpense(
+  async updateManualEvaluationExpense(
     userId: string,
     vehicleId: string,
     expenseId: string,
     dto: UpdateEvaluationExpenseDto,
   ): Promise<ResponseEvaluationExpenseDto> {
     return this.prisma.$transaction(async (tx) => {
-      const expense = await this.findExpenseOrThrow(
+      const expense = await this.findExpenseForUserVehicleOrThrow(
         tx,
         userId,
         vehicleId,
         expenseId,
       );
+      this.ensureManualExpense(expense);
 
       const updatedExpense = await tx.evaluationExpense.update({
         where: {
@@ -392,23 +354,27 @@ export class EvalutionVehicleService {
        * Financial results depend on expenses, so the evaluation must be
        * recalculated after expense updates.
        */
-      await this.recalculateEvaluation(tx, updatedExpense.evaluationId);
+      await this.recalculateEvaluationFinancials(
+        tx,
+        updatedExpense.evaluationId,
+      );
       return new ResponseEvaluationExpenseDto(updatedExpense);
     });
   }
 
-  async removeExpense(
+  async deleteManualEvaluationExpense(
     userId: string,
     vehicleId: string,
     expenseId: string,
   ): Promise<void> {
     await this.prisma.$transaction(async (tx) => {
-      const expense = await this.findExpenseOrThrow(
+      const expense = await this.findExpenseForUserVehicleOrThrow(
         tx,
         userId,
         vehicleId,
         expenseId,
       );
+      this.ensureManualExpense(expense);
 
       await tx.evaluationExpense.delete({
         where: {
@@ -420,11 +386,30 @@ export class EvalutionVehicleService {
        * Financial results depend on expenses, so the evaluation must be
        * recalculated after expense deletion.
        */
-      await this.recalculateEvaluation(tx, expense.evaluationId);
+      await this.recalculateEvaluationFinancials(tx, expense.evaluationId);
     });
   }
 
-  private async findEvaluationOrThrow(
+  private async findVehicleOwnedByUserOrThrow(
+    tx: EvaluationPrismaClient,
+    userId: string,
+    vehicleId: string,
+  ) {
+    const vehicle = await tx.vehicle.findFirst({
+      where: {
+        id: vehicleId,
+        userId,
+      },
+    });
+
+    if (!vehicle) {
+      throw new NotFoundException('Veículo não encontrado');
+    }
+
+    return vehicle;
+  }
+
+  private async findEvaluationForUserVehicleOrThrow(
     tx: EvaluationPrismaClient,
     userId: string,
     vehicleId: string,
@@ -451,7 +436,32 @@ export class EvalutionVehicleService {
     return evaluation;
   }
 
-  private async findExpenseOrThrow(
+  private async findChecklistItemForUserVehicleOrThrow(
+    tx: EvaluationPrismaClient,
+    userId: string,
+    vehicleId: string,
+    checklistItemId: string,
+  ) {
+    const checklistItem = await tx.evaluationChecklistItem.findFirst({
+      where: {
+        id: checklistItemId,
+        evaluation: {
+          vehicleId,
+          vehicle: {
+            userId,
+          },
+        },
+      },
+    });
+
+    if (!checklistItem) {
+      throw new NotFoundException('Item do checklist não encontrado');
+    }
+
+    return checklistItem;
+  }
+
+  private async findExpenseForUserVehicleOrThrow(
     tx: EvaluationPrismaClient,
     userId: string,
     vehicleId: string,
@@ -473,6 +483,7 @@ export class EvalutionVehicleService {
       select: {
         id: true,
         evaluationId: true,
+        source: true,
       },
     });
 
@@ -483,7 +494,98 @@ export class EvalutionVehicleService {
     return expense;
   }
 
-  private async recalculateEvaluation(
+  private async createChecklistSnapshotForEvaluation(
+    tx: EvaluationPrismaClient,
+    evaluationId: string,
+    checklistTemplateItems: ChecklistTemplateItemSnapshotSource[],
+  ) {
+    await tx.evaluationChecklistItem.createMany({
+      data: checklistTemplateItems.map((checklistTemplateItem) => ({
+        evaluationId,
+        templateItemId: checklistTemplateItem.id,
+        category: checklistTemplateItem.category,
+        name: checklistTemplateItem.name,
+        question: checklistTemplateItem.question,
+        severity: checklistTemplateItem.severity,
+        requiresQuantity: checklistTemplateItem.requiresQuantity,
+        isRequired: checklistTemplateItem.isRequired,
+        order: checklistTemplateItem.order,
+        status: ChecklistItemStatus.NOT_CHECKED,
+        quantity: 1,
+        estimatedUnitCost: checklistTemplateItem.defaultEstimatedCost,
+        estimatedTotalCost: null,
+        notes: null,
+        answeredAt: null,
+      })),
+    });
+  }
+
+  private async syncChecklistDerivedExpense(
+    tx: EvaluationPrismaClient,
+    checklistItem: EvaluationChecklistItemExpenseSource,
+  ) {
+    if (checklistItem.status !== ChecklistItemStatus.NEEDS_REPAIR) {
+      await this.removeChecklistDerivedExpense(tx, checklistItem);
+      return;
+    }
+
+    await this.upsertChecklistDerivedExpense(tx, checklistItem);
+  }
+
+  private async upsertChecklistDerivedExpense(
+    tx: EvaluationPrismaClient,
+    checklistItem: EvaluationChecklistItemExpenseSource,
+  ) {
+    const amount = this.resolveChecklistExpenseAmount(checklistItem);
+
+    await tx.evaluationExpense.upsert({
+      where: {
+        evaluationId_name_source: {
+          evaluationId: checklistItem.evaluationId,
+          name: checklistItem.name,
+          source: ExpenseSource.CHECKLIST,
+        },
+      },
+      create: {
+        evaluationId: checklistItem.evaluationId,
+        category: ExpenseCategory.REPAIR,
+        source: ExpenseSource.CHECKLIST,
+        name: checklistItem.name,
+        amount,
+        isRequired: checklistItem.isRequired,
+        notes: checklistItem.notes,
+      },
+      update: {
+        category: ExpenseCategory.REPAIR,
+        amount,
+        isRequired: checklistItem.isRequired,
+        notes: checklistItem.notes,
+      },
+    });
+  }
+
+  private async removeChecklistDerivedExpense(
+    tx: EvaluationPrismaClient,
+    checklistItem: EvaluationChecklistItemExpenseSource,
+  ) {
+    await tx.evaluationExpense.deleteMany({
+      where: {
+        evaluationId: checklistItem.evaluationId,
+        source: ExpenseSource.CHECKLIST,
+        name: checklistItem.name,
+      },
+    });
+  }
+
+  private ensureManualExpense(expense: { source: ExpenseSource }) {
+    if (expense.source !== ExpenseSource.USER) {
+      throw new BadRequestException(
+        'Somente gastos manuais podem ser alterados por esta rota',
+      );
+    }
+  }
+
+  private async recalculateEvaluationFinancials(
     tx: EvaluationPrismaClient,
     evaluationId: string,
   ) {
@@ -513,22 +615,25 @@ export class EvalutionVehicleService {
       evaluation.vehicle.auctionCurrentBid ??
         evaluation.vehicle.auctionInitialBid,
     );
-    const expensesTotal = evaluation.evaluationExpenses.reduce(
+    const totalExpensesAmount = evaluation.evaluationExpenses.reduce(
       (sum, expense) => sum + this.toNumber(expense.amount),
       0,
     );
     const desiredMargin =
       this.toNumber(evaluation.desiredProfitMarginPercent) / 100;
     const safetyMargin = this.toNumber(evaluation.safetyMarginPercent) / 100;
-    const desiredProfit = marketValue * desiredMargin;
-    const safetyReserve = marketValue * safetyMargin;
-    const estimatedFinalCost = currentBid + expensesTotal;
+    const desiredProfitAmount = marketValue * desiredMargin;
+    const safetyMarginAmount = marketValue * safetyMargin;
+    const estimatedFinalCost = currentBid + totalExpensesAmount;
     const estimatedProfit =
       marketValue === 0 ? null : marketValue - estimatedFinalCost;
     const maxRecommendedBid =
       marketValue === 0
         ? null
-        : marketValue - expensesTotal - desiredProfit - safetyReserve;
+        : marketValue -
+          totalExpensesAmount -
+          desiredProfitAmount -
+          safetyMarginAmount;
     const requiredChecklistItems = evaluation.evaluationChecklistItems.filter(
       (item) => item.isRequired,
     );
@@ -549,7 +654,7 @@ export class EvalutionVehicleService {
         riskLevel: this.resolveRiskLevel(estimatedProfit, marketValue),
         recommendation: this.resolveRecommendation(
           estimatedProfit,
-          desiredProfit,
+          desiredProfitAmount,
         ),
         isComplete,
         lastCalculatedAt: new Date(),
@@ -642,10 +747,10 @@ export class EvalutionVehicleService {
      * Checklist expenses prefer explicit total cost; otherwise quantity and
      * unit cost are multiplied.
      */
-    const total = this.toNumber(item.estimatedTotalCost);
+    const explicitTotalCost = this.toNumber(item.estimatedTotalCost);
 
-    if (total > 0) {
-      return total;
+    if (explicitTotalCost > 0) {
+      return explicitTotalCost;
     }
 
     return item.quantity * this.toNumber(item.estimatedUnitCost);

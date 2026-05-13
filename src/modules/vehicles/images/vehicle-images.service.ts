@@ -23,7 +23,7 @@ const vehicleImageExtensionsByMimeType = {
 export class VehicleImagesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(
+  async addImagesToUserVehicle(
     userId: string,
     vehicleId: string,
     files: Express.Multer.File[],
@@ -86,7 +86,7 @@ export class VehicleImagesService {
     }
   }
 
-  async findAll(
+  async listUserVehicleImages(
     userId: string,
     vehicleId: string,
   ): Promise<VehicleImageResponseDto[]> {
@@ -108,7 +108,7 @@ export class VehicleImagesService {
     return vehicle.images.map((image) => new VehicleImageResponseDto(image));
   }
 
-  async remove(
+  async deleteUserVehicleImage(
     userId: string,
     vehicleId: string,
     imageId: string,

@@ -37,8 +37,8 @@ export class AuthService {
    * The password is always stored as a bcrypt hash, and the returned payload
    * intentionally excludes sensitive fields such as `password`.
    */
-  async register(data: RegisterUserDto): Promise<UserResponseDto> {
-    const email = this.normalizeEmail(data.email);
+  async register(registerDto: RegisterUserDto): Promise<UserResponseDto> {
+    const email = this.normalizeEmail(registerDto.email);
     const userExists = await this.prisma.user.findUnique({
       where: { email },
       select: { id: true },
@@ -49,10 +49,10 @@ export class AuthService {
     }
 
     try {
-      const password = await this.hashService.hash(data.password);
+      const password = await this.hashService.hash(registerDto.password);
       const user = await this.prisma.user.create({
         data: {
-          name: data.name,
+          name: registerDto.name,
           email,
           password,
           role: 'user',

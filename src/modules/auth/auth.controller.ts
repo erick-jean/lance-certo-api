@@ -158,11 +158,11 @@ export class AuthController {
     @Res({ passthrough: true }) response: Response,
   ): Promise<MessageResponseDto> {
     const refreshToken = this.getRefreshTokenFromCookie(request);
-    const result = await this.authService.logout(refreshToken);
+    const logoutResult = await this.authService.logout(refreshToken);
 
     this.clearRefreshTokenCookie(response);
 
-    return result;
+    return logoutResult;
   }
 
   private getRefreshTokenFromCookie(request: Request): string {

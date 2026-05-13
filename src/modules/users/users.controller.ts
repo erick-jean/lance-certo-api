@@ -28,6 +28,6 @@ export class UsersController {
     @Param('email') email: string,
     @Req() req: AuthenticatedRequest,
   ): Promise<UserResponseDto> {
-    return this.usersService.findOne(email, req.user);
+    return this.usersService.findUserProfileByEmail(email, req.user);
   }
 }

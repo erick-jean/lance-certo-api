@@ -59,7 +59,7 @@ export class VehiclesController {
     @Req() req: AuthenticatedRequest,
     @Query() query: FindVehiclesQueryDto,
   ): Promise<PaginatedVehicleResponseDto> {
-    return this.vehiclesService.findAll(req.user.sub, query);
+    return this.vehiclesService.listUserVehicles(req.user.sub, query);
   }
 
   @ApiOperation({ summary: 'Cadastra novo veículo.' })
@@ -71,7 +71,10 @@ export class VehiclesController {
     @Body() createVehicleDto: CreateVehicleDto,
     @Req() req: AuthenticatedRequest,
   ): Promise<ResponseVehicleDto> {
-    return this.vehiclesService.create(req.user.sub, createVehicleDto);
+    return this.vehiclesService.createVehicleForUser(
+      req.user.sub,
+      createVehicleDto,
+    );
   }
 
   @ApiOperation({ summary: 'Busca veículo específico.' })
@@ -84,7 +87,7 @@ export class VehiclesController {
     @Param('vehicleId', new ParseUUIDPipe()) vehicleId: string,
     @Req() req: AuthenticatedRequest,
   ): Promise<ResponseVehicleDto> {
-    return this.vehiclesService.findOne(req.user.sub, vehicleId);
+    return this.vehiclesService.findUserVehicleById(req.user.sub, vehicleId);
   }
 
   @ApiOperation({ summary: 'Atualiza veículo.' })
@@ -99,7 +102,7 @@ export class VehiclesController {
     @Body() updateVehicleDto: UpdateVehicleDto,
     @Req() req: AuthenticatedRequest,
   ): Promise<ResponseVehicleDto> {
-    return this.vehiclesService.update(
+    return this.vehiclesService.updateUserVehicle(
       req.user.sub,
       vehicleId,
       updateVehicleDto,
@@ -117,6 +120,6 @@ export class VehiclesController {
     @Req() req: AuthenticatedRequest,
     @Param('vehicleId', new ParseUUIDPipe()) vehicleId: string,
   ): Promise<void> {
-    return this.vehiclesService.remove(req.user.sub, vehicleId);
+    return this.vehiclesService.deleteUserVehicle(req.user.sub, vehicleId);
   }
 }

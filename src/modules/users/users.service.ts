@@ -11,7 +11,7 @@ import { UserResponseDto } from './dto/user-response.dto';
 export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findOne(
+  async findUserProfileByEmail(
     email: string,
     requester: JwtPayload,
   ): Promise<UserResponseDto> {

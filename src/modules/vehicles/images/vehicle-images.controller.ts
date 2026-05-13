@@ -54,7 +54,10 @@ export class VehicleImagesController {
     @Req() req: AuthenticatedRequest,
     @Param('vehicleId', new ParseUUIDPipe()) vehicleId: string,
   ): Promise<VehicleImageResponseDto[]> {
-    return this.vehicleImagesService.findAll(req.user.sub, vehicleId);
+    return this.vehicleImagesService.listUserVehicleImages(
+      req.user.sub,
+      vehicleId,
+    );
   }
 
   @ApiOperation({ summary: 'Adiciona imagens do veiculo.' })
@@ -109,7 +112,11 @@ export class VehicleImagesController {
       throw new BadRequestException('At least one image is required.');
     }
 
-    return this.vehicleImagesService.create(req.user.sub, vehicleId, files);
+    return this.vehicleImagesService.addImagesToUserVehicle(
+      req.user.sub,
+      vehicleId,
+      files,
+    );
   }
 
   @ApiOperation({ summary: 'Remove imagem do veiculo.' })
@@ -123,6 +130,10 @@ export class VehicleImagesController {
     @Param('vehicleId', new ParseUUIDPipe()) vehicleId: string,
     @Param('imageId', new ParseUUIDPipe()) imageId: string,
   ): Promise<void> {
-    return this.vehicleImagesService.remove(req.user.sub, vehicleId, imageId);
+    return this.vehicleImagesService.deleteUserVehicleImage(
+      req.user.sub,
+      vehicleId,
+      imageId,
+    );
   }
 }

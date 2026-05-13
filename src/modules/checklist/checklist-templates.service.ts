@@ -34,7 +34,7 @@ export class ChecklistService {
     return new ResponseChecklistTemplateDto(checklistTemplate);
   }
 
-  async findAllChecklistTemplate(): Promise<ResponseChecklistTemplateDto[]> {
+  async listChecklistTemplates(): Promise<ResponseChecklistTemplateDto[]> {
     const checklistTemplates = await this.prisma.checklistTemplate.findMany({
       /**
        * `_count.items` lets the API expose how many default items a template
@@ -58,7 +58,7 @@ export class ChecklistService {
     );
   }
 
-  async findOneChecklistTemplate(
+  async findChecklistTemplateById(
     id: string,
   ): Promise<ResponseChecklistTemplateDto> {
     const checklistTemplate = await this.prisma.checklistTemplate.findUnique({
@@ -106,7 +106,7 @@ export class ChecklistService {
     }
   }
 
-  async removeChecklistTemplate(id: string): Promise<void> {
+  async deleteChecklistTemplate(id: string): Promise<void> {
     try {
       await this.prisma.checklistTemplate.delete({
         where: { id },
@@ -120,7 +120,7 @@ export class ChecklistService {
     }
   }
 
-  async createItemChecklist(
+  async createChecklistTemplateItem(
     templateId: string,
     dto: CreateChecklistTemplateItemDto,
   ): Promise<ResponseChecklistTemplateItemDto> {
@@ -143,7 +143,7 @@ export class ChecklistService {
     return new ResponseChecklistTemplateItemDto(checklistTemplateItem);
   }
 
-  async findOneItemChecklist(
+  async findChecklistTemplateItemById(
     id: string,
   ): Promise<ResponseChecklistTemplateItemDto> {
     const itemChecklist = await this.prisma.checklistTemplateItem.findUnique({
@@ -157,7 +157,7 @@ export class ChecklistService {
     return new ResponseChecklistTemplateItemDto(itemChecklist);
   }
 
-  async findAllItemChecklist(
+  async listChecklistTemplateItems(
     templateId: string,
   ): Promise<ResponseChecklistTemplateItemDto[]> {
     const checklistTemplate = await this.prisma.checklistTemplate.findUnique({
@@ -180,7 +180,7 @@ export class ChecklistService {
     );
   }
 
-  async updateItemChecklist(
+  async updateChecklistTemplateItem(
     itemId: string,
     dto: UpdateChecklistTemplateItemDto,
   ): Promise<ResponseChecklistTemplateItemDto> {
@@ -200,7 +200,7 @@ export class ChecklistService {
     }
   }
 
-  async removeItemChecklist(itemId: string): Promise<void> {
+  async deleteChecklistTemplateItem(itemId: string): Promise<void> {
     try {
       await this.prisma.checklistTemplateItem.delete({
         where: { id: itemId },

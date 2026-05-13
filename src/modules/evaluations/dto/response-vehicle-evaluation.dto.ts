@@ -7,7 +7,7 @@ import { Prisma } from 'generated/prisma/client';
 import { ResponseEvaluationChecklistItemDto } from './response-evaluation-checklist-item.dto';
 import { ResponseEvaluationExpenseDto } from './response-evaluation-expense.dto';
 
-type ResponseEvalutionVehicleInput = {
+type ResponseVehicleEvaluationInput = {
   desiredProfitMarginPercent: Prisma.Decimal | null;
   safetyMarginPercent: Prisma.Decimal | null;
   maxRecommendedBid: Prisma.Decimal | null;
@@ -20,7 +20,7 @@ type ResponseEvalutionVehicleInput = {
     typeof ResponseEvaluationExpenseDto
   >[0][];
 } & Omit<
-  Partial<ResponseEvalutionVehicleDto>,
+  Partial<ResponseVehicleEvaluationDto>,
   | 'desiredProfitMarginPercent'
   | 'safetyMarginPercent'
   | 'maxRecommendedBid'
@@ -30,7 +30,7 @@ type ResponseEvalutionVehicleInput = {
   | 'evaluationExpenses'
 >;
 
-export class ResponseEvalutionVehicleDto {
+export class ResponseVehicleEvaluationDto {
   @ApiProperty({ example: 'c1a2b3d4-uuid' })
   id!: string;
 
@@ -109,7 +109,7 @@ export class ResponseEvalutionVehicleDto {
   @ApiProperty({ required: false })
   vehicle?: unknown;
 
-  constructor(evaluation: ResponseEvalutionVehicleInput) {
+  constructor(evaluation: ResponseVehicleEvaluationInput) {
     this.id = evaluation.id!;
     this.vehicleId = evaluation.vehicleId!;
     this.riskLevel = evaluation.riskLevel ?? null;
