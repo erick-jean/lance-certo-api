@@ -36,18 +36,18 @@ import { VehicleOwnerGuard } from '../guards/vehicle-owner/vehicle-owner.guard';
 import { VehicleImageResponseDto } from './dto/response-vehicle-image.dto';
 import { VehicleImagesService } from './vehicle-images.service';
 
-@ApiTags('Vehicle Images / Imagens do veiculo')
+@ApiTags('Vehicle Images / Imagens do veículo')
 @ApiBearerAuth()
-@ApiUnauthorizedResponse({ description: 'Unauthorized' })
-@ApiTooManyRequestsResponse({ description: 'Too many requests' })
+@ApiUnauthorizedResponse({ description: 'Não autorizado.' })
+@ApiTooManyRequestsResponse({ description: 'Muitas requisições.' })
 @UseGuards(AuthGuard, VehicleOwnerGuard)
 @Controller('vehicles/:vehicleId/images')
 export class VehicleImagesController {
   constructor(private readonly vehicleImagesService: VehicleImagesService) {}
 
-  @ApiOperation({ summary: 'Lista imagens do veiculo.' })
+  @ApiOperation({ summary: 'Lista imagens do veículo.' })
   @ApiOkResponse({ type: VehicleImageResponseDto, isArray: true })
-  @ApiNotFoundResponse({ description: 'Vehicle not found' })
+  @ApiNotFoundResponse({ description: 'Veículo não encontrado.' })
   @Get()
   @Throttle({ default: { limit: 60, ttl: 60_000, blockDuration: 60_000 } })
   findAll(
@@ -61,7 +61,7 @@ export class VehicleImagesController {
     );
   }
 
-  @ApiOperation({ summary: 'Adiciona imagens do veiculo.' })
+  @ApiOperation({ summary: 'Adiciona imagens do veículo.' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {
@@ -78,8 +78,8 @@ export class VehicleImagesController {
     },
   })
   @ApiCreatedResponse({ type: VehicleImageResponseDto, isArray: true })
-  @ApiBadRequestResponse({ description: 'Invalid image upload' })
-  @ApiNotFoundResponse({ description: 'Vehicle not found' })
+  @ApiBadRequestResponse({ description: 'Upload de imagem inválido.' })
+  @ApiNotFoundResponse({ description: 'Veículo não encontrado.' })
   @Post()
   @Throttle({ default: { limit: 10, ttl: 60_000, blockDuration: 120_000 } })
   @UseInterceptors(
@@ -121,9 +121,9 @@ export class VehicleImagesController {
     );
   }
 
-  @ApiOperation({ summary: 'Remove imagem do veiculo.' })
-  @ApiNoContentResponse({ description: 'Vehicle image removed successfully' })
-  @ApiNotFoundResponse({ description: 'Vehicle image not found' })
+  @ApiOperation({ summary: 'Remove imagem do veículo.' })
+  @ApiNoContentResponse({ description: 'Imagem removida com sucesso.' })
+  @ApiNotFoundResponse({ description: 'Imagem do veículo não encontrada.' })
   @Delete(':imageId')
   @Throttle({ default: { limit: 20, ttl: 60_000, blockDuration: 120_000 } })
   @HttpCode(HttpStatus.NO_CONTENT)

@@ -174,7 +174,7 @@ export class SubscriptionService {
     });
 
     if (!user) {
-      throw new NotFoundException('Usuario nao encontrado');
+      throw new NotFoundException('Usuário não encontrado.');
     }
 
     return user;

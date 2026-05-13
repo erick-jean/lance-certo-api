@@ -17,7 +17,7 @@ import { DashboardSummaryResponseDto } from './dto/dashboard-summary-response.dt
 
 @ApiTags('Dashboard')
 @ApiBearerAuth()
-@ApiUnauthorizedResponse({ description: 'Unauthorized' })
+@ApiUnauthorizedResponse({ description: 'Não autorizado.' })
 @UseGuards(AuthGuard)
 @Controller('dashboard')
 export class DashboardController {

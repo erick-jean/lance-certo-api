@@ -44,20 +44,20 @@ import { VehicleOwnerGuard } from './guards/vehicle-owner/vehicle-owner.guard';
 
 @ApiTags('Vehicles / Veículos')
 @ApiBearerAuth()
-@ApiUnauthorizedResponse({ description: 'Unauthorized' })
-@ApiTooManyRequestsResponse({ description: 'Too many requests' })
+@ApiUnauthorizedResponse({ description: 'Não autorizado.' })
+@ApiTooManyRequestsResponse({ description: 'Muitas requisições.' })
 @UseGuards(AuthGuard)
 @Controller('vehicles')
 export class VehiclesController {
   constructor(private readonly vehiclesService: VehiclesService) {}
 
-  @ApiOperation({ summary: 'Lista veiculos do usuario autenticado' })
+  @ApiOperation({ summary: 'Lista veículos do usuário autenticado.' })
   @ApiOkResponse({
-    description: 'Lista paginada de veiculos retornada com sucesso',
+    description: 'Lista paginada de veículos retornada com sucesso.',
     type: PaginatedVehicleResponseDto,
   })
   @ApiBadRequestResponse({
-    description: 'Invalid pagination parameters',
+    description: 'Parâmetros de paginação inválidos.',
   })
   @Throttle({ default: { limit: 60, ttl: 60_000, blockDuration: 60_000 } })
   @Get()
@@ -70,7 +70,7 @@ export class VehiclesController {
 
   @ApiOperation({ summary: 'Cadastra novo veículo.' })
   @ApiCreatedResponse({ type: ResponseVehicleDto })
-  @ApiBadRequestResponse({ description: 'Invalid vehicle payload' })
+  @ApiBadRequestResponse({ description: 'Dados do veículo inválidos.' })
   @ApiForbiddenResponse({ description: 'Limite do plano grátis atingido.' })
   @Post()
   @Throttle({ default: { limit: 20, ttl: 60_000, blockDuration: 120_000 } })
@@ -87,7 +87,7 @@ export class VehiclesController {
 
   @ApiOperation({ summary: 'Busca veículo específico.' })
   @ApiOkResponse({ type: ResponseVehicleDto })
-  @ApiNotFoundResponse({ description: 'Vehicle not found' })
+  @ApiNotFoundResponse({ description: 'Veículo não encontrado.' })
   @Get(':vehicleId')
   @Throttle({ default: { limit: 60, ttl: 60_000, blockDuration: 60_000 } })
   @UseGuards(VehicleOwnerGuard)
@@ -165,8 +165,8 @@ export class VehiclesController {
 
   @ApiOperation({ summary: 'Atualiza veículo.' })
   @ApiOkResponse({ type: ResponseVehicleDto })
-  @ApiBadRequestResponse({ description: 'Invalid vehicle payload' })
-  @ApiNotFoundResponse({ description: 'Vehicle not found' })
+  @ApiBadRequestResponse({ description: 'Dados do veículo inválidos.' })
+  @ApiNotFoundResponse({ description: 'Veículo não encontrado.' })
   @Throttle({ default: { limit: 30, ttl: 60_000, blockDuration: 120_000 } })
   @Patch(':vehicleId')
   @UseGuards(VehicleOwnerGuard)
@@ -184,8 +184,8 @@ export class VehiclesController {
   }
 
   @ApiOperation({ summary: 'Remove veículo.' })
-  @ApiNoContentResponse({ description: 'Vehicle removed successfully' })
-  @ApiNotFoundResponse({ description: 'Vehicle not found' })
+  @ApiNoContentResponse({ description: 'Veículo removido com sucesso.' })
+  @ApiNotFoundResponse({ description: 'Veículo não encontrado.' })
   @Delete(':vehicleId')
   @Throttle({ default: { limit: 10, ttl: 60_000, blockDuration: 300_000 } })
   @UseGuards(VehicleOwnerGuard)

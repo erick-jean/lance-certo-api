@@ -36,9 +36,9 @@ import { UpdateChecklistTemplateItemDto } from './dto/update-checklist-template-
 
 @ApiTags('Checklist Templates')
 @ApiBearerAuth()
-@ApiUnauthorizedResponse({ description: 'Unauthorized' })
-@ApiForbiddenResponse({ description: 'Admin access required' })
-@ApiTooManyRequestsResponse({ description: 'Too many requests' })
+@ApiUnauthorizedResponse({ description: 'Não autorizado.' })
+@ApiForbiddenResponse({ description: 'Acesso de administrador obrigatório.' })
+@ApiTooManyRequestsResponse({ description: 'Muitas requisições.' })
 /**
  * Checklist templates and template items are administrative reference data.
  * Every route requires a valid JWT and admin role because changes or reads here
@@ -71,7 +71,7 @@ export class ChecklistController {
 
   @ApiOperation({ summary: 'Busca Template de Checklist por id.' })
   @ApiOkResponse({ type: ResponseChecklistTemplateDto })
-  @ApiNotFoundResponse({ description: 'Template Checklist not found' })
+  @ApiNotFoundResponse({ description: 'Template de checklist não encontrado.' })
   @Throttle({ default: { limit: 60, ttl: 60_000, blockDuration: 60_000 } })
   @Get('checklist-templates/:id')
   findOneChecklistTemplate(
@@ -82,7 +82,7 @@ export class ChecklistController {
 
   @ApiOperation({ summary: 'Atualiza Template de Checklist.' })
   @ApiOkResponse({ type: ResponseChecklistTemplateDto })
-  @ApiNotFoundResponse({ description: 'Template Checklist not found' })
+  @ApiNotFoundResponse({ description: 'Template de checklist não encontrado.' })
   @Throttle({ default: { limit: 20, ttl: 60_000, blockDuration: 120_000 } })
   @Patch('checklist-templates/:id')
   updateChecklistTemplate(
@@ -97,9 +97,9 @@ export class ChecklistController {
 
   @ApiOperation({ summary: 'Remove Template de Checklist.' })
   @ApiNoContentResponse({
-    description: 'Template Checklist removed successfully',
+    description: 'Template de checklist removido com sucesso.',
   })
-  @ApiNotFoundResponse({ description: 'Template Checklist not found' })
+  @ApiNotFoundResponse({ description: 'Template de checklist não encontrado.' })
   @Throttle({ default: { limit: 10, ttl: 60_000, blockDuration: 300_000 } })
   @HttpCode(HttpStatus.NO_CONTENT)
   @Delete('checklist-templates/:id')
@@ -112,7 +112,7 @@ export class ChecklistController {
   @ApiOperation({ summary: 'Cria Item de Checklist' })
   @Throttle({ default: { limit: 20, ttl: 60_000, blockDuration: 120_000 } })
   @ApiCreatedResponse({ type: ResponseChecklistTemplateItemDto })
-  @ApiNotFoundResponse({ description: 'Template Checklist not found' })
+  @ApiNotFoundResponse({ description: 'Template de checklist não encontrado.' })
   @Post('checklist-templates/:templateId/items')
   createItemChecklist(
     @Param('templateId', new ParseUUIDPipe()) templateId: string,
@@ -124,9 +124,11 @@ export class ChecklistController {
     );
   }
 
-  @ApiOperation({ summary: 'Busca todos Itens de um Template Checklist' })
+  @ApiOperation({
+    summary: 'Busca todos os itens de um template de checklist.',
+  })
   @ApiOkResponse({ type: ResponseChecklistTemplateItemDto, isArray: true })
-  @ApiNotFoundResponse({ description: 'Template Checklist not found' })
+  @ApiNotFoundResponse({ description: 'Template de checklist não encontrado.' })
   @Throttle({ default: { limit: 60, ttl: 60_000, blockDuration: 60_000 } })
   @Get('checklist-templates/:templateId/items')
   findAllItemChecklist(
@@ -137,7 +139,9 @@ export class ChecklistController {
 
   @ApiOperation({ summary: 'Busca item no Template de Checklist por id.' })
   @ApiOkResponse({ type: ResponseChecklistTemplateItemDto })
-  @ApiNotFoundResponse({ description: 'Template Checklist item not found' })
+  @ApiNotFoundResponse({
+    description: 'Item do template de checklist não encontrado.',
+  })
   @Throttle({ default: { limit: 60, ttl: 60_000, blockDuration: 60_000 } })
   @Get('checklist-template-items/:itemId')
   findOneItemChecklist(
@@ -148,7 +152,9 @@ export class ChecklistController {
 
   @ApiOperation({ summary: 'Atualiza item de Template de Checklist.' })
   @ApiOkResponse({ type: ResponseChecklistTemplateItemDto })
-  @ApiNotFoundResponse({ description: 'Template Checklist item not found' })
+  @ApiNotFoundResponse({
+    description: 'Item do template de checklist não encontrado.',
+  })
   @Throttle({ default: { limit: 20, ttl: 60_000, blockDuration: 120_000 } })
   @Patch('checklist-template-items/:itemId')
   updateItemChecklist(
@@ -163,9 +169,11 @@ export class ChecklistController {
 
   @ApiOperation({ summary: 'Remove item de Template de Checklist.' })
   @ApiNoContentResponse({
-    description: 'Template Checklist item removed successfully',
+    description: 'Item do template de checklist removido com sucesso.',
   })
-  @ApiNotFoundResponse({ description: 'Template Checklist item not found' })
+  @ApiNotFoundResponse({
+    description: 'Item do template de checklist não encontrado.',
+  })
   @Throttle({ default: { limit: 10, ttl: 60_000, blockDuration: 300_000 } })
   @HttpCode(HttpStatus.NO_CONTENT)
   @Delete('checklist-template-items/:itemId')
@@ -180,7 +188,9 @@ export class ChecklistController {
     deprecated: true,
   })
   @ApiOkResponse({ type: ResponseChecklistTemplateItemDto })
-  @ApiNotFoundResponse({ description: 'Template Checklist item not found' })
+  @ApiNotFoundResponse({
+    description: 'Item do template de checklist não encontrado.',
+  })
   @Throttle({ default: { limit: 60, ttl: 60_000, blockDuration: 60_000 } })
   @Get('checklist-template/:itemId/items')
   findOneItemChecklistLegacy(
@@ -195,7 +205,9 @@ export class ChecklistController {
     deprecated: true,
   })
   @ApiOkResponse({ type: ResponseChecklistTemplateItemDto })
-  @ApiNotFoundResponse({ description: 'Template Checklist item not found' })
+  @ApiNotFoundResponse({
+    description: 'Item do template de checklist não encontrado.',
+  })
   @Throttle({ default: { limit: 20, ttl: 60_000, blockDuration: 120_000 } })
   @Patch('checklist-template/:itemId/items')
   updateItemChecklistLegacy(
@@ -214,9 +226,11 @@ export class ChecklistController {
     deprecated: true,
   })
   @ApiNoContentResponse({
-    description: 'Template Checklist item removed successfully',
+    description: 'Item do template de checklist removido com sucesso.',
   })
-  @ApiNotFoundResponse({ description: 'Template Checklist item not found' })
+  @ApiNotFoundResponse({
+    description: 'Item do template de checklist não encontrado.',
+  })
   @Throttle({ default: { limit: 10, ttl: 60_000, blockDuration: 300_000 } })
   @HttpCode(HttpStatus.NO_CONTENT)
   @Delete('checklist-template/:itemId/items')

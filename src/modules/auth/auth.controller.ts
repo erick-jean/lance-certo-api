@@ -36,8 +36,8 @@ import { AuthenticatedRequest } from './interfaces/authenticated-request.interfa
 import { ResponseUserDto } from '../users/dto/response-user.dto';
 
 @ApiTags('Auth')
-@ApiBadRequestResponse({ description: 'Invalid request payload' })
-@ApiTooManyRequestsResponse({ description: 'Too many requests' })
+@ApiBadRequestResponse({ description: 'Dados da requisição inválidos.' })
+@ApiTooManyRequestsResponse({ description: 'Muitas requisições.' })
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -47,9 +47,9 @@ export class AuthController {
 
   @Post('register')
   @Throttle({ default: { limit: 5, ttl: 60_000, blockDuration: 300_000 } })
-  @ApiOperation({ summary: 'Registra um novo usuario' })
+  @ApiOperation({ summary: 'Registra um novo usuário.' })
   @ApiCreatedResponse({ type: ResponseUserDto })
-  @ApiConflictResponse({ description: 'Email already registered' })
+  @ApiConflictResponse({ description: 'E-mail já cadastrado.' })
   register(@Body() registerDto: RegisterUserDto): Promise<ResponseUserDto> {
     return this.authService.register(registerDto);
   }
@@ -64,10 +64,10 @@ export class AuthController {
   @Post('login')
   @Throttle({ default: { limit: 5, ttl: 60_000, blockDuration: 300_000 } })
   @ApiOperation({
-    summary: 'Autentica um usuario e grava refresh token em cookie HttpOnly',
+    summary: 'Autentica um usuário e grava refresh token em cookie HttpOnly.',
   })
   @ApiOkResponse({ type: AuthResponseDto })
-  @ApiUnauthorizedResponse({ description: 'Invalid credentials' })
+  @ApiUnauthorizedResponse({ description: 'Credenciais inválidas.' })
   async signIn(
     @Body() signInDto: LoginDto,
     @Res({ passthrough: true }) response: Response,
@@ -89,10 +89,12 @@ export class AuthController {
   @Post('refresh')
   @Throttle({ default: { limit: 30, ttl: 60_000, blockDuration: 60_000 } })
   @ApiOperation({
-    summary: 'Gera novo access token usando refresh token em cookie HttpOnly',
+    summary: 'Gera novo access token usando refresh token em cookie HttpOnly.',
   })
   @ApiOkResponse({ type: AuthResponseDto })
-  @ApiUnauthorizedResponse({ description: 'Invalid or missing refresh token' })
+  @ApiUnauthorizedResponse({
+    description: 'Refresh token inválido ou ausente.',
+  })
   async refresh(
     @Req() request: Request,
     @Res({ passthrough: true }) response: Response,
@@ -110,7 +112,7 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @Post('forgot-password')
   @Throttle({ default: { limit: 3, ttl: 300_000, blockDuration: 900_000 } })
-  @ApiOperation({ summary: 'Solicita recuperacao de senha' })
+  @ApiOperation({ summary: 'Solicita recuperação de senha.' })
   @ApiOkResponse({ type: MessageResponseDto })
   forgotPassword(@Body() dto: ForgotPasswordDto): Promise<MessageResponseDto> {
     return this.authService.forgotPassword(dto);
@@ -123,9 +125,11 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @Post('reset-password')
   @Throttle({ default: { limit: 5, ttl: 300_000, blockDuration: 900_000 } })
-  @ApiOperation({ summary: 'Redefine a senha usando token de recuperacao' })
+  @ApiOperation({ summary: 'Redefine a senha usando token de recuperação.' })
   @ApiOkResponse({ type: MessageResponseDto })
-  @ApiBadRequestResponse({ description: 'Invalid or expired reset token' })
+  @ApiBadRequestResponse({
+    description: 'Token de recuperação inválido ou expirado.',
+  })
   resetPassword(@Body() dto: ResetPasswordDto): Promise<MessageResponseDto> {
     return this.authService.resetPassword(dto);
   }
@@ -134,9 +138,9 @@ export class AuthController {
   @Throttle({ default: { limit: 60, ttl: 60_000, blockDuration: 60_000 } })
   @UseGuards(AuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Retorna o usuario autenticado' })
+  @ApiOperation({ summary: 'Retorna o usuário autenticado.' })
   @ApiOkResponse({ type: ResponseUserDto })
-  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+  @ApiUnauthorizedResponse({ description: 'Não autorizado.' })
   me(@Req() req: AuthenticatedRequest): Promise<ResponseUserDto> {
     return this.authService.me(req.user.sub);
   }
@@ -149,10 +153,12 @@ export class AuthController {
   @Post('logout')
   @Throttle({ default: { limit: 10, ttl: 60_000, blockDuration: 60_000 } })
   @ApiOperation({
-    summary: 'Revoga refresh token em cookie HttpOnly e encerra sessao',
+    summary: 'Revoga refresh token em cookie HttpOnly e encerra sessão.',
   })
   @ApiOkResponse({ type: MessageResponseDto })
-  @ApiUnauthorizedResponse({ description: 'Invalid or missing refresh token' })
+  @ApiUnauthorizedResponse({
+    description: 'Refresh token inválido ou ausente.',
+  })
   async logout(
     @Req() request: Request,
     @Res({ passthrough: true }) response: Response,
@@ -169,7 +175,7 @@ export class AuthController {
     const refreshToken = this.getOptionalRefreshTokenFromCookie(request);
 
     if (!refreshToken) {
-      throw new UnauthorizedException('Refresh token not found');
+      throw new UnauthorizedException('Refresh token não encontrado.');
     }
 
     return refreshToken;

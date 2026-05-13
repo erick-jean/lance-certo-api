@@ -40,7 +40,7 @@ export class SubscriptionController {
   @Throttle({ default: { limit: 60, ttl: 60_000, blockDuration: 60_000 } })
   @UseGuards(AuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Retorna plano atual do usuario' })
+  @ApiOperation({ summary: 'Retorna plano atual do usuário.' })
   @ApiOkResponse({ type: SubscriptionResponseDto })
   findCurrent(
     @Req() request: AuthenticatedRequest,
@@ -64,7 +64,7 @@ export class SubscriptionController {
   @Throttle({ default: { limit: 10, ttl: 60_000, blockDuration: 300_000 } })
   @UseGuards(AuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Inicia pagamento ou assinatura' })
+  @ApiOperation({ summary: 'Inicia pagamento ou assinatura.' })
   @ApiOkResponse({ type: CheckoutResponseDto })
   checkout(@Req() request: AuthenticatedRequest): Promise<CheckoutResponseDto> {
     return this.subscriptionService.checkout(request.user.sub);
@@ -74,7 +74,7 @@ export class SubscriptionController {
   @Throttle({ default: { limit: 5, ttl: 60_000, blockDuration: 300_000 } })
   @UseGuards(AuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Cancela assinatura' })
+  @ApiOperation({ summary: 'Cancela assinatura.' })
   @ApiOkResponse({ type: SubscriptionResponseDto })
   cancel(
     @Req() request: AuthenticatedRequest,
@@ -85,7 +85,7 @@ export class SubscriptionController {
   @HttpCode(HttpStatus.OK)
   @Post('webhook')
   @Throttle({ default: { limit: 60, ttl: 60_000, blockDuration: 300_000 } })
-  @ApiOperation({ summary: 'Recebe eventos do gateway de pagamento' })
+  @ApiOperation({ summary: 'Recebe eventos do gateway de pagamento.' })
   @ApiOkResponse({ type: MessageResponseDto })
   webhook(
     @Headers('x-webhook-secret') webhookSecret: string | undefined,

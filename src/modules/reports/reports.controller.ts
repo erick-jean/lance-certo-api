@@ -24,7 +24,7 @@ import { ReportsService } from './reports.service';
 
 @ApiTags('Reports / Relatórios')
 @ApiBearerAuth()
-@ApiUnauthorizedResponse({ description: 'Unauthorized' })
+@ApiUnauthorizedResponse({ description: 'Não autorizado.' })
 @Controller('reports')
 export class ReportsController {
   constructor(private readonly reportsService: ReportsService) {}

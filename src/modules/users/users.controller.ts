@@ -38,7 +38,7 @@ import { UsersService } from './users.service';
 
 @ApiTags('Users')
 @ApiBearerAuth()
-@ApiUnauthorizedResponse({ description: 'Unauthorized.' })
+@ApiUnauthorizedResponse({ description: 'Não autorizado.' })
 @UseGuards(AuthGuard)
 @Controller('users')
 export class UsersController {
@@ -56,7 +56,7 @@ export class UsersController {
   @Throttle({ default: { limit: 30, ttl: 60_000, blockDuration: 120_000 } })
   @ApiOperation({ summary: 'Atualiza os dados do usuário autenticado.' })
   @ApiOkResponse({ type: ResponseUserDto })
-  @ApiBadRequestResponse({ description: 'Invalid request.' })
+  @ApiBadRequestResponse({ description: 'Requisição inválida.' })
   updateMe(
     @Req() req: AuthenticatedRequest,
     @Body() dto: UpdateMeDto,
@@ -68,9 +68,9 @@ export class UsersController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @Throttle({ default: { limit: 10, ttl: 60_000, blockDuration: 300_000 } })
   @ApiOperation({ summary: 'Altera a senha do usuário autenticado.' })
-  @ApiNoContentResponse({ description: 'Password changed successfully.' })
+  @ApiNoContentResponse({ description: 'Senha alterada com sucesso.' })
   @ApiBadRequestResponse({
-    description: 'Invalid current password or invalid request.',
+    description: 'Senha atual inválida ou requisição inválida.',
   })
   changeMyPassword(
     @Req() req: AuthenticatedRequest,
@@ -85,7 +85,7 @@ export class UsersController {
   @Throttle({ default: { limit: 60, ttl: 60_000, blockDuration: 60_000 } })
   @ApiOperation({ summary: 'Lista usuários. Somente ADMIN.' })
   @ApiOkResponse({ type: ResponseUserDto, isArray: true })
-  @ApiForbiddenResponse({ description: 'Forbidden.' })
+  @ApiForbiddenResponse({ description: 'Acesso negado.' })
   findAll(): Promise<ResponseUserDto[]> {
     return this.usersService.findAll();
   }
@@ -97,8 +97,8 @@ export class UsersController {
   @ApiOperation({ summary: 'Busca usuário por id. Somente ADMIN.' })
   @ApiParam({ name: 'userId', type: String, format: 'uuid' })
   @ApiOkResponse({ type: ResponseUserDto })
-  @ApiForbiddenResponse({ description: 'Forbidden.' })
-  @ApiNotFoundResponse({ description: 'User not found.' })
+  @ApiForbiddenResponse({ description: 'Acesso negado.' })
+  @ApiNotFoundResponse({ description: 'Usuário não encontrado.' })
   findById(
     @Param('userId', new ParseUUIDPipe()) userId: string,
   ): Promise<ResponseUserDto> {
@@ -112,9 +112,9 @@ export class UsersController {
   @ApiOperation({ summary: 'Atualiza usuário por id. Somente ADMIN.' })
   @ApiParam({ name: 'userId', type: String, format: 'uuid' })
   @ApiOkResponse({ type: ResponseUserDto })
-  @ApiBadRequestResponse({ description: 'Invalid request.' })
-  @ApiForbiddenResponse({ description: 'Forbidden.' })
-  @ApiNotFoundResponse({ description: 'User not found.' })
+  @ApiBadRequestResponse({ description: 'Requisição inválida.' })
+  @ApiForbiddenResponse({ description: 'Acesso negado.' })
+  @ApiNotFoundResponse({ description: 'Usuário não encontrado.' })
   updateById(
     @Param('userId', new ParseUUIDPipe()) userId: string,
     @Body() dto: UpdateUserDto,
@@ -129,9 +129,9 @@ export class UsersController {
   @ApiOperation({ summary: 'Ativa ou inativa usuário. Somente ADMIN.' })
   @ApiParam({ name: 'userId', type: String, format: 'uuid' })
   @ApiOkResponse({ type: ResponseUserDto })
-  @ApiBadRequestResponse({ description: 'Invalid request.' })
-  @ApiForbiddenResponse({ description: 'Forbidden.' })
-  @ApiNotFoundResponse({ description: 'User not found.' })
+  @ApiBadRequestResponse({ description: 'Requisição inválida.' })
+  @ApiForbiddenResponse({ description: 'Acesso negado.' })
+  @ApiNotFoundResponse({ description: 'Usuário não encontrado.' })
   updateStatus(
     @Req() req: AuthenticatedRequest,
     @Param('userId', new ParseUUIDPipe()) userId: string,
@@ -148,10 +148,10 @@ export class UsersController {
   @ApiOperation({ summary: 'Remove ou desativa usuário. Somente ADMIN.' })
   @ApiParam({ name: 'userId', type: String, format: 'uuid' })
   @ApiNoContentResponse({
-    description: 'User deleted or deactivated successfully.',
+    description: 'Usuário removido ou desativado com sucesso.',
   })
-  @ApiForbiddenResponse({ description: 'Forbidden.' })
-  @ApiNotFoundResponse({ description: 'User not found.' })
+  @ApiForbiddenResponse({ description: 'Acesso negado.' })
+  @ApiNotFoundResponse({ description: 'Usuário não encontrado.' })
   removeById(
     @Req() req: AuthenticatedRequest,
     @Param('userId', new ParseUUIDPipe()) userId: string,

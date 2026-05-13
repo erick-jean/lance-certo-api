@@ -39,10 +39,10 @@ import { UpdateEvaluationExpenseDto } from './dto/update-evaluation-expense.dto'
 import { UpdateVehicleEvaluationDto } from './dto/update-vehicle-evaluation.dto';
 import { VehicleEvaluationsService } from './vehicle-evaluations.service';
 
-@ApiTags('Vehicle Evaluation / Avaliacao do veiculo')
+@ApiTags('Vehicle Evaluation / Avaliação do veículo')
 @ApiBearerAuth()
-@ApiUnauthorizedResponse({ description: 'Unauthorized' })
-@ApiTooManyRequestsResponse({ description: 'Too many requests' })
+@ApiUnauthorizedResponse({ description: 'Não autorizado.' })
+@ApiTooManyRequestsResponse({ description: 'Muitas requisições.' })
 @UseGuards(AuthGuard, VehicleOwnerGuard)
 @Controller('vehicles')
 export class VehicleEvaluationsController {
@@ -100,7 +100,7 @@ export class VehicleEvaluationsController {
   }
 
   @ApiOperation({ summary: 'Remove avaliação do veículo.' })
-  @ApiNoContentResponse({ description: 'Vehicle evaluation removed' })
+  @ApiNoContentResponse({ description: 'Avaliação do veículo removida.' })
   @Delete(':vehicleId/evaluation')
   @HttpCode(HttpStatus.NO_CONTENT)
   @Throttle({ default: { limit: 10, ttl: 60_000, blockDuration: 300_000 } })
@@ -216,7 +216,7 @@ export class VehicleEvaluationsController {
   }
 
   @ApiOperation({ summary: 'Remove gasto da avaliação do veículo.' })
-  @ApiNoContentResponse({ description: 'Vehicle evaluation expense removed' })
+  @ApiNoContentResponse({ description: 'Gasto da avaliação removido.' })
   @ApiForbiddenResponse({
     description: 'Plano premium necessário para acessar este recurso.',
   })

@@ -464,7 +464,7 @@ export class AuthService {
    */
   private getPasswordResetRequestedResponse(): MessageResponseDto {
     return {
-      message: 'Se o email existir, enviaremos um link de recuperacao.',
+      message: 'Se o e-mail existir, enviaremos um link de recuperação.',
     };
   }
 }

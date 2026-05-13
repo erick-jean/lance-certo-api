@@ -28,7 +28,7 @@ export class VehicleOwnerGuard implements CanActivate {
     const vehicleId = request.params.vehicleId;
 
     if (!vehicleId) {
-      throw new BadRequestException('Id do veículo é obrigatório.');
+      throw new BadRequestException('ID do veículo é obrigatório.');
     }
 
     /**
