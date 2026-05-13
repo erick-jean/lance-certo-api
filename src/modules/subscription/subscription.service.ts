@@ -99,7 +99,7 @@ export class SubscriptionService {
       where: { id: userId },
       data: {
         planStatus: 'canceled',
-        planExpiresAt: normalizedUser.planExpiresAt ?? new Date(),
+        planExpiresAt: normalizedUser.planExpiresAt,
       },
       select: this.subscriptionSelect,
     });
@@ -113,11 +113,7 @@ export class SubscriptionService {
   async applySubscriptionWebhookEvent(
     dto: SubscriptionWebhookDto,
   ): Promise<MessageResponseDto> {
-    await this.findUserSubscription(dto.userId);
-
-    const planExpiresAt = dto.planExpiresAt
-      ? new Date(dto.planExpiresAt)
-      : this.calculateDefaultPremiumExpiration();
+    const user = await this.findUserSubscription(dto.userId);
 
     switch (dto.event) {
       case 'payment_approved':
@@ -126,16 +122,21 @@ export class SubscriptionService {
           data: {
             plan: 'premium',
             planStatus: 'active',
-            planExpiresAt,
+            planExpiresAt: dto.planExpiresAt
+              ? new Date(dto.planExpiresAt)
+              : this.calculateDefaultPremiumExpiration(),
           },
         });
         break;
       case 'subscription_canceled':
+        // Cancellation stops renewal but keeps premium access until the current expiration date.
         await this.prisma.user.update({
           where: { id: dto.userId },
           data: {
             planStatus: 'canceled',
-            planExpiresAt,
+            planExpiresAt: dto.planExpiresAt
+              ? new Date(dto.planExpiresAt)
+              : user.planExpiresAt,
           },
         });
         break;
