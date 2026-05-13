@@ -50,7 +50,7 @@ export class ResponseEvaluationChecklistItemDto {
   @ApiProperty({ example: 700, nullable: true })
   estimatedTotalCost!: number | null;
 
-  @ApiProperty({ example: 'Observacao', nullable: true })
+  @ApiProperty({ example: 'Observação', nullable: true })
   notes!: string | null;
 
   @ApiProperty({ example: '2026-05-08T15:30:00.000Z', nullable: true })

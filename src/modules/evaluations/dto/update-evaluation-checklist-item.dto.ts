@@ -1,4 +1,4 @@
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsEnum,
@@ -6,9 +6,13 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  MaxLength,
   Min,
 } from 'class-validator';
 import { ChecklistItemStatus } from 'generated/prisma/enums';
+
+const trimString = (value: unknown): unknown =>
+  typeof value === 'string' ? value.trim() : value;
 
 export class UpdateEvaluationChecklistItemDto {
   @ApiPropertyOptional({ enum: ChecklistItemStatus })
@@ -37,8 +41,10 @@ export class UpdateEvaluationChecklistItemDto {
   @Min(0)
   estimatedTotalCost?: number | null;
 
-  @ApiPropertyOptional({ example: 'Precisa substituir a peca.' })
+  @ApiPropertyOptional({ example: 'Precisa substituir a peça.' })
   @IsOptional()
+  @Transform(({ value }: { value: unknown }) => trimString(value))
   @IsString()
+  @MaxLength(1000)
   notes?: string | null;
 }

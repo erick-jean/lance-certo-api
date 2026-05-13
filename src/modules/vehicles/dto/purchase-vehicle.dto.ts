@@ -16,7 +16,7 @@ export class PurchaseVehicleDto {
     example: '2026-05-13T10:00:00.000Z',
     type: String,
     format: 'date-time',
-    description: 'Data do arremate. Se não enviada, usar data atual.',
+    description: 'Data do arremate. Se não enviada, usa a data atual.',
   })
   @IsOptional()
   @IsDateString()

@@ -18,7 +18,11 @@ const trimUppercaseString = (value: unknown): unknown =>
   typeof value === 'string' ? value.trim().toUpperCase() : value;
 
 export class FindVehiclesQueryDto {
-  @ApiPropertyOptional({ example: 1, minimum: 1, description: 'Page number' })
+  @ApiPropertyOptional({
+    example: 1,
+    minimum: 1,
+    description: 'Número da página.',
+  })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
@@ -29,7 +33,7 @@ export class FindVehiclesQueryDto {
     example: 10,
     minimum: 1,
     maximum: 100,
-    description: 'Number of items per page (max 100)',
+    description: 'Quantidade de itens por página (máximo 100).',
   })
   @IsOptional()
   @Type(() => Number)

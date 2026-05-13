@@ -49,7 +49,7 @@ import { UpdateChecklistTemplateItemDto } from './dto/update-checklist-template-
 export class ChecklistController {
   constructor(private readonly checklistService: ChecklistService) {}
 
-  @ApiOperation({ summary: 'Cria Template de Checklist' })
+  @ApiOperation({ summary: 'Cria template de checklist.' })
   @ApiCreatedResponse({ type: ResponseChecklistTemplateDto })
   @Throttle({ default: { limit: 20, ttl: 60_000, blockDuration: 120_000 } })
   @Post('checklist-templates')
@@ -61,7 +61,7 @@ export class ChecklistController {
     );
   }
 
-  @ApiOperation({ summary: 'Busca todos os Template de Checklist' })
+  @ApiOperation({ summary: 'Busca todos os templates de checklist.' })
   @ApiOkResponse({ type: ResponseChecklistTemplateDto, isArray: true })
   @Throttle({ default: { limit: 60, ttl: 60_000, blockDuration: 60_000 } })
   @Get('checklist-templates')
@@ -69,7 +69,7 @@ export class ChecklistController {
     return this.checklistService.listChecklistTemplates();
   }
 
-  @ApiOperation({ summary: 'Busca Template de Checklist por id.' })
+  @ApiOperation({ summary: 'Busca template de checklist por id.' })
   @ApiOkResponse({ type: ResponseChecklistTemplateDto })
   @ApiNotFoundResponse({ description: 'Template de checklist não encontrado.' })
   @Throttle({ default: { limit: 60, ttl: 60_000, blockDuration: 60_000 } })
@@ -80,7 +80,7 @@ export class ChecklistController {
     return this.checklistService.findChecklistTemplateById(id);
   }
 
-  @ApiOperation({ summary: 'Atualiza Template de Checklist.' })
+  @ApiOperation({ summary: 'Atualiza template de checklist.' })
   @ApiOkResponse({ type: ResponseChecklistTemplateDto })
   @ApiNotFoundResponse({ description: 'Template de checklist não encontrado.' })
   @Throttle({ default: { limit: 20, ttl: 60_000, blockDuration: 120_000 } })
@@ -95,7 +95,7 @@ export class ChecklistController {
     );
   }
 
-  @ApiOperation({ summary: 'Remove Template de Checklist.' })
+  @ApiOperation({ summary: 'Remove template de checklist.' })
   @ApiNoContentResponse({
     description: 'Template de checklist removido com sucesso.',
   })
@@ -109,7 +109,7 @@ export class ChecklistController {
     return this.checklistService.deleteChecklistTemplate(id);
   }
 
-  @ApiOperation({ summary: 'Cria Item de Checklist' })
+  @ApiOperation({ summary: 'Cria item de checklist.' })
   @Throttle({ default: { limit: 20, ttl: 60_000, blockDuration: 120_000 } })
   @ApiCreatedResponse({ type: ResponseChecklistTemplateItemDto })
   @ApiNotFoundResponse({ description: 'Template de checklist não encontrado.' })
@@ -137,7 +137,7 @@ export class ChecklistController {
     return this.checklistService.listChecklistTemplateItems(templateId);
   }
 
-  @ApiOperation({ summary: 'Busca item no Template de Checklist por id.' })
+  @ApiOperation({ summary: 'Busca item no template de checklist por id.' })
   @ApiOkResponse({ type: ResponseChecklistTemplateItemDto })
   @ApiNotFoundResponse({
     description: 'Item do template de checklist não encontrado.',
@@ -150,7 +150,7 @@ export class ChecklistController {
     return this.checklistService.findChecklistTemplateItemById(itemId);
   }
 
-  @ApiOperation({ summary: 'Atualiza item de Template de Checklist.' })
+  @ApiOperation({ summary: 'Atualiza item de template de checklist.' })
   @ApiOkResponse({ type: ResponseChecklistTemplateItemDto })
   @ApiNotFoundResponse({
     description: 'Item do template de checklist não encontrado.',
@@ -167,7 +167,7 @@ export class ChecklistController {
     );
   }
 
-  @ApiOperation({ summary: 'Remove item de Template de Checklist.' })
+  @ApiOperation({ summary: 'Remove item de template de checklist.' })
   @ApiNoContentResponse({
     description: 'Item do template de checklist removido com sucesso.',
   })
@@ -184,7 +184,7 @@ export class ChecklistController {
   }
 
   @ApiOperation({
-    summary: 'Busca item no Template de Checklist por id.',
+    summary: 'Busca item no template de checklist por id.',
     deprecated: true,
   })
   @ApiOkResponse({ type: ResponseChecklistTemplateItemDto })
@@ -201,7 +201,7 @@ export class ChecklistController {
   }
 
   @ApiOperation({
-    summary: 'Atualiza item de Template de Checklist.',
+    summary: 'Atualiza item de template de checklist.',
     deprecated: true,
   })
   @ApiOkResponse({ type: ResponseChecklistTemplateItemDto })
@@ -222,7 +222,7 @@ export class ChecklistController {
   }
 
   @ApiOperation({
-    summary: 'Remove item de Template de Checklist.',
+    summary: 'Remove item de template de checklist.',
     deprecated: true,
   })
   @ApiNoContentResponse({

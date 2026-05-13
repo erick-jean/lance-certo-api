@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class MessageResponseDto {
   @ApiProperty({
-    example: 'Se o email existir, enviaremos um link de recuperacao.',
+    example: 'Se o e-mail existir, enviaremos um link de recuperação.',
   })
   message!: string;
 }

@@ -89,7 +89,7 @@ export class ChecklistService {
     });
 
     if (!checklistTemplate) {
-      throw new NotFoundException('Checklist template not found');
+      throw new NotFoundException('Template de checklist não encontrado.');
     }
 
     return new ResponseChecklistTemplateDto(checklistTemplate);
@@ -118,7 +118,7 @@ export class ChecklistService {
         throw error;
       }
 
-      throw new NotFoundException('Checklist template not found');
+      throw new NotFoundException('Template de checklist não encontrado.');
     }
   }
 
@@ -132,7 +132,7 @@ export class ChecklistService {
         throw error;
       }
 
-      throw new NotFoundException('Checklist template not found');
+      throw new NotFoundException('Template de checklist não encontrado.');
     }
   }
 
@@ -145,7 +145,7 @@ export class ChecklistService {
     });
 
     if (!checklistTemplate) {
-      throw new NotFoundException('Checklist template not found');
+      throw new NotFoundException('Template de checklist não encontrado.');
     }
 
     try {
@@ -175,7 +175,9 @@ export class ChecklistService {
     });
 
     if (!itemChecklist) {
-      throw new NotFoundException('Item Checklist template not found');
+      throw new NotFoundException(
+        'Item do template de checklist não encontrado.',
+      );
     }
 
     return new ResponseChecklistTemplateItemDto(itemChecklist);
@@ -190,7 +192,7 @@ export class ChecklistService {
     });
 
     if (!checklistTemplate) {
-      throw new NotFoundException('Checklist template not found');
+      throw new NotFoundException('Template de checklist não encontrado.');
     }
 
     const itemsChecklistTemplate =
@@ -220,7 +222,9 @@ export class ChecklistService {
         throw error;
       }
 
-      throw new NotFoundException('Item Checklist template not found');
+      throw new NotFoundException(
+        'Item do template de checklist não encontrado.',
+      );
     }
   }
 
@@ -234,7 +238,9 @@ export class ChecklistService {
         throw error;
       }
 
-      throw new NotFoundException('Item Checklist template not found');
+      throw new NotFoundException(
+        'Item do template de checklist não encontrado.',
+      );
     }
   }
 

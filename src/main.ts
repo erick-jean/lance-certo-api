@@ -58,7 +58,7 @@ async function bootstrap() {
     const config = new DocumentBuilder()
       .setTitle('Lance Certo API')
       .setDescription(
-        'Sistema para gestao de leiloes de veiculos, avaliacao de custos e controle de arremates.',
+        'Sistema para gestão de leilões de veículos, avaliação de custos e controle de arremates.',
       )
       .setVersion('1.0.0')
       .addBearerAuth()

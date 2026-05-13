@@ -120,7 +120,12 @@ export class ResponseVehicleDto {
   @ApiProperty({ example: 'https://copart.com/lote/123' })
   sourceUrl?: string | null;
 
-  @ApiProperty({ example: '2026-05-06 17:32:44.757' })
+  @ApiProperty({
+    example: '2026-05-06T17:32:44.757Z',
+    nullable: true,
+    type: String,
+    format: 'date-time',
+  })
   eventDate?: Date | null;
 
   @ApiProperty({ example: 'Campo Grande' })
@@ -175,10 +180,20 @@ export class ResponseVehicleDto {
   @ApiProperty({ example: 'Pequenos riscos no para-choque.' })
   notes?: string | null;
 
-  @ApiProperty({ example: '2026-05-06 17:32:44.778' })
+  @ApiProperty({
+    example: '2026-05-06T17:32:44.778Z',
+    nullable: true,
+    type: String,
+    format: 'date-time',
+  })
   createdAt!: Date | null;
 
-  @ApiProperty({ example: '2026-05-06 17:32:44.778' })
+  @ApiProperty({
+    example: '2026-05-06T17:32:44.778Z',
+    nullable: true,
+    type: String,
+    format: 'date-time',
+  })
   updatedAt!: Date | null;
 
   constructor(vehicle: ResponseVehicleInput) {

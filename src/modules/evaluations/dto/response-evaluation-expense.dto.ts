@@ -31,7 +31,7 @@ export class ResponseEvaluationExpenseDto {
   @ApiProperty({ example: true })
   isRequired!: boolean;
 
-  @ApiProperty({ example: 'Observacao', nullable: true })
+  @ApiProperty({ example: 'Observação', nullable: true })
   notes!: string | null;
 
   @ApiProperty({ example: '2026-05-08T15:30:00.000Z' })

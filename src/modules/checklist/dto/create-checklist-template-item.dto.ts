@@ -10,13 +10,17 @@ import {
   MaxLength,
   Min,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import { ChecklistSeverity } from '../../../../generated/prisma/enums';
+
+const trimString = (value: unknown): unknown =>
+  typeof value === 'string' ? value.trim() : value;
 
 export class CreateChecklistTemplateItemDto {
   @ApiProperty({
     example: 'Lataria',
   })
+  @Transform(({ value }: { value: unknown }) => trimString(value))
   @IsString()
   @IsNotEmpty()
   @MaxLength(100)
@@ -25,14 +29,16 @@ export class CreateChecklistTemplateItemDto {
   @ApiProperty({
     example: 'Parachoque dianteiro',
   })
+  @Transform(({ value }: { value: unknown }) => trimString(value))
   @IsString()
   @IsNotEmpty()
   @MaxLength(255)
   name!: string;
 
   @ApiPropertyOptional({
-    example: 'O parachoque dianteiro esta danificado?',
+    example: 'O parachoque dianteiro está danificado?',
   })
+  @Transform(({ value }: { value: unknown }) => trimString(value))
   @IsString()
   @MaxLength(255)
   @IsOptional()

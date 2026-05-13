@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
   IsDateString,
   IsEnum,
@@ -20,27 +20,37 @@ import {
   VehicleType,
 } from '../../../../generated/prisma/enums';
 
+const trimString = (value: unknown): unknown =>
+  typeof value === 'string' ? value.trim() : value;
+
+const trimUppercaseString = (value: unknown): unknown =>
+  typeof value === 'string' ? value.trim().toUpperCase() : value;
+
 export class CreateVehicleDto {
   @ApiPropertyOptional({ example: 'QWE1A23' })
   @IsOptional()
+  @Transform(({ value }: { value: unknown }) => trimUppercaseString(value))
   @IsString()
   @MaxLength(10)
   plate?: string | null;
 
   @ApiPropertyOptional({ example: 'Honda' })
   @IsOptional()
+  @Transform(({ value }: { value: unknown }) => trimString(value))
   @IsString()
   @MaxLength(100)
   brand?: string | null;
 
   @ApiPropertyOptional({ example: 'Civic' })
   @IsOptional()
+  @Transform(({ value }: { value: unknown }) => trimString(value))
   @IsString()
   @MaxLength(100)
   model?: string | null;
 
   @ApiPropertyOptional({ example: 'Touring 1.5 Turbo' })
   @IsOptional()
+  @Transform(({ value }: { value: unknown }) => trimString(value))
   @IsString()
   @MaxLength(150)
   version?: string | null;
@@ -61,6 +71,7 @@ export class CreateVehicleDto {
 
   @ApiPropertyOptional({ example: 'Preto' })
   @IsOptional()
+  @Transform(({ value }: { value: unknown }) => trimString(value))
   @IsString()
   @MaxLength(50)
   color?: string | null;
@@ -99,6 +110,7 @@ export class CreateVehicleDto {
 
   @ApiPropertyOptional({ example: '014082-0' })
   @IsOptional()
+  @Transform(({ value }: { value: unknown }) => trimString(value))
   @IsString()
   @MaxLength(20)
   fipeCode?: string | null;
@@ -119,6 +131,7 @@ export class CreateVehicleDto {
 
   @ApiPropertyOptional({ example: 'Copart' })
   @IsOptional()
+  @Transform(({ value }: { value: unknown }) => trimString(value))
   @IsString()
   @MaxLength(150)
   auctioneer?: string | null;
@@ -134,7 +147,9 @@ export class CreateVehicleDto {
 
   @ApiPropertyOptional({ example: 'https://copart.com/lote/123' })
   @IsOptional()
+  @Transform(({ value }: { value: unknown }) => trimString(value))
   @IsUrl()
+  @MaxLength(2048)
   sourceUrl?: string | null;
 
   @ApiPropertyOptional({ example: '2026-05-06T17:32:44.757Z' })
@@ -144,19 +159,23 @@ export class CreateVehicleDto {
 
   @ApiPropertyOptional({ example: 'Campo Grande' })
   @IsOptional()
+  @Transform(({ value }: { value: unknown }) => trimString(value))
   @IsString()
   @MaxLength(100)
   city?: string | null;
 
   @ApiPropertyOptional({ example: 'MS' })
   @IsOptional()
+  @Transform(({ value }: { value: unknown }) => trimUppercaseString(value))
   @IsString()
   @MaxLength(2)
   state?: string | null;
 
   @ApiPropertyOptional({ example: 'Av. Gury Marques, 5500' })
   @IsOptional()
+  @Transform(({ value }: { value: unknown }) => trimString(value))
   @IsString()
+  @MaxLength(255)
   yardAddress?: string | null;
 
   @ApiPropertyOptional({ example: 85000.0 })
@@ -229,6 +248,8 @@ export class CreateVehicleDto {
 
   @ApiPropertyOptional({ example: 'Pequenos riscos no para-choque.' })
   @IsOptional()
+  @Transform(({ value }: { value: unknown }) => trimString(value))
   @IsString()
+  @MaxLength(1000)
   notes?: string | null;
 }
