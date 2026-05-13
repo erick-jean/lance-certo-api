@@ -1,6 +1,22 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-export class UserResponseDto {
+import { UserRole } from 'src/common/enums/user-role.enum';
+
+type ResponseUserInput = {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  plan: 'free' | 'premium';
+  planStatus: 'active' | 'inactive' | 'canceled' | 'past_due';
+  planExpiresAt: Date | null;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  lastLogin: Date | null;
+};
+
+export class ResponseUserDto {
   @ApiProperty({ example: 'c1a2b3d4-uuid' })
   id!: string;
 
@@ -10,7 +26,7 @@ export class UserResponseDto {
   @ApiProperty({ example: 'user@email.com' })
   email!: string;
 
-  @ApiProperty({ example: 'user' })
+  @ApiProperty({ example: UserRole.USER, enum: UserRole })
   role!: string;
 
   @ApiProperty({ example: 'free', enum: ['free', 'premium'] })
@@ -56,4 +72,18 @@ export class UserResponseDto {
     format: 'date-time',
   })
   lastLogin?: Date | null;
+
+  constructor(user: ResponseUserInput) {
+    this.id = user.id;
+    this.name = user.name;
+    this.email = user.email;
+    this.role = user.role;
+    this.plan = user.plan;
+    this.planStatus = user.planStatus;
+    this.planExpiresAt = user.planExpiresAt;
+    this.isActive = user.isActive;
+    this.createdAt = user.createdAt;
+    this.updatedAt = user.updatedAt;
+    this.lastLogin = user.lastLogin;
+  }
 }

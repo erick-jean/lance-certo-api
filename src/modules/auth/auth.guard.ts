@@ -6,12 +6,16 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
+import { PrismaService } from 'src/database/prisma.service';
 import { AuthenticatedRequest } from './interfaces/authenticated-request.interface';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
-  constructor(private readonly jwtService: JwtService) {}
+  constructor(
+    private readonly jwtService: JwtService,
+    private readonly prisma: PrismaService,
+  ) {}
 
   /**
    * Validates the bearer access token and attaches its decoded payload to the
@@ -32,8 +36,26 @@ export class AuthGuard implements CanActivate {
         throw new UnauthorizedException();
       }
 
+      const user = await this.prisma.user.findUnique({
+        where: { id: payload.sub },
+        select: {
+          id: true,
+          email: true,
+          role: true,
+          isActive: true,
+        },
+      });
+
+      if (!user || !user.isActive) {
+        throw new UnauthorizedException();
+      }
+
       const authenticatedRequest = request as AuthenticatedRequest;
-      authenticatedRequest.user = payload;
+      authenticatedRequest.user = {
+        sub: user.id,
+        email: user.email,
+        role: user.role,
+      };
     } catch {
       throw new UnauthorizedException();
     }

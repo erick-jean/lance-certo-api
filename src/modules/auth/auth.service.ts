@@ -17,7 +17,7 @@ import { RegisterUserDto } from './dto/register-user.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { AuthTokens } from './interfaces/auth-tokens.interface';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
-import { UserResponseDto } from '../users/dto/user-response.dto';
+import { ResponseUserDto } from '../users/dto/response-user.dto';
 
 const PASSWORD_RESET_TOKEN_TTL_MINUTES = 15;
 const DEFAULT_REFRESH_TOKEN_EXPIRES_DAYS = 7;
@@ -37,7 +37,7 @@ export class AuthService {
    * The password is always stored as a bcrypt hash, and the returned payload
    * intentionally excludes sensitive fields such as `password`.
    */
-  async register(registerDto: RegisterUserDto): Promise<UserResponseDto> {
+  async register(registerDto: RegisterUserDto): Promise<ResponseUserDto> {
     const email = this.normalizeEmail(registerDto.email);
     const userExists = await this.prisma.user.findUnique({
       where: { email },
@@ -74,7 +74,7 @@ export class AuthService {
         },
       });
 
-      return user;
+      return new ResponseUserDto(user);
     } catch (error) {
       if (this.isUniqueConstraintError(error)) {
         throw new ConflictException('Email already registered');
@@ -257,7 +257,7 @@ export class AuthService {
    * The user id comes from the JWT `sub` claim, and the query excludes the
    * password hash from the response.
    */
-  async me(userId: string): Promise<UserResponseDto> {
+  async me(userId: string): Promise<ResponseUserDto> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       select: {
@@ -279,7 +279,7 @@ export class AuthService {
       throw new UnauthorizedException();
     }
 
-    return user;
+    return new ResponseUserDto(user);
   }
 
   /**

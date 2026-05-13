@@ -5,12 +5,10 @@ import type { StringValue } from 'ms';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { AuthGuard } from './auth.guard';
-import { UsersModule } from '../users/users.module';
 import { HashModule } from 'src/common/hash/hash.module';
 
 @Module({
   imports: [
-    UsersModule,
     HashModule,
     JwtModule.registerAsync({
       inject: [ConfigService],

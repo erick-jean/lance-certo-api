@@ -33,7 +33,7 @@ import { RegisterUserDto } from './dto/register-user.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { AuthGuard } from './auth.guard';
 import { AuthenticatedRequest } from './interfaces/authenticated-request.interface';
-import { UserResponseDto } from '../users/dto/user-response.dto';
+import { ResponseUserDto } from '../users/dto/response-user.dto';
 
 @ApiTags('Auth')
 @ApiBadRequestResponse({ description: 'Invalid request payload' })
@@ -48,9 +48,9 @@ export class AuthController {
   @Post('register')
   @Throttle({ default: { limit: 5, ttl: 60_000, blockDuration: 300_000 } })
   @ApiOperation({ summary: 'Registra um novo usuario' })
-  @ApiCreatedResponse({ type: UserResponseDto })
+  @ApiCreatedResponse({ type: ResponseUserDto })
   @ApiConflictResponse({ description: 'Email already registered' })
-  register(@Body() registerDto: RegisterUserDto): Promise<UserResponseDto> {
+  register(@Body() registerDto: RegisterUserDto): Promise<ResponseUserDto> {
     return this.authService.register(registerDto);
   }
 
@@ -135,9 +135,9 @@ export class AuthController {
   @UseGuards(AuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Retorna o usuario autenticado' })
-  @ApiOkResponse({ type: UserResponseDto })
+  @ApiOkResponse({ type: ResponseUserDto })
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
-  me(@Req() req: AuthenticatedRequest): Promise<UserResponseDto> {
+  me(@Req() req: AuthenticatedRequest): Promise<ResponseUserDto> {
     return this.authService.me(req.user.sub);
   }
 
