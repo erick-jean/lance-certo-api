@@ -251,11 +251,15 @@ export class VehiclesService {
     userRole?: string,
   ): Promise<ResponseVehicleDto> {
     await this.ensurePremiumAccess(this.prisma, userId, userRole);
-    await this.findVehicleForUserOrAdminOrThrow(userId, vehicleId, userRole);
+    const vehicle = await this.findVehicleForUserOrAdminOrThrow(
+      userId,
+      vehicleId,
+      userRole,
+    );
 
-    const vehicle = await this.prisma.vehicle.update({
+    const updatedVehicle = await this.prisma.vehicle.update({
       where: {
-        id: vehicleId,
+        id: vehicle.id,
       },
       data: {
         purchasePrice: dto.purchasePrice,
@@ -264,7 +268,7 @@ export class VehiclesService {
       },
     });
 
-    return new ResponseVehicleDto(vehicle);
+    return new ResponseVehicleDto(updatedVehicle);
   }
 
   async markVehicleAsSold(
@@ -288,7 +292,7 @@ export class VehiclesService {
 
     const updatedVehicle = await this.prisma.vehicle.update({
       where: {
-        id: vehicleId,
+        id: vehicle.id,
       },
       data: {
         soldPrice: dto.soldPrice,
