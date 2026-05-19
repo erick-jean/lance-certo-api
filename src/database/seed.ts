@@ -138,7 +138,7 @@ const seedVehicles = [
     color: 'Prata',
     fuelType: FuelType.DIESEL,
     transmission: TransmissionType.AUTOMATIC,
-    type: VehicleType.TRUCK,
+    type: VehicleType.CAR,
     mileage: 71000,
     fipeCode: '003269-7',
     fipeValue: new Prisma.Decimal('189000.00'),

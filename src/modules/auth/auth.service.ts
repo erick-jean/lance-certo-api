@@ -57,8 +57,8 @@ export class AuthService {
           email,
           password,
           role: 'user',
-          plan: 'free',
-          planStatus: 'inactive',
+          plan: 'FREE',
+          planStatus: 'NONE',
         },
         select: {
           id: true,

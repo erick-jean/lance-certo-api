@@ -1,4 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
+import {
+  SubscriptionPlan,
+  SubscriptionPlanStatus,
+} from '../../../../generated/prisma/client';
 
 export class PlanLimitsResponseDto {
   @ApiProperty({ example: 3, nullable: true })
@@ -27,14 +31,22 @@ export class PlanLimitsResponseDto {
 }
 
 export class SubscriptionResponseDto {
-  @ApiProperty({ example: 'free', enum: ['free', 'premium'] })
-  plan!: 'free' | 'premium';
+  @ApiProperty({ example: 'FREE', enum: ['FREE', 'PREMIUM'] })
+  plan!: SubscriptionPlan;
 
   @ApiProperty({
-    example: 'inactive',
-    enum: ['active', 'inactive', 'canceled', 'past_due'],
+    example: 'NONE',
+    enum: [
+      'NONE',
+      'PENDING',
+      'ACTIVE',
+      'PAUSED',
+      'CANCELLED',
+      'EXPIRED',
+      'REJECTED',
+    ],
   })
-  planStatus!: 'active' | 'inactive' | 'canceled' | 'past_due';
+  planStatus!: SubscriptionPlanStatus;
 
   @ApiProperty({
     example: '2026-06-05T00:00:00.000Z',

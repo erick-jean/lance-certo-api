@@ -91,14 +91,14 @@ export class SubscriptionService {
     const user = await this.findUserSubscription(userId);
     const normalizedUser = await this.normalizeExpiredSubscription(user);
 
-    if (normalizedUser.plan !== 'premium') {
+    if (normalizedUser.plan !== 'PREMIUM') {
       return this.toSubscriptionResponse(normalizedUser);
     }
 
     const canceledUser = await this.prisma.user.update({
       where: { id: userId },
       data: {
-        planStatus: 'canceled',
+        planStatus: 'CANCELLED',
         planExpiresAt: normalizedUser.planExpiresAt,
       },
       select: this.subscriptionSelect,
@@ -120,8 +120,8 @@ export class SubscriptionService {
         await this.prisma.user.update({
           where: { id: dto.userId },
           data: {
-            plan: 'premium',
-            planStatus: 'active',
+            plan: 'PREMIUM',
+            planStatus: 'ACTIVE',
             planExpiresAt: dto.planExpiresAt
               ? new Date(dto.planExpiresAt)
               : this.calculateDefaultPremiumExpiration(),
@@ -133,7 +133,7 @@ export class SubscriptionService {
         await this.prisma.user.update({
           where: { id: dto.userId },
           data: {
-            planStatus: 'canceled',
+            planStatus: 'CANCELLED',
             planExpiresAt: dto.planExpiresAt
               ? new Date(dto.planExpiresAt)
               : user.planExpiresAt,
@@ -144,7 +144,7 @@ export class SubscriptionService {
         await this.prisma.user.update({
           where: { id: dto.userId },
           data: {
-            planStatus: 'past_due',
+            planStatus: 'PAUSED',
           },
         });
         break;
@@ -152,8 +152,8 @@ export class SubscriptionService {
         await this.prisma.user.update({
           where: { id: dto.userId },
           data: {
-            plan: 'free',
-            planStatus: 'inactive',
+            plan: 'FREE',
+            planStatus: 'NONE',
             planExpiresAt: null,
           },
         });
@@ -189,7 +189,7 @@ export class SubscriptionService {
     user: Awaited<ReturnType<SubscriptionService['findUserSubscription']>>,
   ) {
     const isExpired =
-      user.plan === 'premium' &&
+      user.plan === 'PREMIUM' &&
       user.planExpiresAt !== null &&
       user.planExpiresAt <= new Date();
 
@@ -200,8 +200,8 @@ export class SubscriptionService {
     return this.prisma.user.update({
       where: { id: user.id },
       data: {
-        plan: 'free',
-        planStatus: 'inactive',
+        plan: 'FREE',
+        planStatus: 'NONE',
         planExpiresAt: null,
       },
       select: this.subscriptionSelect,

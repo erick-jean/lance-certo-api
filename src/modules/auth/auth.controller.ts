@@ -62,7 +62,7 @@ export class AuthController {
    */
   @HttpCode(HttpStatus.OK)
   @Post('login')
-  @Throttle({ default: { limit: 5, ttl: 60_000, blockDuration: 300_000 } })
+  //@Throttle({ default: { limit: 5, ttl: 60_000, blockDuration: 300_000 } })
   @ApiOperation({
     summary: 'Autentica um usuário e grava refresh token em cookie HttpOnly.',
   })
@@ -87,7 +87,7 @@ export class AuthController {
    */
   @HttpCode(HttpStatus.OK)
   @Post('refresh')
-  @Throttle({ default: { limit: 30, ttl: 60_000, blockDuration: 60_000 } })
+  //@Throttle({ default: { limit: 30, ttl: 60_000, blockDuration: 60_000 } })
   @ApiOperation({
     summary: 'Gera novo access token usando refresh token em cookie HttpOnly.',
   })

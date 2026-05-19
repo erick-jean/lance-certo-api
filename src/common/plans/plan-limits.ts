@@ -30,11 +30,11 @@ export function isPremiumActive(user: {
   planStatus: string;
   planExpiresAt?: Date | null;
 }): boolean {
-  if (user.plan !== 'premium') {
+  if (user.plan !== 'PREMIUM') {
     return false;
   }
 
-  if (user.planStatus !== 'active') {
+  if (user.planStatus !== 'ACTIVE') {
     return false;
   }
 
