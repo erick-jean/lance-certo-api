@@ -19,6 +19,7 @@ import { ResetPasswordDto } from './dto/reset-password.dto';
 import { AuthTokens } from './interfaces/auth-tokens.interface';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
 import { ResponseUserDto } from '../users/dto/response-user.dto';
+import { userResponseSelect } from '../users/user.select';
 import { EmailService } from '../email/email.service';
 
 const PASSWORD_RESET_TOKEN_TTL_MINUTES = 15;
@@ -61,19 +62,7 @@ export class AuthService {
           plan: 'FREE',
           planStatus: 'NONE',
         },
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          role: true,
-          plan: true,
-          planStatus: true,
-          planExpiresAt: true,
-          isActive: true,
-          createdAt: true,
-          updatedAt: true,
-          lastLogin: true,
-        },
+        select: userResponseSelect,
       });
 
       return new ResponseUserDto(user);
@@ -265,19 +254,7 @@ export class AuthService {
   async me(userId: string): Promise<ResponseUserDto> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        plan: true,
-        planStatus: true,
-        planExpiresAt: true,
-        isActive: true,
-        createdAt: true,
-        updatedAt: true,
-        lastLogin: true,
-      },
+      select: userResponseSelect,
     });
 
     if (!user || !user.isActive) {

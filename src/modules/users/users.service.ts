@@ -17,24 +17,7 @@ import { ResponseUserDto } from './dto/response-user.dto';
 import { UpdateMeDto } from './dto/update-me.dto';
 import { UpdateUserStatusDto } from './dto/update-user-status.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-
-const userResponseSelect = {
-  id: true,
-  name: true,
-  email: true,
-  role: true,
-  plan: true,
-  planStatus: true,
-  planExpiresAt: true,
-  isActive: true,
-  createdAt: true,
-  updatedAt: true,
-  lastLogin: true,
-} satisfies Prisma.UserSelect;
-
-type UserResponseRecord = Prisma.UserGetPayload<{
-  select: typeof userResponseSelect;
-}>;
+import { userResponseSelect, UserResponseRecord } from './user.select';
 
 @Injectable()
 export class UsersService {
