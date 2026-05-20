@@ -284,7 +284,21 @@ export class VehiclesService {
       userRole,
     );
 
-    if (vehicle.purchasePrice === null) {
+    const soldAt = dto.soldAt ? new Date(dto.soldAt) : new Date();
+
+    if (dto.soldPrice <= 0) {
+      throw new BadRequestException(
+        'Valor de venda precisa ser maior que zero.',
+      );
+    }
+
+    if (vehicle.purchasedAt && soldAt < vehicle.purchasedAt) {
+      throw new BadRequestException(
+        'Data da venda nao pode ser anterior a data do arremate.',
+      );
+    }
+
+    if (vehicle.status !== VehicleStatus.PURCHASED) {
       throw new BadRequestException(
         'Veículo precisa estar arrematado antes de ser vendido.',
       );
@@ -296,7 +310,7 @@ export class VehiclesService {
       },
       data: {
         soldPrice: dto.soldPrice,
-        soldAt: dto.soldAt ? new Date(dto.soldAt) : new Date(),
+        soldAt,
         status: VehicleStatus.SOLD,
       },
     });
