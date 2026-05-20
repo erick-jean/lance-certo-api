@@ -5,14 +5,12 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { randomUUID } from 'crypto';
-import { mkdir, unlink, writeFile } from 'fs/promises';
-import { join } from 'path';
 import { ownerScope } from 'src/common/access/owner-scope.util';
 import { PrismaService } from 'src/database/prisma.service';
+import { StorageService } from 'src/modules/storage/storage.service';
 import { VehicleImageResponseDto } from './dto/response-vehicle-image.dto';
 
-const VEHICLE_IMAGE_UPLOAD_DIR = join(process.cwd(), 'uploads', 'vehicles');
-const VEHICLE_IMAGE_PUBLIC_PATH = '/uploads/vehicles';
+const VEHICLE_IMAGE_STORAGE_PREFIX = 'vehicles';
 const MAX_VEHICLE_IMAGES = 10;
 const vehicleImageExtensionsByMimeType = {
   'image/jpeg': '.jpg',
@@ -22,7 +20,10 @@ const vehicleImageExtensionsByMimeType = {
 
 @Injectable()
 export class VehicleImagesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly storageService: StorageService,
+  ) {}
 
   async addImagesToUserVehicle(
     userId: string,
@@ -55,18 +56,20 @@ export class VehicleImagesService {
     }
 
     const imageFiles = files.map((file) => this.prepareVehicleImage(file));
-    const writtenFilePaths: string[] = [];
+    const uploadedKeys: string[] = [];
 
     try {
-      await mkdir(VEHICLE_IMAGE_UPLOAD_DIR, { recursive: true });
-
       /**
-       * Files are written before database records; any failure rolls back the
-       * filesystem side effects tracked in writtenFilePaths.
+       * Files are uploaded before database records; any failure rolls back the
+       * storage side effects tracked in uploadedKeys.
        */
       for (const imageFile of imageFiles) {
-        await writeFile(imageFile.path, imageFile.buffer, { flag: 'wx' });
-        writtenFilePaths.push(imageFile.path);
+        await this.storageService.uploadFile({
+          key: imageFile.storageKey,
+          buffer: imageFile.buffer,
+          contentType: imageFile.mimetype,
+        });
+        uploadedKeys.push(imageFile.storageKey);
       }
 
       const images = await this.prisma.vehicleImage.createManyAndReturn({
@@ -81,7 +84,9 @@ export class VehicleImagesService {
 
       return images.map((image) => new VehicleImageResponseDto(image));
     } catch (error) {
-      await Promise.allSettled(writtenFilePaths.map((path) => unlink(path)));
+      await Promise.allSettled(
+        uploadedKeys.map((key) => this.storageService.deleteFile(key)),
+      );
 
       if (error instanceof BadRequestException) {
         throw error;
@@ -153,7 +158,7 @@ export class VehicleImagesService {
   async removeFiles(filenames: string[]): Promise<void> {
     await Promise.allSettled(
       filenames.map((filename) =>
-        unlink(join(VEHICLE_IMAGE_UPLOAD_DIR, filename)),
+        this.storageService.deleteFile(this.getVehicleImageStorageKey(filename)),
       ),
     );
   }
@@ -162,8 +167,8 @@ export class VehicleImagesService {
     buffer: Buffer;
     filename: string;
     mimetype: keyof typeof vehicleImageExtensionsByMimeType;
-    path: string;
     size: number;
+    storageKey: string;
     url: string;
   } {
     if (!file.buffer || file.buffer.length === 0) {
@@ -192,10 +197,16 @@ export class VehicleImagesService {
       buffer: file.buffer,
       filename,
       mimetype: file.mimetype,
-      path: join(VEHICLE_IMAGE_UPLOAD_DIR, filename),
       size: file.size,
-      url: `${VEHICLE_IMAGE_PUBLIC_PATH}/${filename}`,
+      storageKey: this.getVehicleImageStorageKey(filename),
+      url: this.storageService.getPublicUrl(
+        this.getVehicleImageStorageKey(filename),
+      ),
     };
+  }
+
+  private getVehicleImageStorageKey(filename: string): string {
+    return `${VEHICLE_IMAGE_STORAGE_PREFIX}/${filename}`;
   }
 
   private isAllowedVehicleImageMimeType(

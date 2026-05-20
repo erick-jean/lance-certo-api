@@ -823,6 +823,19 @@ O Swagger deve conter:
 
 ---
 
+## Storage de Arquivos
+
+O upload de imagens de veiculos usa uma abstracao `StorageService`.
+Atualmente a implementacao ativa e local, salvando arquivos em `uploads/`,
+adequada para desenvolvimento e MVP.
+
+Para producao, recomenda-se trocar a implementacao por um storage externo,
+como S3, Cloudflare R2, Supabase Storage ou Azure Blob. As regras de negocio
+de veiculos dependem apenas da abstracao, entao a migracao deve ficar
+concentrada no modulo de storage.
+
+---
+
 ## Rotas principais
 
 ### Auth

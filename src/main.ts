@@ -14,8 +14,9 @@ async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   /**
-   * Public upload serving is acceptable for MVP vehicle images, but
-   * private/signed access should be used before storing sensitive documents.
+   * Local public upload serving supports development/MVP vehicle images.
+   * Production can replace LocalStorageService with S3/R2/Supabase/Azure and
+   * stop serving files from this process.
    */
   app.useStaticAssets(join(process.cwd(), 'uploads'), {
     prefix: '/uploads',
