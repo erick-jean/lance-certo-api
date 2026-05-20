@@ -7,7 +7,6 @@ import {
   HttpStatus,
   Post,
   Query,
-  Req,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -18,9 +17,10 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { AuthGuard } from '../auth/auth.guard';
 import { MessageResponseDto } from '../auth/dto/message-response.dto';
-import { AuthenticatedRequest } from '../auth/interfaces/authenticated-request.interface';
+import { JwtPayload } from '../auth/interfaces/jwt-payload.interface';
 import { MercadoPagoService } from '../mercado-pago/mercado-pago.service';
 import { CheckoutResponseDto } from './dto/checkout-response.dto';
 import { CreateCheckoutDto } from './dto/create-checkout.dto';
@@ -44,9 +44,9 @@ export class SubscriptionController {
   @ApiOperation({ summary: 'Retorna plano atual do usuario.' })
   @ApiOkResponse({ type: SubscriptionResponseDto })
   findCurrent(
-    @Req() request: AuthenticatedRequest,
+    @CurrentUser() user: JwtPayload,
   ): Promise<SubscriptionResponseDto> {
-    return this.subscriptionService.findCurrentSubscription(request.user.sub);
+    return this.subscriptionService.findCurrentSubscription(user.sub);
   }
 
   @Get('usage')
@@ -56,9 +56,9 @@ export class SubscriptionController {
   @ApiOperation({ summary: 'Retorna uso atual e limites do plano.' })
   @ApiOkResponse({ type: SubscriptionUsageResponseDto })
   usage(
-    @Req() request: AuthenticatedRequest,
+    @CurrentUser() user: JwtPayload,
   ): Promise<SubscriptionUsageResponseDto> {
-    return this.subscriptionService.findSubscriptionUsage(request.user.sub);
+    return this.subscriptionService.findSubscriptionUsage(user.sub);
   }
 
   @Post('checkout')
@@ -70,12 +70,12 @@ export class SubscriptionController {
   @ApiBody({ type: CreateCheckoutDto })
   @ApiOkResponse({ type: CheckoutResponseDto })
   checkout(
-    @Req() request: AuthenticatedRequest,
+    @CurrentUser() user: JwtPayload,
     @Body() dto: CreateCheckoutDto,
   ): Promise<CheckoutResponseDto> {
     return this.subscriptionService.createCheckout(
-      request.user.sub,
-      request.user.email,
+      user.sub,
+      user.email,
       dto.cardTokenId,
     );
   }
@@ -87,9 +87,9 @@ export class SubscriptionController {
   @ApiOperation({ summary: 'Cancela assinatura.' })
   @ApiOkResponse({ type: SubscriptionResponseDto })
   cancel(
-    @Req() request: AuthenticatedRequest,
+    @CurrentUser() user: JwtPayload,
   ): Promise<SubscriptionResponseDto> {
-    return this.subscriptionService.cancel(request.user.sub);
+    return this.subscriptionService.cancel(user.sub);
   }
 
   @HttpCode(HttpStatus.OK)

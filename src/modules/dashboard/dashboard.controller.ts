@@ -1,4 +1,4 @@
-import { Controller, Get, Req, UseGuards } from '@nestjs/common';
+import { Controller, Get, UseGuards } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiForbiddenResponse,
@@ -7,10 +7,11 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { RequirePlan } from 'src/common/decorators/require-plan.decorator';
 import { PlanGuard } from 'src/common/guards/plan.guard';
 import { AuthGuard } from '../auth/auth.guard';
-import { AuthenticatedRequest } from '../auth/interfaces/authenticated-request.interface';
+import { JwtPayload } from '../auth/interfaces/jwt-payload.interface';
 import { DashboardService } from './dashboard.service';
 import { DashboardFinancialResponseDto } from './dto/dashboard-financial-response.dto';
 import { DashboardSummaryResponseDto } from './dto/dashboard-summary-response.dto';
@@ -27,9 +28,9 @@ export class DashboardController {
   @ApiOkResponse({ type: DashboardSummaryResponseDto })
   @Get('summary')
   getSummary(
-    @Req() request: AuthenticatedRequest,
+    @CurrentUser() user: JwtPayload,
   ): Promise<DashboardSummaryResponseDto> {
-    return this.dashboardService.getDashboardSummary(request.user.sub);
+    return this.dashboardService.getDashboardSummary(user.sub);
   }
 
   @ApiOperation({ summary: 'Busca resumo financeiro do dashboard.' })
@@ -41,8 +42,8 @@ export class DashboardController {
   @UseGuards(PlanGuard)
   @Get('financial')
   getFinancial(
-    @Req() request: AuthenticatedRequest,
+    @CurrentUser() user: JwtPayload,
   ): Promise<DashboardFinancialResponseDto> {
-    return this.dashboardService.getFinancialDashboard(request.user.sub);
+    return this.dashboardService.getFinancialDashboard(user.sub);
   }
 }

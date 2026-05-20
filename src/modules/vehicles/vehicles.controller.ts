@@ -10,7 +10,6 @@ import {
   Patch,
   Post,
   Query,
-  Req,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -26,10 +25,11 @@ import {
   ApiTooManyRequestsResponse,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { RequirePlan } from 'src/common/decorators/require-plan.decorator';
 import { PlanGuard } from 'src/common/guards/plan.guard';
 import { AuthGuard } from '../auth/auth.guard';
-import { AuthenticatedRequest } from '../auth/interfaces/authenticated-request.interface';
+import { JwtPayload } from '../auth/interfaces/jwt-payload.interface';
 import { CreateVehicleDto } from './dto/create-vehicle.dto';
 import { FindVehiclesQueryDto } from './dto/find-vehicles-query.dto';
 import { PaginatedVehicleResponseDto } from './dto/paginated-vehicles-response.dto';
@@ -62,10 +62,10 @@ export class VehiclesController {
   @Throttle({ default: { limit: 60, ttl: 60_000, blockDuration: 60_000 } })
   @Get()
   findAll(
-    @Req() req: AuthenticatedRequest,
+    @CurrentUser() user: JwtPayload,
     @Query() query: FindVehiclesQueryDto,
   ): Promise<PaginatedVehicleResponseDto> {
-    return this.vehiclesService.listUserVehicles(req.user.sub, query);
+    return this.vehiclesService.listUserVehicles(user.sub, query);
   }
 
   @ApiOperation({ summary: 'Cadastra novo veículo.' })
@@ -76,12 +76,12 @@ export class VehiclesController {
   @Throttle({ default: { limit: 20, ttl: 60_000, blockDuration: 120_000 } })
   create(
     @Body() createVehicleDto: CreateVehicleDto,
-    @Req() req: AuthenticatedRequest,
+    @CurrentUser() user: JwtPayload,
   ): Promise<ResponseVehicleDto> {
     return this.vehiclesService.createVehicleForUser(
-      req.user.sub,
+      user.sub,
       createVehicleDto,
-      req.user.role,
+      user.role,
     );
   }
 
@@ -93,12 +93,12 @@ export class VehiclesController {
   @UseGuards(VehicleOwnerGuard)
   findOne(
     @Param('vehicleId', new ParseUUIDPipe()) vehicleId: string,
-    @Req() req: AuthenticatedRequest,
+    @CurrentUser() user: JwtPayload,
   ): Promise<ResponseVehicleDto> {
     return this.vehiclesService.findVehicleForUser(
-      req.user.sub,
+      user.sub,
       vehicleId,
-      req.user.role,
+      user.role,
     );
   }
 
@@ -111,15 +111,15 @@ export class VehiclesController {
   @Patch(':vehicleId/purchase')
   @UseGuards(VehicleOwnerGuard, PlanGuard)
   markAsPurchased(
-    @Req() req: AuthenticatedRequest,
+    @CurrentUser() user: JwtPayload,
     @Param('vehicleId', new ParseUUIDPipe()) vehicleId: string,
     @Body() dto: PurchaseVehicleDto,
   ): Promise<ResponseVehicleDto> {
     return this.vehiclesService.markVehicleAsPurchased(
-      req.user.sub,
+      user.sub,
       vehicleId,
       dto,
-      req.user.role,
+      user.role,
     );
   }
 
@@ -132,15 +132,15 @@ export class VehiclesController {
   @Patch(':vehicleId/sale')
   @UseGuards(VehicleOwnerGuard, PlanGuard)
   markAsSold(
-    @Req() req: AuthenticatedRequest,
+    @CurrentUser() user: JwtPayload,
     @Param('vehicleId', new ParseUUIDPipe()) vehicleId: string,
     @Body() dto: SellVehicleDto,
   ): Promise<ResponseVehicleDto> {
     return this.vehiclesService.markVehicleAsSold(
-      req.user.sub,
+      user.sub,
       vehicleId,
       dto,
-      req.user.role,
+      user.role,
     );
   }
 
@@ -153,13 +153,13 @@ export class VehiclesController {
   @Get(':vehicleId/financial-summary')
   @UseGuards(VehicleOwnerGuard, PlanGuard)
   getFinancialSummary(
-    @Req() req: AuthenticatedRequest,
+    @CurrentUser() user: JwtPayload,
     @Param('vehicleId', new ParseUUIDPipe()) vehicleId: string,
   ): Promise<VehicleFinancialSummaryDto> {
     return this.vehiclesService.getVehicleFinancialSummary(
-      req.user.sub,
+      user.sub,
       vehicleId,
-      req.user.role,
+      user.role,
     );
   }
 
@@ -173,13 +173,13 @@ export class VehiclesController {
   update(
     @Param('vehicleId', new ParseUUIDPipe()) vehicleId: string,
     @Body() updateVehicleDto: UpdateVehicleDto,
-    @Req() req: AuthenticatedRequest,
+    @CurrentUser() user: JwtPayload,
   ): Promise<ResponseVehicleDto> {
     return this.vehiclesService.updateVehicleForUser(
-      req.user.sub,
+      user.sub,
       vehicleId,
       updateVehicleDto,
-      req.user.role,
+      user.role,
     );
   }
 
@@ -191,13 +191,13 @@ export class VehiclesController {
   @UseGuards(VehicleOwnerGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(
-    @Req() req: AuthenticatedRequest,
+    @CurrentUser() user: JwtPayload,
     @Param('vehicleId', new ParseUUIDPipe()) vehicleId: string,
   ): Promise<void> {
     return this.vehiclesService.deleteVehicleForUser(
-      req.user.sub,
+      user.sub,
       vehicleId,
-      req.user.role,
+      user.role,
     );
   }
 }

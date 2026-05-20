@@ -3,7 +3,6 @@ import {
   Get,
   Param,
   ParseUUIDPipe,
-  Req,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -14,10 +13,11 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { RequirePlan } from 'src/common/decorators/require-plan.decorator';
 import { PlanGuard } from 'src/common/guards/plan.guard';
 import { AuthGuard } from '../auth/auth.guard';
-import { AuthenticatedRequest } from '../auth/interfaces/authenticated-request.interface';
+import { JwtPayload } from '../auth/interfaces/jwt-payload.interface';
 import { VehicleOwnerGuard } from '../vehicles/guards/vehicle-owner/vehicle-owner.guard';
 import { VehicleReportResponseDto } from './dto/vehicle-report-response.dto';
 import { ReportsService } from './reports.service';
@@ -38,13 +38,13 @@ export class ReportsController {
   @UseGuards(AuthGuard, VehicleOwnerGuard, PlanGuard)
   @Get('vehicles/:vehicleId')
   getVehicleReport(
-    @Req() request: AuthenticatedRequest,
+    @CurrentUser() user: JwtPayload,
     @Param('vehicleId', new ParseUUIDPipe()) vehicleId: string,
   ): Promise<VehicleReportResponseDto> {
     return this.reportsService.getVehicleReport(
-      request.user.sub,
+      user.sub,
       vehicleId,
-      request.user.role,
+      user.role,
     );
   }
 }

@@ -8,7 +8,6 @@ import {
   Param,
   ParseUUIDPipe,
   Post,
-  Req,
   UploadedFiles,
   UseGuards,
   UseInterceptors,
@@ -30,8 +29,9 @@ import {
 } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { memoryStorage } from 'multer';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { AuthGuard } from '../../auth/auth.guard';
-import { AuthenticatedRequest } from '../../auth/interfaces/authenticated-request.interface';
+import { JwtPayload } from '../../auth/interfaces/jwt-payload.interface';
 import { VehicleOwnerGuard } from '../guards/vehicle-owner/vehicle-owner.guard';
 import { VehicleImageResponseDto } from './dto/response-vehicle-image.dto';
 import { VehicleImagesService } from './vehicle-images.service';
@@ -51,13 +51,13 @@ export class VehicleImagesController {
   @Get()
   @Throttle({ default: { limit: 60, ttl: 60_000, blockDuration: 60_000 } })
   findAll(
-    @Req() req: AuthenticatedRequest,
+    @CurrentUser() user: JwtPayload,
     @Param('vehicleId', new ParseUUIDPipe()) vehicleId: string,
   ): Promise<VehicleImageResponseDto[]> {
     return this.vehicleImagesService.listUserVehicleImages(
-      req.user.sub,
+      user.sub,
       vehicleId,
-      req.user.role,
+      user.role,
     );
   }
 
@@ -105,7 +105,7 @@ export class VehicleImagesController {
     }),
   )
   create(
-    @Req() req: AuthenticatedRequest,
+    @CurrentUser() user: JwtPayload,
     @Param('vehicleId', new ParseUUIDPipe()) vehicleId: string,
     @UploadedFiles() files: Express.Multer.File[],
   ): Promise<VehicleImageResponseDto[]> {
@@ -114,10 +114,10 @@ export class VehicleImagesController {
     }
 
     return this.vehicleImagesService.addImagesToUserVehicle(
-      req.user.sub,
+      user.sub,
       vehicleId,
       files,
-      req.user.role,
+      user.role,
     );
   }
 
@@ -128,15 +128,15 @@ export class VehicleImagesController {
   @Throttle({ default: { limit: 20, ttl: 60_000, blockDuration: 120_000 } })
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(
-    @Req() req: AuthenticatedRequest,
+    @CurrentUser() user: JwtPayload,
     @Param('vehicleId', new ParseUUIDPipe()) vehicleId: string,
     @Param('imageId', new ParseUUIDPipe()) imageId: string,
   ): Promise<void> {
     return this.vehicleImagesService.deleteUserVehicleImage(
-      req.user.sub,
+      user.sub,
       vehicleId,
       imageId,
-      req.user.role,
+      user.role,
     );
   }
 }

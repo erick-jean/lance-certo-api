@@ -23,6 +23,7 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import type { CookieOptions, Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { AuthResponseDto } from './dto/auth-response.dto';
@@ -32,7 +33,7 @@ import { MessageResponseDto } from './dto/message-response.dto';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { AuthGuard } from './auth.guard';
-import { AuthenticatedRequest } from './interfaces/authenticated-request.interface';
+import { JwtPayload } from './interfaces/jwt-payload.interface';
 import { ResponseUserDto } from '../users/dto/response-user.dto';
 
 type RequestWithCookies = Request & {
@@ -145,8 +146,8 @@ export class AuthController {
   @ApiOperation({ summary: 'Retorna o usuário autenticado.' })
   @ApiOkResponse({ type: ResponseUserDto })
   @ApiUnauthorizedResponse({ description: 'Não autorizado.' })
-  me(@Req() req: AuthenticatedRequest): Promise<ResponseUserDto> {
-    return this.authService.me(req.user.sub);
+  me(@CurrentUser() user: JwtPayload): Promise<ResponseUserDto> {
+    return this.authService.me(user.sub);
   }
 
   /**

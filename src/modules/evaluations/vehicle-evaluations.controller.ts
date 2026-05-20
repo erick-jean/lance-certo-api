@@ -9,7 +9,6 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
-  Req,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -24,10 +23,11 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { RequirePlan } from 'src/common/decorators/require-plan.decorator';
 import { PlanGuard } from 'src/common/guards/plan.guard';
 import { AuthGuard } from '../auth/auth.guard';
-import { AuthenticatedRequest } from '../auth/interfaces/authenticated-request.interface';
+import { JwtPayload } from '../auth/interfaces/jwt-payload.interface';
 import { VehicleOwnerGuard } from '../vehicles/guards/vehicle-owner/vehicle-owner.guard';
 import { CreateEvaluationExpenseDto } from './dto/create-evaluation-expense.dto';
 import { CreateVehicleEvaluationDto } from './dto/create-vehicle-evaluation.dto';
@@ -55,15 +55,15 @@ export class VehicleEvaluationsController {
   @Post(':vehicleId/evaluation')
   @Throttle({ default: { limit: 10, ttl: 60_000, blockDuration: 120_000 } })
   create(
-    @Req() req: AuthenticatedRequest,
+    @CurrentUser() user: JwtPayload,
     @Param('vehicleId', new ParseUUIDPipe()) vehicleId: string,
     @Body() dto: CreateVehicleEvaluationDto,
   ): Promise<ResponseVehicleEvaluationDto> {
     return this.vehicleEvaluationsService.createEvaluationForVehicle(
-      req.user.sub,
+      user.sub,
       vehicleId,
       dto,
-      req.user.role,
+      user.role,
     );
   }
 
@@ -72,13 +72,13 @@ export class VehicleEvaluationsController {
   @Get(':vehicleId/evaluation')
   @Throttle({ default: { limit: 60, ttl: 60_000, blockDuration: 60_000 } })
   findByVehicleId(
-    @Req() req: AuthenticatedRequest,
+    @CurrentUser() user: JwtPayload,
     @Param('vehicleId', new ParseUUIDPipe()) vehicleId: string,
   ): Promise<ResponseVehicleEvaluationDto> {
     return this.vehicleEvaluationsService.findEvaluationForVehicle(
-      req.user.sub,
+      user.sub,
       vehicleId,
-      req.user.role,
+      user.role,
     );
   }
 
@@ -87,15 +87,15 @@ export class VehicleEvaluationsController {
   @Patch(':vehicleId/evaluation')
   @Throttle({ default: { limit: 20, ttl: 60_000, blockDuration: 120_000 } })
   updateByVehicleId(
-    @Req() req: AuthenticatedRequest,
+    @CurrentUser() user: JwtPayload,
     @Param('vehicleId', new ParseUUIDPipe()) vehicleId: string,
     @Body() dto: UpdateVehicleEvaluationDto,
   ): Promise<ResponseVehicleEvaluationDto> {
     return this.vehicleEvaluationsService.updateEvaluationMargins(
-      req.user.sub,
+      user.sub,
       vehicleId,
       dto,
-      req.user.role,
+      user.role,
     );
   }
 
@@ -105,13 +105,13 @@ export class VehicleEvaluationsController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @Throttle({ default: { limit: 10, ttl: 60_000, blockDuration: 300_000 } })
   removeByVehicleId(
-    @Req() req: AuthenticatedRequest,
+    @CurrentUser() user: JwtPayload,
     @Param('vehicleId', new ParseUUIDPipe()) vehicleId: string,
   ): Promise<void> {
     return this.vehicleEvaluationsService.deleteEvaluationForVehicle(
-      req.user.sub,
+      user.sub,
       vehicleId,
-      req.user.role,
+      user.role,
     );
   }
 
@@ -120,13 +120,13 @@ export class VehicleEvaluationsController {
   @Get(':vehicleId/evaluation/checklist')
   @Throttle({ default: { limit: 60, ttl: 60_000, blockDuration: 60_000 } })
   findChecklistByVehicleId(
-    @Req() req: AuthenticatedRequest,
+    @CurrentUser() user: JwtPayload,
     @Param('vehicleId', new ParseUUIDPipe()) vehicleId: string,
   ): Promise<ResponseEvaluationChecklistItemDto[]> {
     return this.vehicleEvaluationsService.listChecklistForVehicle(
-      req.user.sub,
+      user.sub,
       vehicleId,
-      req.user.role,
+      user.role,
     );
   }
 
@@ -135,17 +135,17 @@ export class VehicleEvaluationsController {
   @Patch(':vehicleId/evaluation/checklist-items/:checklistItemId')
   @Throttle({ default: { limit: 30, ttl: 60_000, blockDuration: 120_000 } })
   updateChecklistItem(
-    @Req() req: AuthenticatedRequest,
+    @CurrentUser() user: JwtPayload,
     @Param('vehicleId', new ParseUUIDPipe()) vehicleId: string,
     @Param('checklistItemId', new ParseUUIDPipe()) checklistItemId: string,
     @Body() dto: UpdateEvaluationChecklistItemDto,
   ): Promise<ResponseEvaluationChecklistItemDto> {
     return this.vehicleEvaluationsService.updateChecklistItemAnswer(
-      req.user.sub,
+      user.sub,
       vehicleId,
       checklistItemId,
       dto,
-      req.user.role,
+      user.role,
     );
   }
 
@@ -159,13 +159,13 @@ export class VehicleEvaluationsController {
   @UseGuards(AuthGuard, VehicleOwnerGuard, PlanGuard)
   @Throttle({ default: { limit: 60, ttl: 60_000, blockDuration: 60_000 } })
   findExpensesByVehicleId(
-    @Req() req: AuthenticatedRequest,
+    @CurrentUser() user: JwtPayload,
     @Param('vehicleId', new ParseUUIDPipe()) vehicleId: string,
   ): Promise<ResponseEvaluationExpenseDto[]> {
     return this.vehicleEvaluationsService.listEvaluationExpenses(
-      req.user.sub,
+      user.sub,
       vehicleId,
-      req.user.role,
+      user.role,
     );
   }
 
@@ -179,15 +179,15 @@ export class VehicleEvaluationsController {
   @UseGuards(AuthGuard, VehicleOwnerGuard, PlanGuard)
   @Throttle({ default: { limit: 20, ttl: 60_000, blockDuration: 120_000 } })
   createExpense(
-    @Req() req: AuthenticatedRequest,
+    @CurrentUser() user: JwtPayload,
     @Param('vehicleId', new ParseUUIDPipe()) vehicleId: string,
     @Body() dto: CreateEvaluationExpenseDto,
   ): Promise<ResponseEvaluationExpenseDto> {
     return this.vehicleEvaluationsService.createManualEvaluationExpense(
-      req.user.sub,
+      user.sub,
       vehicleId,
       dto,
-      req.user.role,
+      user.role,
     );
   }
 
@@ -201,17 +201,17 @@ export class VehicleEvaluationsController {
   @UseGuards(AuthGuard, VehicleOwnerGuard, PlanGuard)
   @Throttle({ default: { limit: 30, ttl: 60_000, blockDuration: 120_000 } })
   updateExpense(
-    @Req() req: AuthenticatedRequest,
+    @CurrentUser() user: JwtPayload,
     @Param('vehicleId', new ParseUUIDPipe()) vehicleId: string,
     @Param('expenseId', new ParseUUIDPipe()) expenseId: string,
     @Body() dto: UpdateEvaluationExpenseDto,
   ): Promise<ResponseEvaluationExpenseDto> {
     return this.vehicleEvaluationsService.updateManualEvaluationExpense(
-      req.user.sub,
+      user.sub,
       vehicleId,
       expenseId,
       dto,
-      req.user.role,
+      user.role,
     );
   }
 
@@ -226,15 +226,15 @@ export class VehicleEvaluationsController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @Throttle({ default: { limit: 20, ttl: 60_000, blockDuration: 120_000 } })
   removeExpense(
-    @Req() req: AuthenticatedRequest,
+    @CurrentUser() user: JwtPayload,
     @Param('vehicleId', new ParseUUIDPipe()) vehicleId: string,
     @Param('expenseId', new ParseUUIDPipe()) expenseId: string,
   ): Promise<void> {
     return this.vehicleEvaluationsService.deleteManualEvaluationExpense(
-      req.user.sub,
+      user.sub,
       vehicleId,
       expenseId,
-      req.user.role,
+      user.role,
     );
   }
 }

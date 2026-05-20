@@ -8,7 +8,6 @@ import {
   Param,
   ParseUUIDPipe,
   Patch,
-  Req,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -24,11 +23,12 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { UserRole } from 'src/common/enums/user-role.enum';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { AuthGuard } from '../auth/auth.guard';
-import { AuthenticatedRequest } from '../auth/interfaces/authenticated-request.interface';
+import { JwtPayload } from '../auth/interfaces/jwt-payload.interface';
 import { ChangeMyPasswordDto } from './dto/change-my-password.dto';
 import { ResponseUserDto } from './dto/response-user.dto';
 import { UpdateMeDto } from './dto/update-me.dto';
@@ -48,8 +48,8 @@ export class UsersController {
   @Throttle({ default: { limit: 60, ttl: 60_000, blockDuration: 60_000 } })
   @ApiOperation({ summary: 'Busca os dados do usuário autenticado.' })
   @ApiOkResponse({ type: ResponseUserDto })
-  findMe(@Req() req: AuthenticatedRequest): Promise<ResponseUserDto> {
-    return this.usersService.findMe(req.user.sub);
+  findMe(@CurrentUser() user: JwtPayload): Promise<ResponseUserDto> {
+    return this.usersService.findMe(user.sub);
   }
 
   @Patch('me')
@@ -58,10 +58,10 @@ export class UsersController {
   @ApiOkResponse({ type: ResponseUserDto })
   @ApiBadRequestResponse({ description: 'Requisição inválida.' })
   updateMe(
-    @Req() req: AuthenticatedRequest,
+    @CurrentUser() user: JwtPayload,
     @Body() dto: UpdateMeDto,
   ): Promise<ResponseUserDto> {
-    return this.usersService.updateMe(req.user.sub, dto);
+    return this.usersService.updateMe(user.sub, dto);
   }
 
   @Patch('me/password')
@@ -73,10 +73,10 @@ export class UsersController {
     description: 'Senha atual inválida ou requisição inválida.',
   })
   changeMyPassword(
-    @Req() req: AuthenticatedRequest,
+    @CurrentUser() user: JwtPayload,
     @Body() dto: ChangeMyPasswordDto,
   ): Promise<void> {
-    return this.usersService.changeMyPassword(req.user.sub, dto);
+    return this.usersService.changeMyPassword(user.sub, dto);
   }
 
   @Get()
@@ -133,11 +133,11 @@ export class UsersController {
   @ApiForbiddenResponse({ description: 'Acesso negado.' })
   @ApiNotFoundResponse({ description: 'Usuário não encontrado.' })
   updateStatus(
-    @Req() req: AuthenticatedRequest,
+    @CurrentUser() user: JwtPayload,
     @Param('userId', new ParseUUIDPipe()) userId: string,
     @Body() dto: UpdateUserStatusDto,
   ): Promise<ResponseUserDto> {
-    return this.usersService.updateStatus(req.user.sub, userId, dto);
+    return this.usersService.updateStatus(user.sub, userId, dto);
   }
 
   @Delete(':userId')
@@ -153,9 +153,9 @@ export class UsersController {
   @ApiForbiddenResponse({ description: 'Acesso negado.' })
   @ApiNotFoundResponse({ description: 'Usuário não encontrado.' })
   removeById(
-    @Req() req: AuthenticatedRequest,
+    @CurrentUser() user: JwtPayload,
     @Param('userId', new ParseUUIDPipe()) userId: string,
   ): Promise<void> {
-    return this.usersService.removeById(req.user.sub, userId);
+    return this.usersService.removeById(user.sub, userId);
   }
 }
