@@ -12,7 +12,6 @@ import {
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
-  ApiBearerAuth,
   ApiForbiddenResponse,
   ApiNoContentResponse,
   ApiNotFoundResponse,
@@ -20,14 +19,13 @@ import {
   ApiOperation,
   ApiParam,
   ApiTags,
-  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
+import { Authenticated } from 'src/common/decorators/authenticated.decorator';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { UserRole } from 'src/common/enums/user-role.enum';
 import { RolesGuard } from 'src/common/guards/roles.guard';
-import { AuthGuard } from '../auth/auth.guard';
 import { JwtPayload } from '../auth/interfaces/jwt-payload.interface';
 import { ChangeMyPasswordDto } from './dto/change-my-password.dto';
 import { ResponseUserDto } from './dto/response-user.dto';
@@ -37,9 +35,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { UsersService } from './users.service';
 
 @ApiTags('Users')
-@ApiBearerAuth()
-@ApiUnauthorizedResponse({ description: 'Não autorizado.' })
-@UseGuards(AuthGuard)
+@Authenticated()
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}

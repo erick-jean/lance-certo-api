@@ -7,18 +7,16 @@ import {
   HttpStatus,
   Post,
   Query,
-  UseGuards,
 } from '@nestjs/common';
 import {
-  ApiBearerAuth,
   ApiBody,
   ApiOkResponse,
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
+import { Authenticated } from 'src/common/decorators/authenticated.decorator';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
-import { AuthGuard } from '../auth/auth.guard';
 import { MessageResponseDto } from '../auth/dto/message-response.dto';
 import { JwtPayload } from '../auth/interfaces/jwt-payload.interface';
 import { MercadoPagoService } from '../mercado-pago/mercado-pago.service';
@@ -39,8 +37,7 @@ export class SubscriptionController {
 
   @Get()
   @Throttle({ default: { limit: 60, ttl: 60_000, blockDuration: 60_000 } })
-  @UseGuards(AuthGuard)
-  @ApiBearerAuth()
+  @Authenticated()
   @ApiOperation({ summary: 'Retorna plano atual do usuario.' })
   @ApiOkResponse({ type: SubscriptionResponseDto })
   findCurrent(
@@ -51,8 +48,7 @@ export class SubscriptionController {
 
   @Get('usage')
   @Throttle({ default: { limit: 60, ttl: 60_000, blockDuration: 60_000 } })
-  @UseGuards(AuthGuard)
-  @ApiBearerAuth()
+  @Authenticated()
   @ApiOperation({ summary: 'Retorna uso atual e limites do plano.' })
   @ApiOkResponse({ type: SubscriptionUsageResponseDto })
   usage(
@@ -64,8 +60,7 @@ export class SubscriptionController {
   @Post('checkout')
   @HttpCode(HttpStatus.OK)
   @Throttle({ default: { limit: 10, ttl: 60_000, blockDuration: 300_000 } })
-  @UseGuards(AuthGuard)
-  @ApiBearerAuth()
+  @Authenticated()
   @ApiOperation({ summary: 'Inicia pagamento ou assinatura.' })
   @ApiBody({ type: CreateCheckoutDto })
   @ApiOkResponse({ type: CheckoutResponseDto })
@@ -82,8 +77,7 @@ export class SubscriptionController {
 
   @Post('cancel')
   @Throttle({ default: { limit: 5, ttl: 60_000, blockDuration: 300_000 } })
-  @UseGuards(AuthGuard)
-  @ApiBearerAuth()
+  @Authenticated()
   @ApiOperation({ summary: 'Cancela assinatura.' })
   @ApiOkResponse({ type: SubscriptionResponseDto })
   cancel(

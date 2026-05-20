@@ -12,7 +12,6 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import {
-  ApiBearerAuth,
   ApiCreatedResponse,
   ApiForbiddenResponse,
   ApiNoContentResponse,
@@ -20,13 +19,12 @@ import {
   ApiOperation,
   ApiTags,
   ApiTooManyRequestsResponse,
-  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
+import { Authenticated } from 'src/common/decorators/authenticated.decorator';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { RequirePlan } from 'src/common/decorators/require-plan.decorator';
 import { PlanGuard } from 'src/common/guards/plan.guard';
-import { AuthGuard } from '../auth/auth.guard';
 import { JwtPayload } from '../auth/interfaces/jwt-payload.interface';
 import { VehicleOwnerGuard } from '../vehicles/guards/vehicle-owner/vehicle-owner.guard';
 import { CreateEvaluationExpenseDto } from './dto/create-evaluation-expense.dto';
@@ -40,10 +38,9 @@ import { UpdateVehicleEvaluationDto } from './dto/update-vehicle-evaluation.dto'
 import { VehicleEvaluationsService } from './vehicle-evaluations.service';
 
 @ApiTags('Vehicle Evaluation / Avaliação do veículo')
-@ApiBearerAuth()
-@ApiUnauthorizedResponse({ description: 'Não autorizado.' })
 @ApiTooManyRequestsResponse({ description: 'Muitas requisições.' })
-@UseGuards(AuthGuard, VehicleOwnerGuard)
+@Authenticated()
+@UseGuards(VehicleOwnerGuard)
 @Controller('vehicles')
 export class VehicleEvaluationsController {
   constructor(
@@ -156,7 +153,7 @@ export class VehicleEvaluationsController {
   })
   @Get(':vehicleId/evaluation/expenses')
   @RequirePlan('premium')
-  @UseGuards(AuthGuard, VehicleOwnerGuard, PlanGuard)
+  @UseGuards(PlanGuard)
   @Throttle({ default: { limit: 60, ttl: 60_000, blockDuration: 60_000 } })
   findExpensesByVehicleId(
     @CurrentUser() user: JwtPayload,
@@ -176,7 +173,7 @@ export class VehicleEvaluationsController {
   })
   @Post(':vehicleId/evaluation/expenses')
   @RequirePlan('premium')
-  @UseGuards(AuthGuard, VehicleOwnerGuard, PlanGuard)
+  @UseGuards(PlanGuard)
   @Throttle({ default: { limit: 20, ttl: 60_000, blockDuration: 120_000 } })
   createExpense(
     @CurrentUser() user: JwtPayload,
@@ -198,7 +195,7 @@ export class VehicleEvaluationsController {
   })
   @Patch(':vehicleId/evaluation/expenses/:expenseId')
   @RequirePlan('premium')
-  @UseGuards(AuthGuard, VehicleOwnerGuard, PlanGuard)
+  @UseGuards(PlanGuard)
   @Throttle({ default: { limit: 30, ttl: 60_000, blockDuration: 120_000 } })
   updateExpense(
     @CurrentUser() user: JwtPayload,
@@ -222,7 +219,7 @@ export class VehicleEvaluationsController {
   })
   @Delete(':vehicleId/evaluation/expenses/:expenseId')
   @RequirePlan('premium')
-  @UseGuards(AuthGuard, VehicleOwnerGuard, PlanGuard)
+  @UseGuards(PlanGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   @Throttle({ default: { limit: 20, ttl: 60_000, blockDuration: 120_000 } })
   removeExpense(

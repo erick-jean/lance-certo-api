@@ -16,7 +16,6 @@ import { CreateChecklistTemplateDto } from './dto/create-checklist-template.dto'
 import { UpdateChecklistDto } from './dto/update-checklist.dto';
 import { ResponseChecklistTemplateDto } from './dto/response-checklist-template.dto';
 import {
-  ApiBearerAuth,
   ApiCreatedResponse,
   ApiForbiddenResponse,
   ApiNoContentResponse,
@@ -25,18 +24,15 @@ import {
   ApiOperation,
   ApiTags,
   ApiTooManyRequestsResponse,
-  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
-import { AuthGuard } from 'src/modules/auth/auth.guard';
+import { Authenticated } from 'src/common/decorators/authenticated.decorator';
 import { AdminGuard } from 'src/common/guards/admin.guard';
 import { CreateChecklistTemplateItemDto } from './dto/create-checklist-template-item.dto';
 import { ResponseChecklistTemplateItemDto } from './dto/response-checklist-template-item.dto';
 import { UpdateChecklistTemplateItemDto } from './dto/update-checklist-template-item.dto';
 
 @ApiTags('Checklist Templates')
-@ApiBearerAuth()
-@ApiUnauthorizedResponse({ description: 'Não autorizado.' })
 @ApiForbiddenResponse({ description: 'Acesso de administrador obrigatório.' })
 @ApiTooManyRequestsResponse({ description: 'Muitas requisições.' })
 /**
@@ -44,7 +40,8 @@ import { UpdateChecklistTemplateItemDto } from './dto/update-checklist-template-
  * Every route requires a valid JWT and admin role because changes or reads here
  * expose the global checklist rules used by vehicle evaluations.
  */
-@UseGuards(AuthGuard, AdminGuard)
+@Authenticated()
+@UseGuards(AdminGuard)
 @Controller()
 export class ChecklistController {
   constructor(private readonly checklistService: ChecklistService) {}

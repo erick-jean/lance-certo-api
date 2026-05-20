@@ -8,11 +8,9 @@ import {
   Req,
   Res,
   UnauthorizedException,
-  UseGuards,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
-  ApiBearerAuth,
   ApiBadRequestResponse,
   ApiConflictResponse,
   ApiCreatedResponse,
@@ -23,6 +21,7 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
+import { Authenticated } from 'src/common/decorators/authenticated.decorator';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import type { CookieOptions, Request, Response } from 'express';
 import { AuthService } from './auth.service';
@@ -32,7 +31,6 @@ import { LoginDto } from './dto/login.dto';
 import { MessageResponseDto } from './dto/message-response.dto';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
-import { AuthGuard } from './auth.guard';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
 import { ResponseUserDto } from '../users/dto/response-user.dto';
 
@@ -141,11 +139,9 @@ export class AuthController {
 
   @Get('me')
   @Throttle({ default: { limit: 60, ttl: 60_000, blockDuration: 60_000 } })
-  @UseGuards(AuthGuard)
-  @ApiBearerAuth()
+  @Authenticated()
   @ApiOperation({ summary: 'Retorna o usuário autenticado.' })
   @ApiOkResponse({ type: ResponseUserDto })
-  @ApiUnauthorizedResponse({ description: 'Não autorizado.' })
   me(@CurrentUser() user: JwtPayload): Promise<ResponseUserDto> {
     return this.authService.me(user.sub);
   }

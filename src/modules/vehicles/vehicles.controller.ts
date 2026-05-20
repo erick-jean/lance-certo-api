@@ -13,7 +13,6 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import {
-  ApiBearerAuth,
   ApiOkResponse,
   ApiOperation,
   ApiTags,
@@ -23,12 +22,11 @@ import {
   ApiNoContentResponse,
   ApiNotFoundResponse,
   ApiTooManyRequestsResponse,
-  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
+import { Authenticated } from 'src/common/decorators/authenticated.decorator';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { RequirePlan } from 'src/common/decorators/require-plan.decorator';
 import { PlanGuard } from 'src/common/guards/plan.guard';
-import { AuthGuard } from '../auth/auth.guard';
 import { JwtPayload } from '../auth/interfaces/jwt-payload.interface';
 import { CreateVehicleDto } from './dto/create-vehicle.dto';
 import { FindVehiclesQueryDto } from './dto/find-vehicles-query.dto';
@@ -43,10 +41,8 @@ import { Throttle } from '@nestjs/throttler';
 import { VehicleOwnerGuard } from './guards/vehicle-owner/vehicle-owner.guard';
 
 @ApiTags('Vehicles / Veículos')
-@ApiBearerAuth()
-@ApiUnauthorizedResponse({ description: 'Não autorizado.' })
 @ApiTooManyRequestsResponse({ description: 'Muitas requisições.' })
-@UseGuards(AuthGuard)
+@Authenticated()
 @Controller('vehicles')
 export class VehiclesController {
   constructor(private readonly vehiclesService: VehiclesService) {}
