@@ -11,12 +11,10 @@ import { SubscriptionUsageResponseDto } from './dto/subscription-usage-response.
 import { SubscriptionWebhookDto } from './dto/subscription-webhook.dto';
 import { MessageResponseDto } from '../auth/dto/message-response.dto';
 import { MercadoPagoService } from '../mercado-pago/mercado-pago.service';
-import { SubscriptionPlanStatus } from 'generated/prisma/enums';
-
-interface AuthenticatedUser {
-  id: string;
-  email: string;
-}
+import {
+  Prisma,
+  SubscriptionPlanStatus,
+} from '../../../generated/prisma/client';
 
 @Injectable()
 export class SubscriptionService {
@@ -69,7 +67,11 @@ export class SubscriptionService {
     };
   }
 
-  async createCheckout(userId: string, email: string, cardTokenId: string) {
+  async createCheckout(
+    userId: string,
+    email: string,
+    cardTokenId: string,
+  ): Promise<CheckoutResponseDto> {
     const mpSubscription =
       await this.mercadoPagoService.createPreapprovalSubscription({
         userId: userId,
@@ -83,6 +85,9 @@ export class SubscriptionService {
     const nextPaymentAt = mpSubscription.next_payment_date
       ? new Date(mpSubscription.next_payment_date)
       : null;
+    const amount = mpSubscription.auto_recurring?.transaction_amount ?? 29.9;
+    const currency = mpSubscription.auto_recurring?.currency_id ?? 'BRL';
+    const metadata = mpSubscription as Prisma.InputJsonValue;
 
     await this.prisma.$transaction([
       this.prisma.subscription.upsert({
@@ -101,8 +106,8 @@ export class SubscriptionService {
           mercadoPagoCollectorId: mpSubscription.collector_id
             ? String(mpSubscription.collector_id)
             : null,
-          amount: mpSubscription.auto_recurring?.transaction_amount ?? 29.9,
-          currency: mpSubscription.auto_recurring?.currency_id ?? 'BRL',
+          amount,
+          currency,
           reason: mpSubscription.reason,
           externalReference: mpSubscription.external_reference,
           startedAt: mpSubscription.auto_recurring?.start_date
@@ -112,13 +117,13 @@ export class SubscriptionService {
           expiresAt: mpSubscription.auto_recurring?.end_date
             ? new Date(mpSubscription.auto_recurring.end_date)
             : null,
-          metadata: mpSubscription,
+          metadata,
         },
         update: {
           status: internalStatus,
           mercadoPagoStatus: mpSubscription.status,
           nextPaymentAt,
-          metadata: mpSubscription,
+          metadata,
         },
       }),
 
@@ -136,9 +141,12 @@ export class SubscriptionService {
       message: 'Assinatura criada com sucesso.',
       subscription: {
         id: mpSubscription.id,
+        plan: 'PREMIUM',
         status: internalStatus,
         mercadoPagoStatus: mpSubscription.status,
         nextPaymentAt,
+        amount,
+        currency,
       },
     };
   }
@@ -295,6 +303,7 @@ export class SubscriptionService {
       case 'paused':
         return 'PAUSED';
       case 'cancelled':
+      case 'canceled':
         return 'CANCELLED';
       case 'rejected':
         return 'REJECTED';

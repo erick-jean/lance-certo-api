@@ -4,12 +4,29 @@ import {
   Logger,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 
 interface CreatePreapprovalParams {
   userId: string;
   payerEmail: string;
   cardTokenId: string;
+}
+
+export interface MercadoPagoPreapprovalResponse {
+  id: string;
+  status: string;
+  payer_id?: number | string | null;
+  collector_id?: number | string | null;
+  reason?: string | null;
+  external_reference?: string | null;
+  next_payment_date?: string | null;
+  auto_recurring?: {
+    transaction_amount?: number;
+    currency_id?: string;
+    start_date?: string | null;
+    end_date?: string | null;
+  };
+  [key: string]: unknown;
 }
 
 @Injectable()
@@ -22,9 +39,11 @@ export class MercadoPagoService {
   /**
    * Creates a new preapproval subscription in Mercado Pago.
    * @param params userId, payerEmail, and cardTokenId.
-    * @returns The response from Mercado Pago containing subscription details.
+   * @returns The response from Mercado Pago containing subscription details.
    */
-  async createPreapprovalSubscription(params: CreatePreapprovalParams) {
+  async createPreapprovalSubscription(
+    params: CreatePreapprovalParams,
+  ): Promise<MercadoPagoPreapprovalResponse> {
     const accessToken = this.configService.get<string>(
       'MERCADO_PAGO_ACCESS_TOKEN',
     );
@@ -40,7 +59,7 @@ export class MercadoPagoService {
     }
 
     try {
-      const response = await axios.post(
+      const response = await axios.post<MercadoPagoPreapprovalResponse>(
         `${this.baseUrl}/preapproval`,
         {
           preapproval_plan_id: planId,
@@ -49,9 +68,9 @@ export class MercadoPagoService {
           payer_email: params.payerEmail,
           card_token_id: params.cardTokenId,
           status: 'authorized',
-          back_url:
-            this.configService.get<string>('FRONTEND_URL') +
-            '/assinatura/sucesso',
+          back_url: `${this.configService.getOrThrow<string>(
+            'APP_FRONTEND_URL',
+          )}/assinatura/sucesso`,
         },
         {
           headers: {
@@ -62,10 +81,10 @@ export class MercadoPagoService {
       );
 
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       this.logger.error(
         'Erro ao criar assinatura no Mercado Pago',
-        error?.response?.data || error?.message,
+        this.resolveMercadoPagoError(error),
       );
 
       throw new InternalServerErrorException(
@@ -74,7 +93,9 @@ export class MercadoPagoService {
     }
   }
 
-  async getPreapproval(preapprovalId: string) {
+  async getPreapproval(
+    preapprovalId: string,
+  ): Promise<MercadoPagoPreapprovalResponse> {
     const accessToken = this.configService.get<string>(
       'MERCADO_PAGO_ACCESS_TOKEN',
     );
@@ -86,7 +107,7 @@ export class MercadoPagoService {
     }
 
     try {
-      const response = await axios.get(
+      const response = await axios.get<MercadoPagoPreapprovalResponse>(
         `${this.baseUrl}/preapproval/${preapprovalId}`,
         {
           headers: {
@@ -96,15 +117,27 @@ export class MercadoPagoService {
       );
 
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       this.logger.error(
         'Erro ao buscar assinatura no Mercado Pago',
-        error?.response?.data || error?.message,
+        this.resolveMercadoPagoError(error),
       );
 
       throw new InternalServerErrorException(
         'Não foi possível consultar a assinatura no Mercado Pago.',
       );
     }
+  }
+
+  private resolveMercadoPagoError(error: unknown): unknown {
+    if (error instanceof AxiosError) {
+      return error.response?.data ?? error.message;
+    }
+
+    if (error instanceof Error) {
+      return error.message;
+    }
+
+    return error;
   }
 }

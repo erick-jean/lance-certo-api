@@ -13,6 +13,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import {
   ApiBearerAuth,
+  ApiBody,
   ApiOkResponse,
   ApiOperation,
   ApiTags,
@@ -27,7 +28,7 @@ import { SubscriptionResponseDto } from './dto/subscription-response.dto';
 import { SubscriptionUsageResponseDto } from './dto/subscription-usage-response.dto';
 import { SubscriptionWebhookDto } from './dto/subscription-webhook.dto';
 import { SubscriptionService } from './subscription.service';
-import { CreateSubscriptionCheckoutDto } from '../mercado-pago/dto/create-subscription-checkout.dto';
+import { CreateCheckoutDto } from './dto/create-checkout.dto';
 
 @ApiTags('Subscription / Assinatura')
 @Controller('subscription')
@@ -62,15 +63,17 @@ export class SubscriptionController {
   }
 
   @Post('checkout')
+  @HttpCode(HttpStatus.OK)
   @Throttle({ default: { limit: 10, ttl: 60_000, blockDuration: 300_000 } })
   @UseGuards(AuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Inicia pagamento ou assinatura.' })
+  @ApiBody({ type: CreateCheckoutDto })
   @ApiOkResponse({ type: CheckoutResponseDto })
   checkout(
     @Req() request: AuthenticatedRequest,
-    @Body() dto: CreateSubscriptionCheckoutDto,
-  ) {
+    @Body() dto: CreateCheckoutDto,
+  ): Promise<CheckoutResponseDto> {
     return this.subscriptionService.createCheckout(
       request.user.sub,
       request.user.email,
