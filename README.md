@@ -451,6 +451,7 @@ SMTP_PASSWORD="senha_smtp"
 APP_FRONTEND_URL="http://localhost:4200"
 CORS_ORIGIN="http://localhost:4200"
 
+# Use "true" apenas em desenvolvimento. Em producao, mantenha "false".
 SWAGGER_ENABLED="true"
 
 MERCADO_PAGO_ACCESS_TOKEN="TEST-seu-access-token"
@@ -712,6 +713,16 @@ Swagger, se habilitado:
 ```txt
 http://localhost:3000/api
 ```
+
+Em producao, o Swagger deve ficar desabilitado:
+
+```env
+NODE_ENV=production
+SWAGGER_ENABLED=false
+```
+
+A aplicacao falha no boot se `NODE_ENV=production` e
+`SWAGGER_ENABLED=true` forem usados juntos.
 
 ### Rodar em desenvolvimento
 

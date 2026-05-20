@@ -64,11 +64,20 @@ export function validateEnv(config: RawEnv): ValidatedEnv {
   );
 
   validateJwt(config);
+  validateSwaggerEnv(validated);
   validateUrls(config);
   validateDockerEnv(config, validated);
   validateEmailEnv(config, validated);
 
   return validated;
+}
+
+function validateSwaggerEnv(config: ValidatedEnv): void {
+  if (config.NODE_ENV === 'production' && config.SWAGGER_ENABLED) {
+    throw new Error(
+      'SWAGGER_ENABLED must be false when NODE_ENV is production',
+    );
+  }
 }
 
 function validateJwt(config: RawEnv): void {
