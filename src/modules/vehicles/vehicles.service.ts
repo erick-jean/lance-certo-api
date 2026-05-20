@@ -15,6 +15,7 @@ import {
   PLAN_LIMITS,
   resolveEffectivePlan,
 } from 'src/common/plans/plan-limits';
+import { normalizePlate } from 'src/common/utils/plate.util';
 import { PrismaService } from 'src/database/prisma.service';
 import { Prisma } from '../../../generated/prisma/client';
 import { VehicleStatus } from '../../../generated/prisma/enums';
@@ -487,7 +488,9 @@ export class VehiclesService {
       ...(query.model
         ? { model: { contains: query.model, mode: 'insensitive' } }
         : {}),
-      ...(query.plate ? { plate: { contains: query.plate } } : {}),
+      ...(query.plate
+        ? { plate: { contains: normalizePlate(query.plate) } }
+        : {}),
     };
   }
 
@@ -495,7 +498,10 @@ export class VehiclesService {
     dto: CreateVehicleDto | UpdateVehicleDto,
   ): VehicleWritableData {
     return {
-      plate: dto.plate,
+      plate:
+        dto.plate === undefined || dto.plate === null
+          ? dto.plate
+          : normalizePlate(dto.plate),
       brand: dto.brand,
       model: dto.model,
       version: dto.version,

@@ -19,6 +19,7 @@ import {
   VehicleStatus,
   VehicleType,
 } from '../../../../generated/prisma/enums';
+import { normalizePlate } from 'src/common/utils/plate.util';
 
 const trimString = (value: unknown): unknown =>
   typeof value === 'string' ? value.trim() : value;
@@ -26,10 +27,13 @@ const trimString = (value: unknown): unknown =>
 const trimUppercaseString = (value: unknown): unknown =>
   typeof value === 'string' ? value.trim().toUpperCase() : value;
 
+const normalizePlateValue = (value: unknown): unknown =>
+  typeof value === 'string' ? normalizePlate(value) : value;
+
 export class CreateVehicleDto {
   @ApiPropertyOptional({ example: 'QWE1A23' })
   @IsOptional()
-  @Transform(({ value }: { value: unknown }) => trimUppercaseString(value))
+  @Transform(({ value }: { value: unknown }) => normalizePlateValue(value))
   @IsString()
   @MaxLength(10)
   plate?: string | null;
