@@ -62,9 +62,10 @@ model Subscription {
   plan   SubscriptionPlan       @default(PREMIUM)
   status SubscriptionPlanStatus @default(PENDING)
 
-  mercadoPagoPreapprovalId String? @unique @db.VarChar(255)
+  mercadoPagoPreapprovalId String? @unique @db.VarChar(255) // ID da assinatura no Mercado Pago.
   mercadoPagoPayerId       String? @db.VarChar(255)
-  mercadoPagoCollectorId   String? @db.VarChar(255)
+  mercadoPagoStatus       String? @db.VarChar(50) // Status retornado pelo Mercado Pago (ex: "authorized", "pending", "rejected").
+  mercadoPagoCollectorId   String? @db.VarChar(255) //ID da conta que vai receber o pagamento.
 
   amount   Decimal @db.Decimal(10, 2)
   currency String  @default("BRL") @db.VarChar(10)
@@ -80,6 +81,8 @@ model Subscription {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  metadata Json? @db.Json
 
   @@index([userId])
   @@index([status])
