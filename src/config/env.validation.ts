@@ -13,6 +13,7 @@ const requiredEnvVars = [
 ] as const;
 
 const optionalUrlEnvVars = ['CORS_ORIGIN', 'MERCADO_PAGO_WEBHOOK_URL'] as const;
+const optionalBooleanEnvVars = ['SMTP_SECURE'] as const;
 
 export function validateEnv(config: Env): Env {
   for (const key of requiredEnvVars) {
@@ -52,6 +53,8 @@ export function validateEnv(config: Env): Env {
     throw new Error('NODE_ENV must be development, test or production');
   }
 
+  validateEmailEnv(config);
+
   try {
     new URL(config.APP_FRONTEND_URL ?? '');
   } catch {
@@ -75,4 +78,41 @@ export function validateEnv(config: Env): Env {
   }
 
   return config;
+}
+
+function validateEmailEnv(config: Env): void {
+  const hasSmtpHost = Boolean(config.SMTP_HOST);
+  const hasSmtpPort = Boolean(config.SMTP_PORT);
+  const hasEmailFrom = Boolean(config.EMAIL_FROM);
+  const isProduction = config.NODE_ENV === 'production';
+
+  if (isProduction && (!hasSmtpHost || !hasSmtpPort || !hasEmailFrom)) {
+    throw new Error(
+      'SMTP_HOST, SMTP_PORT and EMAIL_FROM are required in production',
+    );
+  }
+
+  if ((hasSmtpHost || hasSmtpPort || hasEmailFrom) && !hasSmtpPort) {
+    throw new Error('SMTP_PORT is required when SMTP email is configured');
+  }
+
+  if (hasSmtpPort) {
+    const port = Number(config.SMTP_PORT);
+
+    if (!Number.isInteger(port) || port <= 0 || port > 65_535) {
+      throw new Error('SMTP_PORT must be a valid TCP port');
+    }
+  }
+
+  for (const key of optionalBooleanEnvVars) {
+    const value = config[key];
+
+    if (value && !['true', 'false'].includes(value)) {
+      throw new Error(`${key} must be true or false`);
+    }
+  }
+
+  if (Boolean(config.SMTP_USER) !== Boolean(config.SMTP_PASSWORD)) {
+    throw new Error('SMTP_USER and SMTP_PASSWORD must be provided together');
+  }
 }

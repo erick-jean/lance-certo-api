@@ -441,6 +441,13 @@ JWT_REFRESH_EXPIRES_DAYS="7"
 REFRESH_TOKEN_COOKIE_NAME="refresh_token"
 REFRESH_TOKEN_COOKIE_SECURE="false"
 
+EMAIL_FROM="Lance Certo <no-reply@example.com>"
+SMTP_HOST="smtp.example.com"
+SMTP_PORT="587"
+SMTP_SECURE="false"
+SMTP_USER="usuario_smtp"
+SMTP_PASSWORD="senha_smtp"
+
 APP_FRONTEND_URL="http://localhost:4200"
 CORS_ORIGIN="http://localhost:4200"
 

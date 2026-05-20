@@ -19,6 +19,7 @@ import { ResetPasswordDto } from './dto/reset-password.dto';
 import { AuthTokens } from './interfaces/auth-tokens.interface';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
 import { ResponseUserDto } from '../users/dto/response-user.dto';
+import { EmailService } from '../email/email.service';
 
 const PASSWORD_RESET_TOKEN_TTL_MINUTES = 15;
 const DEFAULT_REFRESH_TOKEN_EXPIRES_DAYS = 7;
@@ -30,6 +31,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly hashService: HashService,
     private readonly configService: ConfigService,
+    private readonly emailService: EmailService,
   ) {}
 
   /**
@@ -177,7 +179,10 @@ export class AuthService {
       },
     });
 
-    this.sendPasswordResetLink(user.email, token);
+    await this.emailService.sendPasswordResetEmail(
+      user.email,
+      this.buildPasswordResetLink(token),
+    );
 
     return response;
   }
@@ -447,15 +452,6 @@ export class AuthService {
       'http://localhost:4200';
 
     return `${frontendUrl.replace(/\/$/, '')}/reset-password?token=${token}`;
-  }
-
-  private sendPasswordResetLink(email: string, token: string): void {
-    const resetLink = this.buildPasswordResetLink(token);
-
-    // TODO: Replace this with EmailService once SMTP/API delivery is configured.
-    if (process.env.NODE_ENV !== 'production') {
-      console.log(`Password reset link for ${email}: ${resetLink}`);
-    }
   }
 
   /**

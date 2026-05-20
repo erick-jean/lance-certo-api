@@ -6,10 +6,12 @@ import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { AuthGuard } from './auth.guard';
 import { HashModule } from 'src/common/hash/hash.module';
+import { EmailModule } from '../email/email.module';
 
 @Module({
   imports: [
     HashModule,
+    EmailModule,
     JwtModule.registerAsync({
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
