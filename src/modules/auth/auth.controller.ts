@@ -59,10 +59,10 @@ export class AuthController {
    *
    * The JSON response only exposes the access token so browser JavaScript does
    * not need to handle the refresh token directly.
-   */
+  */
   @HttpCode(HttpStatus.OK)
   @Post('login')
-  //@Throttle({ default: { limit: 5, ttl: 60_000, blockDuration: 300_000 } })
+  @Throttle({ default: { limit: 5, ttl: 60_000, blockDuration: 300_000 } })
   @ApiOperation({
     summary: 'Autentica um usuário e grava refresh token em cookie HttpOnly.',
   })
@@ -84,10 +84,10 @@ export class AuthController {
   /**
    * Rotates the refresh token from the HttpOnly cookie and returns a new access
    * token.
-   */
+  */
   @HttpCode(HttpStatus.OK)
   @Post('refresh')
-  //@Throttle({ default: { limit: 30, ttl: 60_000, blockDuration: 60_000 } })
+  @Throttle({ default: { limit: 20, ttl: 60_000, blockDuration: 120_000 } })
   @ApiOperation({
     summary: 'Gera novo access token usando refresh token em cookie HttpOnly.',
   })
