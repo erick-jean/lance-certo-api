@@ -246,9 +246,8 @@ export class MercadoPagoService {
   }
 
   private getWebhookSecret(): string {
-    return (
-      this.configService.get<string>('MERCADO_PAGO_WEBHOOK_SECRET') ??
-      this.configService.getOrThrow<string>('SUBSCRIPTION_WEBHOOK_SECRET')
+    return this.configService.getOrThrow<string>(
+      'MERCADO_PAGO_WEBHOOK_SECRET',
     );
   }
 

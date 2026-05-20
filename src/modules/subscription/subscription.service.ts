@@ -7,7 +7,6 @@ import { PrismaService } from 'src/database/prisma.service';
 import { CheckoutResponseDto } from './dto/checkout-response.dto';
 import { SubscriptionResponseDto } from './dto/subscription-response.dto';
 import { SubscriptionUsageResponseDto } from './dto/subscription-usage-response.dto';
-import { SubscriptionWebhookDto } from './dto/subscription-webhook.dto';
 import { MessageResponseDto } from '../auth/dto/message-response.dto';
 import {
   MercadoPagoPreapprovalResponse,
@@ -260,64 +259,6 @@ export class SubscriptionService {
     return this.toSubscriptionResponse(canceledUser);
   }
 
-  /**
-   * Applies a trusted payment gateway event to the user's subscription state.
-   */
-  async applySubscriptionWebhookEvent(
-    dto: SubscriptionWebhookDto,
-  ): Promise<MessageResponseDto> {
-    const user = await this.findUserSubscription(dto.userId);
-
-    switch (dto.event) {
-      case 'payment_approved':
-        await this.prisma.user.update({
-          where: { id: dto.userId },
-          data: {
-            plan: 'PREMIUM',
-            planStatus: 'ACTIVE',
-            planExpiresAt: dto.planExpiresAt
-              ? new Date(dto.planExpiresAt)
-              : this.calculateDefaultPremiumExpiration(),
-          },
-        });
-        break;
-      case 'subscription_canceled':
-        // Cancellation stops renewal but keeps premium access until the current expiration date.
-        await this.prisma.user.update({
-          where: { id: dto.userId },
-          data: {
-            planStatus: 'CANCELLED',
-            planExpiresAt: dto.planExpiresAt
-              ? new Date(dto.planExpiresAt)
-              : user.planExpiresAt,
-          },
-        });
-        break;
-      case 'payment_past_due':
-        await this.prisma.user.update({
-          where: { id: dto.userId },
-          data: {
-            planStatus: 'PAUSED',
-          },
-        });
-        break;
-      case 'subscription_expired':
-        await this.prisma.user.update({
-          where: { id: dto.userId },
-          data: {
-            plan: 'FREE',
-            planStatus: 'NONE',
-            planExpiresAt: null,
-          },
-        });
-        break;
-    }
-
-    return {
-      message: 'Evento de assinatura processado com sucesso.',
-    };
-  }
-
   private resolveMercadoPagoExternalReference(
     mpSubscription: MercadoPagoPreapprovalResponse,
   ): string | undefined {
@@ -446,12 +387,6 @@ export class SubscriptionService {
       user.planExpiresAt !== null &&
       user.planExpiresAt <= new Date()
     );
-  }
-
-  private calculateDefaultPremiumExpiration(): Date {
-    const expiresAt = new Date();
-    expiresAt.setMonth(expiresAt.getMonth() + 1);
-    return expiresAt;
   }
 
   private mapMercadoPagoStatus(status: string): SubscriptionPlanStatus {

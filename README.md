@@ -452,7 +452,11 @@ APP_FRONTEND_URL="http://localhost:4200"
 CORS_ORIGIN="http://localhost:4200"
 
 SWAGGER_ENABLED="true"
-SUBSCRIPTION_WEBHOOK_SECRET="secret_local_de_desenvolvimento"
+
+MERCADO_PAGO_ACCESS_TOKEN="TEST-seu-access-token"
+MERCADO_PAGO_PREMIUM_PLAN_ID="seu-preapproval-plan-id"
+MERCADO_PAGO_WEBHOOK_SECRET="segredo-assinatura-webhook-mercado-pago"
+MERCADO_PAGO_WEBHOOK_URL="https://sua-url-publica.com/subscription/webhook/mercado-pago"
 
 PORT=3000
 ```
@@ -824,7 +828,7 @@ O Swagger deve conter:
 | GET | `/subscription/usage` | Retorna uso e limites do plano |
 | POST | `/subscription/checkout` | Inicia checkout |
 | POST | `/subscription/cancel` | Cancela assinatura |
-| POST | `/subscription/webhook` | Recebe evento do gateway de pagamento |
+| POST | `/subscription/webhook/mercado-pago` | Recebe webhook oficial assinado do Mercado Pago |
 
 ---
 
@@ -910,7 +914,7 @@ O Swagger deve conter:
 - `POST /auth/login`
 - `POST /auth/forgot-password`
 - `POST /auth/reset-password`
-- `POST /subscription/webhook`
+- `POST /subscription/webhook/mercado-pago`
 
 ### Rotas autenticadas
 

@@ -9,7 +9,6 @@ const requiredEnvVars = [
   'REFRESH_TOKEN_COOKIE_NAME',
   'REFRESH_TOKEN_COOKIE_SECURE',
   'SWAGGER_ENABLED',
-  'SUBSCRIPTION_WEBHOOK_SECRET',
 ] as const;
 
 const optionalUrlEnvVars = ['CORS_ORIGIN', 'MERCADO_PAGO_WEBHOOK_URL'] as const;
@@ -54,6 +53,7 @@ export function validateEnv(config: Env): Env {
   }
 
   validateEmailEnv(config);
+  validateMercadoPagoWebhookEnv(config);
 
   try {
     new URL(config.APP_FRONTEND_URL ?? '');
@@ -114,5 +114,15 @@ function validateEmailEnv(config: Env): void {
 
   if (Boolean(config.SMTP_USER) !== Boolean(config.SMTP_PASSWORD)) {
     throw new Error('SMTP_USER and SMTP_PASSWORD must be provided together');
+  }
+}
+
+function validateMercadoPagoWebhookEnv(config: Env): void {
+  if (config.NODE_ENV !== 'production') {
+    return;
+  }
+
+  if (!config.MERCADO_PAGO_WEBHOOK_SECRET) {
+    throw new Error('MERCADO_PAGO_WEBHOOK_SECRET is required in production');
   }
 }
