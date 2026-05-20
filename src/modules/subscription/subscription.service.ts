@@ -125,7 +125,7 @@ export class SubscriptionService {
       this.mercadoPagoService.getSubscriptionAmount(mpSubscription);
     const currency =
       this.mercadoPagoService.getSubscriptionCurrency(mpSubscription);
-    const metadata = mpSubscription as Prisma.InputJsonValue;
+    const metadata = this.sanitizeMercadoPagoMetadata(mpSubscription);
     const userId =
       this.resolveMercadoPagoExternalReference(mpSubscription) ??
       fallbackUserId ??
@@ -224,6 +224,27 @@ export class SubscriptionService {
       expiresAt: this.toNullableDate(mpSubscription.auto_recurring?.end_date),
       cancelledAt: internalStatus === 'CANCELLED' ? new Date() : null,
       metadata: params.metadata,
+    };
+  }
+
+  private sanitizeMercadoPagoMetadata(
+    subscription: MercadoPagoPreapprovalResponse,
+  ): Prisma.InputJsonValue {
+    return {
+      id: subscription.id,
+      status: subscription.status,
+      external_reference: subscription.external_reference ?? null,
+      payer_id: this.toOptionalString(subscription.payer_id),
+      collector_id: this.toOptionalString(subscription.collector_id),
+      next_payment_date: subscription.next_payment_date ?? null,
+      reason: subscription.reason ?? null,
+      auto_recurring: {
+        transaction_amount:
+          subscription.auto_recurring?.transaction_amount ?? null,
+        currency_id: subscription.auto_recurring?.currency_id ?? null,
+        start_date: subscription.auto_recurring?.start_date ?? null,
+        end_date: subscription.auto_recurring?.end_date ?? null,
+      },
     };
   }
 
