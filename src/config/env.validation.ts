@@ -1,115 +1,148 @@
-type Env = Record<string, string | undefined>;
+type RawEnv = Record<string, string | undefined>;
+type NodeEnv = 'development' | 'test' | 'production';
 
-const requiredEnvVars = [
+type ValidatedEnv = Record<string, unknown> & {
+  NODE_ENV: NodeEnv;
+  PORT: number;
+  DATABASE_URL: string;
+  JWT_SECRET: string;
+  JWT_EXPIRES_IN: string;
+  JWT_REFRESH_EXPIRES_DAYS: number;
+  APP_FRONTEND_URL: string;
+  REFRESH_TOKEN_COOKIE_NAME: string;
+  REFRESH_TOKEN_COOKIE_SECURE: boolean;
+  SWAGGER_ENABLED: boolean;
+  MERCADO_PAGO_ACCESS_TOKEN: string;
+  MERCADO_PAGO_PREMIUM_PLAN_ID: string;
+  MERCADO_PAGO_WEBHOOK_SECRET: string;
+  MERCADO_PAGO_WEBHOOK_URL: string;
+  POSTGRES_PORT?: number;
+  SMTP_PORT?: number;
+  SMTP_SECURE?: boolean;
+};
+
+const requiredStringEnvVars = [
   'DATABASE_URL',
   'JWT_SECRET',
   'JWT_EXPIRES_IN',
-  'JWT_REFRESH_EXPIRES_DAYS',
   'APP_FRONTEND_URL',
   'REFRESH_TOKEN_COOKIE_NAME',
-  'REFRESH_TOKEN_COOKIE_SECURE',
-  'SWAGGER_ENABLED',
+  'MERCADO_PAGO_ACCESS_TOKEN',
+  'MERCADO_PAGO_PREMIUM_PLAN_ID',
+  'MERCADO_PAGO_WEBHOOK_SECRET',
+  'MERCADO_PAGO_WEBHOOK_URL',
 ] as const;
 
-const optionalUrlEnvVars = ['CORS_ORIGIN', 'MERCADO_PAGO_WEBHOOK_URL'] as const;
-const optionalBooleanEnvVars = ['SMTP_SECURE'] as const;
+const requiredUrlEnvVars = [
+  'DATABASE_URL',
+  'APP_FRONTEND_URL',
+  'MERCADO_PAGO_WEBHOOK_URL',
+] as const;
 
-export function validateEnv(config: Env): Env {
-  for (const key of requiredEnvVars) {
-    if (!config[key]) {
-      throw new Error(`${key} is required`);
-    }
+const optionalUrlListEnvVars = ['CORS_ORIGIN'] as const;
+
+export function validateEnv(config: RawEnv): ValidatedEnv {
+  const validated = { ...config } as ValidatedEnv;
+
+  for (const key of requiredStringEnvVars) {
+    validated[key] = getRequiredString(config, key);
   }
 
-  if (config.JWT_SECRET && config.JWT_SECRET.length < 32) {
+  validated.NODE_ENV = validateNodeEnv(config.NODE_ENV);
+  validated.PORT = parseOptionalPositiveInteger(config.PORT, 'PORT', 3000);
+  validated.JWT_REFRESH_EXPIRES_DAYS = parseRequiredPositiveInteger(
+    config.JWT_REFRESH_EXPIRES_DAYS,
+    'JWT_REFRESH_EXPIRES_DAYS',
+  );
+  validated.REFRESH_TOKEN_COOKIE_SECURE = parseRequiredBoolean(
+    config.REFRESH_TOKEN_COOKIE_SECURE,
+    'REFRESH_TOKEN_COOKIE_SECURE',
+  );
+  validated.SWAGGER_ENABLED = parseRequiredBoolean(
+    config.SWAGGER_ENABLED,
+    'SWAGGER_ENABLED',
+  );
+
+  validateJwt(config);
+  validateUrls(config);
+  validateDockerEnv(config, validated);
+  validateEmailEnv(config, validated);
+
+  return validated;
+}
+
+function validateJwt(config: RawEnv): void {
+  const jwtSecret = getRequiredString(config, 'JWT_SECRET');
+
+  if (jwtSecret.length < 32) {
     throw new Error('JWT_SECRET must be at least 32 characters long');
   }
 
-  if (!Number.isFinite(Number(config.JWT_REFRESH_EXPIRES_DAYS))) {
-    throw new Error('JWT_REFRESH_EXPIRES_DAYS must be a valid number');
-  }
-
-  if (Number(config.JWT_REFRESH_EXPIRES_DAYS) <= 0) {
-    throw new Error('JWT_REFRESH_EXPIRES_DAYS must be greater than zero');
-  }
-
-  if (!/^\d+[smhd]$/.test(config.JWT_EXPIRES_IN ?? '')) {
+  if (!/^\d+[smhd]$/.test(getRequiredString(config, 'JWT_EXPIRES_IN'))) {
     throw new Error('JWT_EXPIRES_IN must use a duration like 15m, 1h or 1d');
   }
+}
 
-  if (!['true', 'false'].includes(config.REFRESH_TOKEN_COOKIE_SECURE ?? '')) {
-    throw new Error('REFRESH_TOKEN_COOKIE_SECURE must be true or false');
+function validateUrls(config: RawEnv): void {
+  for (const key of requiredUrlEnvVars) {
+    assertValidUrl(getRequiredString(config, key), key);
   }
 
-  if (!['true', 'false'].includes(config.SWAGGER_ENABLED ?? '')) {
-    throw new Error('SWAGGER_ENABLED must be true or false');
-  }
-
-  if (
-    config.NODE_ENV &&
-    !['development', 'test', 'production'].includes(config.NODE_ENV)
-  ) {
-    throw new Error('NODE_ENV must be development, test or production');
-  }
-
-  validateEmailEnv(config);
-  validateMercadoPagoWebhookEnv(config);
-
-  try {
-    new URL(config.APP_FRONTEND_URL ?? '');
-  } catch {
-    throw new Error('APP_FRONTEND_URL must be a valid URL');
-  }
-
-  for (const key of optionalUrlEnvVars) {
+  for (const key of optionalUrlListEnvVars) {
     const value = config[key];
 
     if (!value) {
       continue;
     }
 
-    for (const origin of value.split(',').map((origin) => origin.trim())) {
-      try {
-        new URL(origin);
-      } catch {
-        throw new Error(`${key} must contain valid comma-separated URLs`);
-      }
+    for (const origin of value.split(',').map((item) => item.trim())) {
+      assertValidUrl(origin, key);
     }
   }
-
-  return config;
 }
 
-function validateEmailEnv(config: Env): void {
-  const hasSmtpHost = Boolean(config.SMTP_HOST);
-  const hasSmtpPort = Boolean(config.SMTP_PORT);
-  const hasEmailFrom = Boolean(config.EMAIL_FROM);
-  const isProduction = config.NODE_ENV === 'production';
+function validateDockerEnv(config: RawEnv, validated: ValidatedEnv): void {
+  if (config.POSTGRES_PORT) {
+    validated.POSTGRES_PORT = parseOptionalPositiveInteger(
+      config.POSTGRES_PORT,
+      'POSTGRES_PORT',
+    );
+  }
+}
 
-  if (isProduction && (!hasSmtpHost || !hasSmtpPort || !hasEmailFrom)) {
+function validateEmailEnv(config: RawEnv, validated: ValidatedEnv): void {
+  const hasSmtpConfig = Boolean(
+    config.SMTP_HOST ||
+      config.SMTP_PORT ||
+      config.EMAIL_FROM ||
+      config.SMTP_SECURE ||
+      config.SMTP_USER ||
+      config.SMTP_PASSWORD,
+  );
+  const isProduction = validated.NODE_ENV === 'production';
+
+  if (isProduction && !hasSmtpConfig) {
     throw new Error(
       'SMTP_HOST, SMTP_PORT and EMAIL_FROM are required in production',
     );
   }
 
-  if ((hasSmtpHost || hasSmtpPort || hasEmailFrom) && !hasSmtpPort) {
-    throw new Error('SMTP_PORT is required when SMTP email is configured');
+  if (!hasSmtpConfig) {
+    return;
   }
 
-  if (hasSmtpPort) {
-    const port = Number(config.SMTP_PORT);
+  getRequiredString(config, 'SMTP_HOST');
+  getRequiredString(config, 'EMAIL_FROM');
+  validated.SMTP_PORT = parseRequiredPositiveInteger(
+    config.SMTP_PORT,
+    'SMTP_PORT',
+  );
 
-    if (!Number.isInteger(port) || port <= 0 || port > 65_535) {
-      throw new Error('SMTP_PORT must be a valid TCP port');
-    }
-  }
-
-  for (const key of optionalBooleanEnvVars) {
-    const value = config[key];
-
-    if (value && !['true', 'false'].includes(value)) {
-      throw new Error(`${key} must be true or false`);
-    }
+  if (config.SMTP_SECURE) {
+    validated.SMTP_SECURE = parseRequiredBoolean(
+      config.SMTP_SECURE,
+      'SMTP_SECURE',
+    );
   }
 
   if (Boolean(config.SMTP_USER) !== Boolean(config.SMTP_PASSWORD)) {
@@ -117,12 +150,72 @@ function validateEmailEnv(config: Env): void {
   }
 }
 
-function validateMercadoPagoWebhookEnv(config: Env): void {
-  if (config.NODE_ENV !== 'production') {
-    return;
+function validateNodeEnv(value: string | undefined): NodeEnv {
+  if (!value) {
+    return 'development';
   }
 
-  if (!config.MERCADO_PAGO_WEBHOOK_SECRET) {
-    throw new Error('MERCADO_PAGO_WEBHOOK_SECRET is required in production');
+  if (['development', 'test', 'production'].includes(value)) {
+    return value as NodeEnv;
+  }
+
+  throw new Error('NODE_ENV must be development, test or production');
+}
+
+function getRequiredString(config: RawEnv, key: string): string {
+  const value = config[key]?.trim();
+
+  if (!value) {
+    throw new Error(`${key} is required`);
+  }
+
+  return value;
+}
+
+function parseRequiredBoolean(
+  value: string | undefined,
+  key: string,
+): boolean {
+  if (value !== 'true' && value !== 'false') {
+    throw new Error(`${key} must be true or false`);
+  }
+
+  return value === 'true';
+}
+
+function parseRequiredPositiveInteger(
+  value: string | undefined,
+  key: string,
+): number {
+  const parsed = Number(value);
+
+  if (!Number.isInteger(parsed) || parsed <= 0) {
+    throw new Error(`${key} must be a positive integer`);
+  }
+
+  return parsed;
+}
+
+function parseOptionalPositiveInteger(
+  value: string | undefined,
+  key: string,
+  defaultValue?: number,
+): number {
+  if (!value) {
+    if (defaultValue !== undefined) {
+      return defaultValue;
+    }
+
+    throw new Error(`${key} is required`);
+  }
+
+  return parseRequiredPositiveInteger(value, key);
+}
+
+function assertValidUrl(value: string, key: string): void {
+  try {
+    new URL(value);
+  } catch {
+    throw new Error(`${key} must be a valid URL`);
   }
 }

@@ -52,9 +52,9 @@ export class EmailService {
 
   private createTransporter(): Transporter | null {
     const host = this.configService.get<string>('SMTP_HOST');
-    const port = Number(this.configService.get<string>('SMTP_PORT'));
+    const port = this.configService.get<number>('SMTP_PORT');
 
-    if (!host || !Number.isFinite(port)) {
+    if (!host || !port) {
       return null;
     }
 
@@ -64,13 +64,13 @@ export class EmailService {
     return nodemailer.createTransport({
       host,
       port,
-      secure: this.configService.get<string>('SMTP_SECURE') === 'true',
+      secure: this.configService.get<boolean>('SMTP_SECURE') ?? false,
       auth: user && pass ? { user, pass } : undefined,
     });
   }
 
   private handleMissingSmtpConfig(email: string, resetLink: string): void {
-    if (this.configService.get<string>('NODE_ENV') === 'production') {
+    if (this.configService.getOrThrow<string>('NODE_ENV') === 'production') {
       this.logger.error(
         'SMTP nao configurado em producao. Link de reset nao sera exibido em logs.',
       );
@@ -86,9 +86,6 @@ export class EmailService {
   }
 
   private getEmailFrom(): string {
-    return (
-      this.configService.get<string>('EMAIL_FROM') ??
-      'Lance Certo <no-reply@lancecerto.local>'
-    );
+    return this.configService.getOrThrow<string>('EMAIL_FROM');
   }
 }

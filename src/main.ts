@@ -51,8 +51,7 @@ async function bootstrap() {
       res.redirect('/api');
     });
 
-  const swaggerEnabled =
-    configService.get<string>('SWAGGER_ENABLED') === 'true';
+  const swaggerEnabled = configService.getOrThrow<boolean>('SWAGGER_ENABLED');
 
   if (swaggerEnabled) {
     const config = new DocumentBuilder()
@@ -68,7 +67,7 @@ async function bootstrap() {
     SwaggerModule.setup('api', app, documentFactory);
   }
 
-  await app.listen(configService.get<number>('PORT') ?? 3000);
+  await app.listen(configService.getOrThrow<number>('PORT'));
 }
 
 void bootstrap();

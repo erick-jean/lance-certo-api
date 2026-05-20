@@ -57,7 +57,7 @@ export class MercadoPagoService {
   ): Promise<MercadoPagoPreapprovalResponse> {
     const accessToken = this.getAccessToken();
 
-    const planId = this.configService.get<string>(
+    const planId = this.configService.getOrThrow<string>(
       'MERCADO_PAGO_PREMIUM_PLAN_ID',
     );
 
@@ -205,7 +205,7 @@ export class MercadoPagoService {
   }
 
   private getAccessToken(): string {
-    const accessToken = this.configService.get<string>(
+    const accessToken = this.configService.getOrThrow<string>(
       'MERCADO_PAGO_ACCESS_TOKEN',
     );
 
@@ -230,14 +230,10 @@ export class MercadoPagoService {
     return error;
   }
 
-  private getWebhookUrl(): string | undefined {
-    const configuredUrl = this.configService.get<string>(
+  private getWebhookUrl(): string {
+    const configuredUrl = this.configService.getOrThrow<string>(
       'MERCADO_PAGO_WEBHOOK_URL',
     );
-
-    if (!configuredUrl) {
-      return undefined;
-    }
 
     const url = new URL(configuredUrl);
     url.searchParams.set('source_news', 'webhooks');

@@ -22,7 +22,6 @@ import { ResponseUserDto } from '../users/dto/response-user.dto';
 import { EmailService } from '../email/email.service';
 
 const PASSWORD_RESET_TOKEN_TTL_MINUTES = 15;
-const DEFAULT_REFRESH_TOKEN_EXPIRES_DAYS = 7;
 
 @Injectable()
 export class AuthService {
@@ -434,22 +433,18 @@ export class AuthService {
    * Reads and validates the refresh token lifetime from environment settings.
    */
   private getRefreshTokenExpiresDays(): number {
-    const value = Number(this.configService.get('JWT_REFRESH_EXPIRES_DAYS'));
-
-    if (!Number.isFinite(value) || value <= 0) {
-      return DEFAULT_REFRESH_TOKEN_EXPIRES_DAYS;
-    }
-
-    return value;
+    return this.configService.getOrThrow<number>(
+      'JWT_REFRESH_EXPIRES_DAYS',
+    );
   }
 
   /**
    * Builds the frontend password reset URL using the configured app URL.
    */
   private buildPasswordResetLink(token: string): string {
-    const frontendUrl =
-      this.configService.get<string>('APP_FRONTEND_URL') ??
-      'http://localhost:4200';
+    const frontendUrl = this.configService.getOrThrow<string>(
+      'APP_FRONTEND_URL',
+    );
 
     return `${frontendUrl.replace(/\/$/, '')}/reset-password?token=${token}`;
   }

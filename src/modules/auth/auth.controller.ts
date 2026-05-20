@@ -225,9 +225,8 @@ export class AuthController {
   }
 
   private getRefreshTokenCookieName(): string {
-    return (
-      this.configService.get<string>('REFRESH_TOKEN_COOKIE_NAME') ??
-      'refresh_token'
+    return this.configService.getOrThrow<string>(
+      'REFRESH_TOKEN_COOKIE_NAME',
     );
   }
 
@@ -245,8 +244,8 @@ export class AuthController {
    * Enables the Secure cookie flag when the environment requires HTTPS.
    */
   private isRefreshTokenCookieSecure(): boolean {
-    return (
-      this.configService.get<string>('REFRESH_TOKEN_COOKIE_SECURE') === 'true'
+    return this.configService.getOrThrow<boolean>(
+      'REFRESH_TOKEN_COOKIE_SECURE',
     );
   }
 
@@ -255,12 +254,10 @@ export class AuthController {
    * milliseconds.
    */
   private getRefreshTokenCookieMaxAge(): number {
-    const expiresDays = Number(
-      this.configService.get('JWT_REFRESH_EXPIRES_DAYS'),
+    const expiresDays = this.configService.getOrThrow<number>(
+      'JWT_REFRESH_EXPIRES_DAYS',
     );
-    const safeExpiresDays =
-      Number.isFinite(expiresDays) && expiresDays > 0 ? expiresDays : 7;
 
-    return safeExpiresDays * 24 * 60 * 60 * 1000;
+    return expiresDays * 24 * 60 * 60 * 1000;
   }
 }
