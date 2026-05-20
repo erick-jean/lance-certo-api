@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { randomUUID } from 'crypto';
+import sharp from 'sharp';
 import { ownerScope } from 'src/common/access/owner-scope.util';
 import { PrismaService } from 'src/database/prisma.service';
 import { StorageService } from 'src/modules/storage/storage.service';
@@ -12,6 +13,9 @@ import { VehicleImageResponseDto } from './dto/response-vehicle-image.dto';
 
 const VEHICLE_IMAGE_STORAGE_PREFIX = 'vehicles';
 const MAX_VEHICLE_IMAGES = 10;
+const MAX_IMAGE_WIDTH = 6000;
+const MAX_IMAGE_HEIGHT = 6000;
+const OPTIMIZED_IMAGE_WIDTH = 1920;
 const vehicleImageExtensionsByMimeType = {
   'image/jpeg': '.jpg',
   'image/png': '.png',
@@ -55,7 +59,9 @@ export class VehicleImagesService {
       );
     }
 
-    const imageFiles = files.map((file) => this.prepareVehicleImage(file));
+    const imageFiles = await Promise.all(
+      files.map((file) => this.prepareVehicleImage(file)),
+    );
     const uploadedKeys: string[] = [];
 
     try {
@@ -163,14 +169,14 @@ export class VehicleImagesService {
     );
   }
 
-  private prepareVehicleImage(file: Express.Multer.File): {
+  private async prepareVehicleImage(file: Express.Multer.File): Promise<{
     buffer: Buffer;
     filename: string;
-    mimetype: keyof typeof vehicleImageExtensionsByMimeType;
+    mimetype: 'image/webp';
     size: number;
     storageKey: string;
     url: string;
-  } {
+  }> {
     if (!file.buffer || file.buffer.length === 0) {
       throw new BadRequestException('Arquivo de imagem inválido.');
     }
@@ -189,15 +195,14 @@ export class VehicleImagesService {
       throw new BadRequestException('Conteúdo da imagem inválido.');
     }
 
-    const filename = `${randomUUID()}${
-      vehicleImageExtensionsByMimeType[file.mimetype]
-    }`;
+    const optimizedBuffer = await this.optimizeVehicleImage(file.buffer);
+    const filename = `${randomUUID()}.webp`;
 
     return {
-      buffer: file.buffer,
+      buffer: optimizedBuffer,
       filename,
-      mimetype: file.mimetype,
-      size: file.size,
+      mimetype: 'image/webp',
+      size: optimizedBuffer.length,
       storageKey: this.getVehicleImageStorageKey(filename),
       url: this.storageService.getPublicUrl(
         this.getVehicleImageStorageKey(filename),
@@ -207,6 +212,44 @@ export class VehicleImagesService {
 
   private getVehicleImageStorageKey(filename: string): string {
     return `${VEHICLE_IMAGE_STORAGE_PREFIX}/${filename}`;
+  }
+
+  private async optimizeVehicleImage(buffer: Buffer): Promise<Buffer> {
+    try {
+      const image = sharp(buffer, {
+        failOn: 'warning',
+        limitInputPixels: MAX_IMAGE_WIDTH * MAX_IMAGE_HEIGHT,
+      });
+      const metadata = await image.metadata();
+
+      if (!metadata.width || !metadata.height) {
+        throw new BadRequestException('Dimensoes da imagem invalidas.');
+      }
+
+      if (
+        metadata.width > MAX_IMAGE_WIDTH ||
+        metadata.height > MAX_IMAGE_HEIGHT
+      ) {
+        throw new BadRequestException(
+          `Imagem excede o limite de ${MAX_IMAGE_WIDTH}x${MAX_IMAGE_HEIGHT}px.`,
+        );
+      }
+
+      return image
+        .rotate()
+        .resize({
+          width: OPTIMIZED_IMAGE_WIDTH,
+          withoutEnlargement: true,
+        })
+        .webp({ quality: 82 })
+        .toBuffer();
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+
+      throw new BadRequestException('Conteudo da imagem invalido.');
+    }
   }
 
   private isAllowedVehicleImageMimeType(
