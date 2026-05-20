@@ -29,12 +29,6 @@ export class SubscriptionService {
     private readonly mercadoPagoService: MercadoPagoService,
   ) {}
 
-  /**
-   * Returns the user's current subscription state.
-   *
-   * If a premium plan is already expired, the state is normalized back to free
-   * before responding.
-   */
   async findCurrentSubscription(
     userId: string,
   ): Promise<SubscriptionResponseDto> {
@@ -248,9 +242,6 @@ export class SubscriptionService {
     };
   }
 
-  /**
-   * Cancels subscription renewal while keeping premium access until expiration.
-   */
   async cancel(userId: string): Promise<SubscriptionResponseDto> {
     const user = await this.findUserSubscription(userId);
     const normalizedUser = await this.normalizeExpiredSubscription(user);
@@ -273,6 +264,7 @@ export class SubscriptionService {
         subscription.mercadoPagoPreapprovalId,
       );
 
+    // Mercado Pago cancels renewal; local premium access remains until expiresAt.
     await this.syncMercadoPagoPreapproval(cancelledSubscription, userId);
 
     const canceledUser = await this.findUserSubscription(userId);

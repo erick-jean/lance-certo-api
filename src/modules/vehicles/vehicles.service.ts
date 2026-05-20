@@ -111,12 +111,6 @@ export class VehiclesService {
     return new ResponseVehicleDto(vehicle);
   }
 
-  /**
-   * Returns paginated vehicles owned by a user.
-   *
-   * The user scope is enforced server-side so users cannot list vehicles from
-   * another account.
-   */
   async listUserVehicles(
     userId: string,
     query: FindVehiclesQueryDto,

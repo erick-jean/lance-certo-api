@@ -34,12 +34,6 @@ export class AuthService {
     private readonly emailService: EmailService,
   ) {}
 
-  /**
-   * Creates a new user account after checking for email uniqueness.
-   *
-   * The password is always stored as a bcrypt hash, and the returned payload
-   * intentionally excludes sensitive fields such as `password`.
-   */
   async register(registerDto: RegisterUserDto): Promise<ResponseUserDto> {
     const email = this.normalizeEmail(registerDto.email);
     const userExists = await this.prisma.user.findUnique({
@@ -75,13 +69,6 @@ export class AuthService {
     }
   }
 
-  /**
-   * Authenticates a user and issues a short-lived access token plus a
-   * long-lived refresh token.
-   *
-   * The refresh token is returned to the controller so it can be stored in an
-   * HttpOnly cookie. Only the hashed version is persisted in the database.
-   */
   async signIn(login: LoginDto): Promise<AuthTokens> {
     const email = this.normalizeEmail(login.email);
     const user = await this.prisma.user.findUnique({
@@ -124,14 +111,8 @@ export class AuthService {
     return this.issueAuthTokens(payload);
   }
 
-  /**
-   * Starts the password reset flow for an email address.
-   *
-   * The response is intentionally generic to avoid exposing whether an email
-   * exists in the system. The raw token is only used to build the reset link;
-   * the database stores a SHA-256 hash of that token.
-   */
   async forgotPassword(dto: ForgotPasswordDto): Promise<MessageResponseDto> {
+    // Keep the response generic so callers cannot discover registered emails.
     const response = this.getPasswordResetRequestedResponse();
     const email = this.normalizeEmail(dto.email);
     const user = await this.prisma.user.findUnique({
@@ -175,13 +156,6 @@ export class AuthService {
     return response;
   }
 
-  /**
-   * Resets a user's password when a valid, unused and non-expired reset token
-   * is provided.
-   *
-   * Marking the token as used and updating the password happen in the same
-   * transaction so a token cannot be reused during concurrent requests.
-   */
   async resetPassword(dto: ResetPasswordDto): Promise<MessageResponseDto> {
     const tokenHash = this.hashPasswordResetToken(dto.token);
     const now = new Date();
@@ -206,6 +180,7 @@ export class AuthService {
 
     const password = await this.hashService.hash(dto.password);
 
+    // Consume the reset token atomically to prevent reuse.
     await this.prisma.$transaction(async (tx) => {
       const updatedTokens = await tx.passwordResetToken.updateMany({
         where: {
@@ -245,12 +220,6 @@ export class AuthService {
     };
   }
 
-  /**
-   * Returns the currently authenticated user profile.
-   *
-   * The user id comes from the JWT `sub` claim, and the query excludes the
-   * password hash from the response.
-   */
   async me(userId: string): Promise<ResponseUserDto> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
@@ -264,12 +233,6 @@ export class AuthService {
     return new ResponseUserDto(user);
   }
 
-  /**
-   * Rotates a refresh token and returns a new token pair.
-   *
-   * The old refresh token is revoked inside a transaction before a new one is
-   * created. This limits replay risk if a refresh token is intercepted.
-   */
   async refresh(rawRefreshToken: string): Promise<AuthTokens> {
     const tokenHash = this.hashToken(rawRefreshToken);
     const now = new Date();
@@ -305,6 +268,7 @@ export class AuthService {
       role: storedRefreshToken.user.role,
     };
 
+    // Revoke the old refresh token before issuing the next pair.
     return this.prisma.$transaction(async (tx) => {
       const revokedTokens = await tx.refreshToken.updateMany({
         where: {
@@ -327,12 +291,6 @@ export class AuthService {
     });
   }
 
-  /**
-   * Revokes the active refresh token for the current session.
-   *
-   * A missing, expired or already revoked token is treated as an unauthorized
-   * request, which prevents logout from succeeding for unauthenticated clients.
-   */
   async logout(refreshToken: string): Promise<MessageResponseDto> {
     const tokenHash = this.hashToken(refreshToken);
 
@@ -376,12 +334,6 @@ export class AuthService {
     return createHash('sha256').update(token).digest('hex');
   }
 
-  /**
-   * Creates an access token and a persisted refresh token for a JWT payload.
-   *
-   * Accepts either the regular Prisma service or a transaction client so token
-   * rotation can create the new refresh token atomically.
-   */
   private async issueAuthTokens(
     payload: JwtPayload,
     prisma: PrismaService | Prisma.TransactionClient = this.prisma,
@@ -390,6 +342,7 @@ export class AuthService {
     const refreshTokenHash = this.hashToken(refreshToken);
     const refreshTokenExpiresDays = this.getRefreshTokenExpiresDays();
 
+    // Store only the hash; the raw refresh token is returned for the HttpOnly cookie.
     await prisma.refreshToken.create({
       data: {
         userId: payload.sub,
@@ -406,18 +359,12 @@ export class AuthService {
     };
   }
 
-  /**
-   * Reads and validates the refresh token lifetime from environment settings.
-   */
   private getRefreshTokenExpiresDays(): number {
     return this.configService.getOrThrow<number>(
       'JWT_REFRESH_EXPIRES_DAYS',
     );
   }
 
-  /**
-   * Builds the frontend password reset URL using the configured app URL.
-   */
   private buildPasswordResetLink(token: string): string {
     const frontendUrl = this.configService.getOrThrow<string>(
       'APP_FRONTEND_URL',
@@ -426,10 +373,6 @@ export class AuthService {
     return `${frontendUrl.replace(/\/$/, '')}/reset-password?token=${token}`;
   }
 
-  /**
-   * Returns the generic password reset response used for both existing and
-   * non-existing emails.
-   */
   private getPasswordResetRequestedResponse(): MessageResponseDto {
     return {
       message: 'Se o e-mail existir, enviaremos um link de recuperação.',

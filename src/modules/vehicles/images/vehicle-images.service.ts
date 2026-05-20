@@ -235,6 +235,7 @@ export class VehicleImagesService {
         );
       }
 
+      // Re-encoding to WebP strips metadata/EXIF and normalizes user uploads.
       return image
         .rotate()
         .resize({

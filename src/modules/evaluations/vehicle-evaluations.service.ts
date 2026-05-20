@@ -81,9 +81,6 @@ export class VehicleEvaluationsService {
     dto: CreateVehicleEvaluationDto,
     userRole?: string,
   ): Promise<ResponseVehicleEvaluationDto> {
-    /**
-     * The evaluation and checklist snapshot must be created atomically.
-     */
     return this.prisma.$transaction(async (tx) => {
       const userPlan = await this.findUserPlanOrThrow(tx, userId);
       const effectivePlan = this.resolveFeaturePlan(userPlan);
@@ -219,10 +216,6 @@ export class VehicleEvaluationsService {
         data: this.toEvaluationWritableData(dto),
       });
 
-      /**
-       * Financial results depend on margins, so the evaluation must be
-       * recalculated after margin changes.
-       */
       const recalculated = await this.recalculateEvaluationFinancials(
         tx,
         evaluation.id,
@@ -305,9 +298,6 @@ export class VehicleEvaluationsService {
        */
       await this.syncChecklistDerivedExpense(tx, updatedItem);
 
-      /**
-       * Checklist-derived expenses affect financial results.
-       */
       await this.recalculateEvaluationFinancials(tx, updatedItem.evaluationId);
       return new ResponseEvaluationChecklistItemDto(updatedItem);
     });
@@ -371,10 +361,6 @@ export class VehicleEvaluationsService {
         },
       });
 
-      /**
-       * Financial results depend on expenses, so the evaluation must be
-       * recalculated after manual expense changes.
-       */
       await this.recalculateEvaluationFinancials(tx, evaluation.id);
       return new ResponseEvaluationExpenseDto(expense);
     });
@@ -407,10 +393,6 @@ export class VehicleEvaluationsService {
         data: this.toExpenseWritableData(dto),
       });
 
-      /**
-       * Financial results depend on expenses, so the evaluation must be
-       * recalculated after expense updates.
-       */
       await this.recalculateEvaluationFinancials(
         tx,
         updatedExpense.evaluationId,
@@ -444,10 +426,6 @@ export class VehicleEvaluationsService {
         },
       });
 
-      /**
-       * Financial results depend on expenses, so the evaluation must be
-       * recalculated after expense deletion.
-       */
       await this.recalculateEvaluationFinancials(tx, expense.evaluationId);
     });
   }
@@ -529,9 +507,6 @@ export class VehicleEvaluationsService {
     vehicleId: string,
     userRole?: string,
   ) {
-    /**
-     * Scope the evaluation lookup by userId to prevent cross-user access.
-     */
     const evaluation = await tx.vehicleEvaluation.findFirst({
       where: {
         vehicleId,
@@ -580,9 +555,6 @@ export class VehicleEvaluationsService {
     expenseId: string,
     userRole?: string,
   ) {
-    /**
-     * Scope the expense through evaluation and vehicle ownership.
-     */
     const expense = await tx.evaluationExpense.findFirst({
       where: {
         id: expenseId,
@@ -700,10 +672,6 @@ export class VehicleEvaluationsService {
     tx: EvaluationPrismaClient,
     evaluationId: string,
   ) {
-    /**
-     * Recalculation uses the latest vehicle values, checklist status and all
-     * expenses to keep the evaluation summary consistent.
-     */
     const evaluation = await tx.vehicleEvaluation.findUnique({
       where: {
         id: evaluationId,
@@ -868,9 +836,6 @@ export class VehicleEvaluationsService {
   }
 
   private toNumber(value: Prisma.Decimal | number | string | null | undefined) {
-    /**
-     * Prisma Decimal values are converted to numbers for financial formulas.
-     */
     return value === null || value === undefined ? 0 : Number(value);
   }
 

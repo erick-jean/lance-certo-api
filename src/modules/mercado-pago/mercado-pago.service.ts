@@ -47,11 +47,6 @@ export class MercadoPagoService {
 
   constructor(private readonly configService: ConfigService) {}
 
-  /**
-   * Creates a new preapproval subscription in Mercado Pago.
-   * @param params userId, payerEmail, and cardTokenId.
-   * @returns The response from Mercado Pago containing subscription details.
-   */
   async createPreapprovalSubscription(
     params: CreatePreapprovalParams,
   ): Promise<MercadoPagoPreapprovalResponse> {

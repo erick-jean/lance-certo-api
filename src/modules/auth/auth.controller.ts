@@ -57,12 +57,6 @@ export class AuthController {
     return this.authService.register(registerDto);
   }
 
-  /**
-   * Authenticates a user and stores the refresh token in an HttpOnly cookie.
-   *
-   * The JSON response only exposes the access token so browser JavaScript does
-   * not need to handle the refresh token directly.
-  */
   @HttpCode(HttpStatus.OK)
   @Post('login')
   @Throttle({ default: { limit: 5, ttl: 60_000, blockDuration: 300_000 } })
@@ -84,10 +78,6 @@ export class AuthController {
     };
   }
 
-  /**
-   * Rotates the refresh token from the HttpOnly cookie and returns a new access
-   * token.
-  */
   @HttpCode(HttpStatus.OK)
   @Post('refresh')
   @Throttle({ default: { limit: 20, ttl: 60_000, blockDuration: 120_000 } })
@@ -121,10 +111,6 @@ export class AuthController {
     return this.authService.forgotPassword(dto);
   }
 
-  /**
-   * Completes password recovery by validating the reset token and saving the
-   * new password hash.
-   */
   @HttpCode(HttpStatus.OK)
   @Post('reset-password')
   @Throttle({ default: { limit: 5, ttl: 300_000, blockDuration: 900_000 } })
@@ -146,10 +132,6 @@ export class AuthController {
     return this.authService.me(user.sub);
   }
 
-  /**
-   * Revokes the refresh token stored in the HttpOnly cookie and clears it from
-   * the browser.
-   */
   @HttpCode(HttpStatus.OK)
   @Post('logout')
   @Throttle({ default: { limit: 10, ttl: 60_000, blockDuration: 60_000 } })
@@ -182,9 +164,6 @@ export class AuthController {
     return refreshToken;
   }
 
-  /**
-   * Returns the configured refresh token cookie parsed by cookie-parser.
-   */
   private getOptionalRefreshTokenFromCookie(
     request: RequestWithCookies,
   ): string | undefined {
@@ -203,10 +182,6 @@ export class AuthController {
     );
   }
 
-  /**
-   * Clears the refresh token cookie using the same path/security settings used
-   * when it was created.
-   */
   private clearRefreshTokenCookie(response: Response): void {
     response.clearCookie(
       this.getRefreshTokenCookieName(),
@@ -230,19 +205,12 @@ export class AuthController {
     };
   }
 
-  /**
-   * Enables the Secure cookie flag when the environment requires HTTPS.
-   */
   private isRefreshTokenCookieSecure(): boolean {
     return this.configService.getOrThrow<boolean>(
       'REFRESH_TOKEN_COOKIE_SECURE',
     );
   }
 
-  /**
-   * Converts refresh token expiration from days to cookie `maxAge`
-   * milliseconds.
-   */
   private getRefreshTokenCookieMaxAge(): number {
     const expiresDays = this.configService.getOrThrow<number>(
       'JWT_REFRESH_EXPIRES_DAYS',
