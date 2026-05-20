@@ -57,6 +57,13 @@ export class SubscriptionResponseDto {
   })
   planExpiresAt!: Date | null;
 
+  @ApiProperty({
+    description:
+      'Indica se o usuario ainda pode acessar recursos premium neste momento.',
+    example: true,
+  })
+  isPremiumActive!: boolean;
+
   @ApiProperty({ type: PlanLimitsResponseDto })
   limits!: PlanLimitsResponseDto;
 }

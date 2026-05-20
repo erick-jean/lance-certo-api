@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import {
+  isPremiumActive,
   PLAN_LIMITS,
-  resolveEffectivePlan,
 } from 'src/common/plans/plan-limits';
 import { PrismaService } from 'src/database/prisma.service';
 import { CheckoutResponseDto } from './dto/checkout-response.dto';
@@ -50,7 +50,8 @@ export class SubscriptionService {
   ): Promise<SubscriptionUsageResponseDto> {
     const user = await this.findUserSubscription(userId);
     const normalizedUser = await this.normalizeExpiredSubscription(user);
-    const effectivePlan = resolveEffectivePlan(normalizedUser);
+    const premiumActive = isPremiumActive(normalizedUser);
+    const effectivePlan = premiumActive ? 'premium' : 'free';
     const limits = PLAN_LIMITS[effectivePlan];
     const vehicles = await this.prisma.vehicle.count({
       where: { userId },
@@ -64,6 +65,7 @@ export class SubscriptionService {
       plan: normalizedUser.plan,
       planStatus: normalizedUser.planStatus,
       planExpiresAt: normalizedUser.planExpiresAt,
+      isPremiumActive: premiumActive,
       effectivePlan,
       limits,
       usage: {
@@ -423,12 +425,14 @@ export class SubscriptionService {
   private toSubscriptionResponse(
     user: Awaited<ReturnType<SubscriptionService['findUserSubscription']>>,
   ): SubscriptionResponseDto {
-    const effectivePlan = resolveEffectivePlan(user);
+    const premiumActive = isPremiumActive(user);
+    const effectivePlan = premiumActive ? 'premium' : 'free';
 
     return {
       plan: user.plan,
       planStatus: user.planStatus,
       planExpiresAt: user.planExpiresAt,
+      isPremiumActive: premiumActive,
       limits: PLAN_LIMITS[effectivePlan],
     };
   }

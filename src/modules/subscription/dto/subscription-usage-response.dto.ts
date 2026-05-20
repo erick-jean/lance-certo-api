@@ -1,4 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
+import {
+  SubscriptionPlan,
+  SubscriptionPlanStatus,
+} from '../../../../generated/prisma/client';
 import { PlanLimitsResponseDto } from './subscription-response.dto';
 
 export class SubscriptionUsageDto {
@@ -10,11 +14,22 @@ export class SubscriptionUsageDto {
 }
 
 export class SubscriptionUsageResponseDto {
-  @ApiProperty({ example: 'free' })
-  plan!: string;
+  @ApiProperty({ example: 'FREE', enum: ['FREE', 'PREMIUM'] })
+  plan!: SubscriptionPlan;
 
-  @ApiProperty({ example: 'inactive' })
-  planStatus!: string;
+  @ApiProperty({
+    example: 'NONE',
+    enum: [
+      'NONE',
+      'PENDING',
+      'ACTIVE',
+      'PAUSED',
+      'CANCELLED',
+      'EXPIRED',
+      'REJECTED',
+    ],
+  })
+  planStatus!: SubscriptionPlanStatus;
 
   @ApiProperty({
     example: '2026-06-05T00:00:00.000Z',
@@ -26,6 +41,13 @@ export class SubscriptionUsageResponseDto {
 
   @ApiProperty({ example: 'free', enum: ['free', 'premium'] })
   effectivePlan!: 'free' | 'premium';
+
+  @ApiProperty({
+    description:
+      'Indica se o usuario ainda pode acessar recursos premium neste momento.',
+    example: false,
+  })
+  isPremiumActive!: boolean;
 
   @ApiProperty({ type: PlanLimitsResponseDto })
   limits!: PlanLimitsResponseDto;
