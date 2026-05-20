@@ -20,23 +20,25 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
-import { createHmac, timingSafeEqual } from 'crypto';
+import { timingSafeEqual } from 'crypto';
 import { AuthGuard } from '../auth/auth.guard';
 import { MessageResponseDto } from '../auth/dto/message-response.dto';
 import { AuthenticatedRequest } from '../auth/interfaces/authenticated-request.interface';
+import { MercadoPagoService } from '../mercado-pago/mercado-pago.service';
 import { CheckoutResponseDto } from './dto/checkout-response.dto';
+import { CreateCheckoutDto } from './dto/create-checkout.dto';
+import { MercadoPagoWebhookDto } from './dto/mercado-pago-webhook.dto';
 import { SubscriptionResponseDto } from './dto/subscription-response.dto';
 import { SubscriptionUsageResponseDto } from './dto/subscription-usage-response.dto';
 import { SubscriptionWebhookDto } from './dto/subscription-webhook.dto';
 import { SubscriptionService } from './subscription.service';
-import { CreateCheckoutDto } from './dto/create-checkout.dto';
-import { MercadoPagoWebhookDto } from './dto/mercado-pago-webhook.dto';
 
 @ApiTags('Subscription / Assinatura')
 @Controller('subscription')
 export class SubscriptionController {
   constructor(
     private readonly subscriptionService: SubscriptionService,
+    private readonly mercadoPagoService: MercadoPagoService,
     private readonly configService: ConfigService,
   ) {}
 
@@ -119,7 +121,11 @@ export class SubscriptionController {
     @Query('data.id') queryDataId: string | undefined,
     @Body() dto: MercadoPagoWebhookDto,
   ): Promise<MessageResponseDto> {
-    this.validateMercadoPagoSignature(signature, requestId, queryDataId);
+    this.mercadoPagoService.validateWebhookSignature({
+      signature,
+      requestId,
+      dataId: queryDataId,
+    });
 
     return this.subscriptionService.applyMercadoPagoWebhookEvent(dto);
   }
@@ -147,70 +153,5 @@ export class SubscriptionController {
       valueBuffer.length === expectedBuffer.length &&
       timingSafeEqual(valueBuffer, expectedBuffer)
     );
-  }
-
-  private validateMercadoPagoSignature(
-    signature: string | undefined,
-    requestId: string | undefined,
-    dataId: string | undefined,
-  ): void {
-    const expectedSecret =
-      this.configService.get<string>('MERCADO_PAGO_WEBHOOK_SECRET') ??
-      this.configService.getOrThrow<string>('SUBSCRIPTION_WEBHOOK_SECRET');
-
-    const signatureParts = this.parseMercadoPagoSignature(signature);
-
-    if (!requestId || !signatureParts.ts || !signatureParts.v1) {
-      throw new UnauthorizedException(
-        'Assinatura do Mercado Pago ausente ou invÃ¡lida',
-      );
-    }
-
-    const manifest = this.buildMercadoPagoManifest({
-      dataId,
-      requestId,
-      timestamp: signatureParts.ts,
-    });
-    const expectedHash = createHmac('sha256', expectedSecret)
-      .update(manifest)
-      .digest('hex');
-
-    if (!this.secureEquals(signatureParts.v1, expectedHash)) {
-      throw new UnauthorizedException(
-        'Assinatura do Mercado Pago invÃ¡lida',
-      );
-    }
-  }
-
-  private parseMercadoPagoSignature(
-    signature: string | undefined,
-  ): Record<string, string> {
-    if (!signature) {
-      return {};
-    }
-
-    return signature.split(',').reduce<Record<string, string>>((acc, part) => {
-      const [key, value] = part.split('=').map((item) => item.trim());
-
-      if (key && value) {
-        acc[key] = value;
-      }
-
-      return acc;
-    }, {});
-  }
-
-  private buildMercadoPagoManifest(params: {
-    dataId: string | undefined;
-    requestId: string;
-    timestamp: string;
-  }): string {
-    const normalizedDataId = params.dataId?.toLowerCase();
-
-    return [
-      normalizedDataId ? `id:${normalizedDataId};` : '',
-      `request-id:${params.requestId};`,
-      `ts:${params.timestamp};`,
-    ].join('');
   }
 }

@@ -1,15 +1,23 @@
 import {
+  ForbiddenException,
   Injectable,
   InternalServerErrorException,
   Logger,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios, { AxiosError } from 'axios';
+import { createHmac, timingSafeEqual } from 'crypto';
 
 interface CreatePreapprovalParams {
   userId: string;
   payerEmail: string;
   cardTokenId: string;
+}
+
+interface ValidateWebhookSignatureParams {
+  signature: string | undefined;
+  requestId: string | undefined;
+  dataId: string | undefined;
 }
 
 export interface MercadoPagoPreapprovalResponse {
@@ -34,6 +42,8 @@ export interface MercadoPagoPreapprovalResponse {
 export class MercadoPagoService {
   private readonly logger = new Logger(MercadoPagoService.name);
   private readonly baseUrl = 'https://api.mercadopago.com';
+  private readonly fallbackSubscriptionAmount = 29.9;
+  private readonly fallbackCurrency = 'BRL';
 
   constructor(private readonly configService: ConfigService) {}
 
@@ -131,6 +141,47 @@ export class MercadoPagoService {
     }
   }
 
+  validateWebhookSignature(params: ValidateWebhookSignatureParams): void {
+    const signatureParts = this.parseWebhookSignature(params.signature);
+
+    if (!params.requestId || !signatureParts.ts || !signatureParts.v1) {
+      throw new ForbiddenException(
+        'Assinatura do Mercado Pago ausente ou invalida.',
+      );
+    }
+
+    /**
+     * Mercado Pago signs a manifest built from URL query params and headers,
+     * not from the JSON body. Keeping this here avoids duplicating provider
+     * security rules in controllers.
+     */
+    const manifest = this.buildWebhookSignatureManifest({
+      dataId: params.dataId,
+      requestId: params.requestId,
+      timestamp: signatureParts.ts,
+    });
+    const expectedSignature = createHmac('sha256', this.getWebhookSecret())
+      .update(manifest)
+      .digest('hex');
+
+    if (!this.secureEquals(signatureParts.v1, expectedSignature)) {
+      throw new ForbiddenException('Assinatura do Mercado Pago invalida.');
+    }
+  }
+
+  getSubscriptionAmount(subscription: MercadoPagoPreapprovalResponse): number {
+    return (
+      subscription.auto_recurring?.transaction_amount ??
+      this.fallbackSubscriptionAmount
+    );
+  }
+
+  getSubscriptionCurrency(
+    subscription: MercadoPagoPreapprovalResponse,
+  ): string {
+    return subscription.auto_recurring?.currency_id ?? this.fallbackCurrency;
+  }
+
   private resolveMercadoPagoError(error: unknown): unknown {
     if (error instanceof AxiosError) {
       return error.response?.data ?? error.message;
@@ -156,5 +207,54 @@ export class MercadoPagoService {
     url.searchParams.set('source_news', 'webhooks');
 
     return url.toString();
+  }
+
+  private getWebhookSecret(): string {
+    return (
+      this.configService.get<string>('MERCADO_PAGO_WEBHOOK_SECRET') ??
+      this.configService.getOrThrow<string>('SUBSCRIPTION_WEBHOOK_SECRET')
+    );
+  }
+
+  private parseWebhookSignature(
+    signature: string | undefined,
+  ): Record<string, string> {
+    if (!signature) {
+      return {};
+    }
+
+    return signature.split(',').reduce<Record<string, string>>((acc, part) => {
+      const [key, value] = part.split('=').map((item) => item.trim());
+
+      if (key && value) {
+        acc[key] = value;
+      }
+
+      return acc;
+    }, {});
+  }
+
+  private buildWebhookSignatureManifest(params: {
+    dataId: string | undefined;
+    requestId: string;
+    timestamp: string;
+  }): string {
+    const normalizedDataId = params.dataId?.toLowerCase();
+
+    return [
+      normalizedDataId ? `id:${normalizedDataId};` : '',
+      `request-id:${params.requestId};`,
+      `ts:${params.timestamp};`,
+    ].join('');
+  }
+
+  private secureEquals(value: string, expected: string): boolean {
+    const valueBuffer = Buffer.from(value);
+    const expectedBuffer = Buffer.from(expected);
+
+    return (
+      valueBuffer.length === expectedBuffer.length &&
+      timingSafeEqual(valueBuffer, expectedBuffer)
+    );
   }
 }
