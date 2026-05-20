@@ -34,11 +34,11 @@ export function isPremiumActive(user: {
     return false;
   }
 
-  if (user.planStatus !== 'ACTIVE') {
+  if (!['ACTIVE', 'CANCELLED', 'PAUSED'].includes(user.planStatus)) {
     return false;
   }
 
-  if (user.planExpiresAt && user.planExpiresAt <= new Date()) {
+  if (!user.planExpiresAt || user.planExpiresAt <= new Date()) {
     return false;
   }
 

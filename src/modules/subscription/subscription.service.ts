@@ -237,14 +237,23 @@ export class SubscriptionService {
       return this.toSubscriptionResponse(normalizedUser);
     }
 
-    const canceledUser = await this.prisma.user.update({
-      where: { id: userId },
-      data: {
-        planStatus: 'CANCELLED',
-        planExpiresAt: normalizedUser.planExpiresAt,
-      },
-      select: this.subscriptionSelect,
-    });
+    const subscription =
+      await this.findCancelableMercadoPagoSubscription(userId);
+
+    if (!subscription?.mercadoPagoPreapprovalId) {
+      throw new NotFoundException(
+        'Assinatura Mercado Pago nao encontrada para cancelamento.',
+      );
+    }
+
+    const cancelledSubscription =
+      await this.mercadoPagoService.cancelPreapproval(
+        subscription.mercadoPagoPreapprovalId,
+      );
+
+    await this.syncMercadoPagoPreapproval(cancelledSubscription, userId);
+
+    const canceledUser = await this.findUserSubscription(userId);
 
     return this.toSubscriptionResponse(canceledUser);
   }
@@ -330,6 +339,26 @@ export class SubscriptionService {
     return subscription?.userId;
   }
 
+  private async findCancelableMercadoPagoSubscription(userId: string) {
+    return this.prisma.subscription.findFirst({
+      where: {
+        userId,
+        mercadoPagoPreapprovalId: {
+          not: null,
+        },
+        status: {
+          in: ['ACTIVE', 'PENDING', 'PAUSED'],
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      select: {
+        mercadoPagoPreapprovalId: true,
+      },
+    });
+  }
+
   private resolvePlanExpiresAt(
     status: SubscriptionPlanStatus,
     nextPaymentAt: Date | null,
@@ -374,10 +403,7 @@ export class SubscriptionService {
   private async normalizeExpiredSubscription(
     user: Awaited<ReturnType<SubscriptionService['findUserSubscription']>>,
   ) {
-    const isExpired =
-      user.plan === 'PREMIUM' &&
-      user.planExpiresAt !== null &&
-      user.planExpiresAt <= new Date();
+    const isExpired = this.isSubscriptionAccessExpired(user);
 
     if (!isExpired) {
       return user;
@@ -405,6 +431,17 @@ export class SubscriptionService {
       planExpiresAt: user.planExpiresAt,
       limits: PLAN_LIMITS[effectivePlan],
     };
+  }
+
+  private isSubscriptionAccessExpired(user: {
+    plan: string;
+    planExpiresAt: Date | null;
+  }): boolean {
+    return (
+      user.plan === 'PREMIUM' &&
+      user.planExpiresAt !== null &&
+      user.planExpiresAt <= new Date()
+    );
   }
 
   private calculateDefaultPremiumExpiration(): Date {

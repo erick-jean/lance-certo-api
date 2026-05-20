@@ -55,15 +55,13 @@ export class MercadoPagoService {
   async createPreapprovalSubscription(
     params: CreatePreapprovalParams,
   ): Promise<MercadoPagoPreapprovalResponse> {
-    const accessToken = this.configService.get<string>(
-      'MERCADO_PAGO_ACCESS_TOKEN',
-    );
+    const accessToken = this.getAccessToken();
 
     const planId = this.configService.get<string>(
       'MERCADO_PAGO_PREMIUM_PLAN_ID',
     );
 
-    if (!accessToken || !planId) {
+    if (!planId) {
       throw new InternalServerErrorException(
         'Credenciais do Mercado Pago não configuradas.',
       );
@@ -108,15 +106,7 @@ export class MercadoPagoService {
   async getPreapproval(
     preapprovalId: string,
   ): Promise<MercadoPagoPreapprovalResponse> {
-    const accessToken = this.configService.get<string>(
-      'MERCADO_PAGO_ACCESS_TOKEN',
-    );
-
-    if (!accessToken) {
-      throw new InternalServerErrorException(
-        'Access Token do Mercado Pago não configurado.',
-      );
-    }
+    const accessToken = this.getAccessToken();
 
     try {
       const response = await axios.get<MercadoPagoPreapprovalResponse>(
@@ -137,6 +127,38 @@ export class MercadoPagoService {
 
       throw new InternalServerErrorException(
         'Não foi possível consultar a assinatura no Mercado Pago.',
+      );
+    }
+  }
+
+  async cancelPreapproval(
+    preapprovalId: string,
+  ): Promise<MercadoPagoPreapprovalResponse> {
+    const accessToken = this.getAccessToken();
+
+    try {
+      const response = await axios.put<MercadoPagoPreapprovalResponse>(
+        `${this.baseUrl}/preapproval/${preapprovalId}`,
+        {
+          status: 'cancelled',
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+
+      return response.data;
+    } catch (error: unknown) {
+      this.logger.error(
+        'Erro ao cancelar assinatura no Mercado Pago',
+        this.resolveMercadoPagoError(error),
+      );
+
+      throw new InternalServerErrorException(
+        'Nao foi possivel cancelar a assinatura no Mercado Pago.',
       );
     }
   }
@@ -180,6 +202,20 @@ export class MercadoPagoService {
     subscription: MercadoPagoPreapprovalResponse,
   ): string {
     return subscription.auto_recurring?.currency_id ?? this.fallbackCurrency;
+  }
+
+  private getAccessToken(): string {
+    const accessToken = this.configService.get<string>(
+      'MERCADO_PAGO_ACCESS_TOKEN',
+    );
+
+    if (!accessToken) {
+      throw new InternalServerErrorException(
+        'Access Token do Mercado Pago nao configurado.',
+      );
+    }
+
+    return accessToken;
   }
 
   private resolveMercadoPagoError(error: unknown): unknown {
