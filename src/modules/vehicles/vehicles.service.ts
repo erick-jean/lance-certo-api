@@ -257,6 +257,24 @@ export class VehiclesService {
       userRole,
     );
 
+    if (dto.purchasePrice <= 0) {
+      throw new BadRequestException(
+        'Valor do arremate precisa ser maior que zero.',
+      );
+    }
+
+    if (vehicle.status === VehicleStatus.SOLD) {
+      throw new BadRequestException(
+        'Veiculo vendido nao pode voltar para arrematado.',
+      );
+    }
+
+    if (vehicle.status === VehicleStatus.REJECTED) {
+      throw new BadRequestException(
+        'Veiculo rejeitado nao pode ser marcado como arrematado.',
+      );
+    }
+
     const updatedVehicle = await this.prisma.vehicle.update({
       where: {
         id: vehicle.id,

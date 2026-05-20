@@ -9,7 +9,7 @@ export class PurchaseVehicleDto {
   })
   @Type(() => Number)
   @IsNumber()
-  @Min(0)
+  @Min(0.01)
   purchasePrice!: number;
 
   @ApiPropertyOptional({
