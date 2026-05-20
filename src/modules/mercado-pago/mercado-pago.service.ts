@@ -15,6 +15,7 @@ interface CreatePreapprovalParams {
 export interface MercadoPagoPreapprovalResponse {
   id: string;
   status: string;
+  payer_email?: string | null;
   payer_id?: number | string | null;
   collector_id?: number | string | null;
   reason?: string | null;
@@ -71,6 +72,7 @@ export class MercadoPagoService {
           back_url: `${this.configService.getOrThrow<string>(
             'APP_FRONTEND_URL',
           )}/assinatura/sucesso`,
+          notification_url: this.getWebhookUrl(),
         },
         {
           headers: {
@@ -139,5 +141,20 @@ export class MercadoPagoService {
     }
 
     return error;
+  }
+
+  private getWebhookUrl(): string | undefined {
+    const configuredUrl = this.configService.get<string>(
+      'MERCADO_PAGO_WEBHOOK_URL',
+    );
+
+    if (!configuredUrl) {
+      return undefined;
+    }
+
+    const url = new URL(configuredUrl);
+    url.searchParams.set('source_news', 'webhooks');
+
+    return url.toString();
   }
 }

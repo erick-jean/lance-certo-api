@@ -14,6 +14,7 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { VehicleEvaluationsModule } from './modules/evaluations/vehicle-evaluations.module';
 import { ReportsModule } from './modules/reports/reports.module';
 import { MercadoPagoModule } from './modules/mercado-pago/mercado-pago.module';
+import { WebhooksModule } from './webhooks/webhooks.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { MercadoPagoModule } from './modules/mercado-pago/mercado-pago.module';
     DashboardModule,
     ReportsModule,
     MercadoPagoModule,
+    WebhooksModule,
   ],
   providers: [
     {

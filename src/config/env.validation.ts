@@ -12,7 +12,7 @@ const requiredEnvVars = [
   'SUBSCRIPTION_WEBHOOK_SECRET',
 ] as const;
 
-const optionalUrlEnvVars = ['CORS_ORIGIN'] as const;
+const optionalUrlEnvVars = ['CORS_ORIGIN', 'MERCADO_PAGO_WEBHOOK_URL'] as const;
 
 export function validateEnv(config: Env): Env {
   for (const key of requiredEnvVars) {

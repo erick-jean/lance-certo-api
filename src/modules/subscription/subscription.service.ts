@@ -10,11 +10,15 @@ import { SubscriptionResponseDto } from './dto/subscription-response.dto';
 import { SubscriptionUsageResponseDto } from './dto/subscription-usage-response.dto';
 import { SubscriptionWebhookDto } from './dto/subscription-webhook.dto';
 import { MessageResponseDto } from '../auth/dto/message-response.dto';
-import { MercadoPagoService } from '../mercado-pago/mercado-pago.service';
+import {
+  MercadoPagoPreapprovalResponse,
+  MercadoPagoService,
+} from '../mercado-pago/mercado-pago.service';
 import {
   Prisma,
   SubscriptionPlanStatus,
 } from '../../../generated/prisma/client';
+import { MercadoPagoWebhookDto } from './dto/mercado-pago-webhook.dto';
 
 @Injectable()
 export class SubscriptionService {
@@ -79,15 +83,52 @@ export class SubscriptionService {
         cardTokenId,
       });
 
-    const internalStatus = this.mapMercadoPagoStatus(mpSubscription.status);
-    const isActive = internalStatus === 'ACTIVE';
+    await this.syncMercadoPagoPreapproval(mpSubscription, userId);
 
+    return this.toCheckoutResponse(mpSubscription);
+  }
+
+  async applyMercadoPagoWebhookEvent(
+    dto: MercadoPagoWebhookDto,
+  ): Promise<MessageResponseDto> {
+    if (dto.type !== 'subscription_preapproval') {
+      return {
+        message: `Evento Mercado Pago recebido sem processamento: ${dto.type}.`,
+      };
+    }
+
+    const mpSubscription = await this.mercadoPagoService.getPreapproval(
+      dto.data.id,
+    );
+
+    await this.syncMercadoPagoPreapproval(mpSubscription);
+
+    return {
+      message: 'Webhook Mercado Pago processado com sucesso.',
+    };
+  }
+
+  private async syncMercadoPagoPreapproval(
+    mpSubscription: MercadoPagoPreapprovalResponse,
+    fallbackUserId?: string,
+  ): Promise<void> {
+    const internalStatus = this.mapMercadoPagoStatus(mpSubscription.status);
     const nextPaymentAt = mpSubscription.next_payment_date
       ? new Date(mpSubscription.next_payment_date)
       : null;
     const amount = mpSubscription.auto_recurring?.transaction_amount ?? 29.9;
     const currency = mpSubscription.auto_recurring?.currency_id ?? 'BRL';
     const metadata = mpSubscription as Prisma.InputJsonValue;
+    const userId =
+      this.resolveMercadoPagoExternalReference(mpSubscription) ??
+      fallbackUserId ??
+      (await this.findUserIdByMercadoPagoPreapprovalId(mpSubscription.id));
+
+    if (!userId) {
+      throw new NotFoundException(
+        'UsuÃ¡rio da assinatura Mercado Pago nÃ£o encontrado.',
+      );
+    }
 
     await this.prisma.$transaction([
       this.prisma.subscription.upsert({
@@ -95,7 +136,7 @@ export class SubscriptionService {
           mercadoPagoPreapprovalId: mpSubscription.id,
         },
         create: {
-          userId: userId,
+          userId,
           plan: 'PREMIUM',
           status: internalStatus,
           mercadoPagoPreapprovalId: mpSubscription.id,
@@ -122,7 +163,21 @@ export class SubscriptionService {
         update: {
           status: internalStatus,
           mercadoPagoStatus: mpSubscription.status,
+          mercadoPagoPayerId: mpSubscription.payer_id
+            ? String(mpSubscription.payer_id)
+            : null,
+          mercadoPagoCollectorId: mpSubscription.collector_id
+            ? String(mpSubscription.collector_id)
+            : null,
+          amount,
+          currency,
+          reason: mpSubscription.reason,
+          externalReference: mpSubscription.external_reference,
           nextPaymentAt,
+          expiresAt: mpSubscription.auto_recurring?.end_date
+            ? new Date(mpSubscription.auto_recurring.end_date)
+            : null,
+          cancelledAt: internalStatus === 'CANCELLED' ? new Date() : undefined,
           metadata,
         },
       }),
@@ -130,12 +185,26 @@ export class SubscriptionService {
       this.prisma.user.update({
         where: { id: userId },
         data: {
-          plan: 'PREMIUM',
-          planStatus: isActive ? 'ACTIVE' : 'PENDING',
-          planExpiresAt: isActive ? nextPaymentAt : null,
+          plan: internalStatus === 'NONE' ? 'FREE' : 'PREMIUM',
+          planStatus: internalStatus,
+          planExpiresAt: this.resolvePlanExpiresAt(
+            internalStatus,
+            nextPaymentAt,
+          ),
         },
       }),
     ]);
+  }
+
+  private toCheckoutResponse(
+    mpSubscription: MercadoPagoPreapprovalResponse,
+  ): CheckoutResponseDto {
+    const internalStatus = this.mapMercadoPagoStatus(mpSubscription.status);
+    const nextPaymentAt = mpSubscription.next_payment_date
+      ? new Date(mpSubscription.next_payment_date)
+      : null;
+    const amount = mpSubscription.auto_recurring?.transaction_amount ?? 29.9;
+    const currency = mpSubscription.auto_recurring?.currency_id ?? 'BRL';
 
     return {
       message: 'Assinatura criada com sucesso.',
@@ -230,6 +299,40 @@ export class SubscriptionService {
     return {
       message: 'Evento de assinatura processado com sucesso.',
     };
+  }
+
+  private resolveMercadoPagoExternalReference(
+    mpSubscription: MercadoPagoPreapprovalResponse,
+  ): string | undefined {
+    return typeof mpSubscription.external_reference === 'string'
+      ? mpSubscription.external_reference
+      : undefined;
+  }
+
+  private async findUserIdByMercadoPagoPreapprovalId(
+    preapprovalId: string,
+  ): Promise<string | undefined> {
+    const subscription = await this.prisma.subscription.findUnique({
+      where: {
+        mercadoPagoPreapprovalId: preapprovalId,
+      },
+      select: {
+        userId: true,
+      },
+    });
+
+    return subscription?.userId;
+  }
+
+  private resolvePlanExpiresAt(
+    status: SubscriptionPlanStatus,
+    nextPaymentAt: Date | null,
+  ): Date | null {
+    if (['ACTIVE', 'CANCELLED', 'PAUSED'].includes(status)) {
+      return nextPaymentAt;
+    }
+
+    return null;
   }
 
   private readonly subscriptionSelect = {
