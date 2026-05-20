@@ -454,6 +454,10 @@ CORS_ORIGIN="http://localhost:4200"
 # Use "true" apenas em desenvolvimento. Em producao, mantenha "false".
 SWAGGER_ENABLED="true"
 
+# Opcional em desenvolvimento. Recomendado em producao para rate limit
+# distribuido quando houver mais de uma instancia da API.
+# REDIS_URL="redis://localhost:6379"
+
 MERCADO_PAGO_ACCESS_TOKEN="TEST-seu-access-token"
 MERCADO_PAGO_PREMIUM_PLAN_ID="seu-preapproval-plan-id"
 MERCADO_PAGO_WEBHOOK_SECRET="segredo-assinatura-webhook-mercado-pago"
@@ -723,6 +727,20 @@ SWAGGER_ENABLED=false
 
 A aplicacao falha no boot se `NODE_ENV=production` e
 `SWAGGER_ENABLED=true` forem usados juntos.
+
+### Rate Limit Distribuido
+
+O projeto usa `@nestjs/throttler` para limitar excesso de requisicoes. Em
+desenvolvimento, se `REDIS_URL` nao estiver definida, o storage fica em memoria.
+
+Em producao, configure Redis para que o rate limit seja compartilhado entre
+instancias da API:
+
+```env
+REDIS_URL=redis://usuario:senha@host:6379
+```
+
+Sem Redis, cada instancia controla limites apenas em memoria propria.
 
 ### Rodar em desenvolvimento
 

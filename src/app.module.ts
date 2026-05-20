@@ -1,8 +1,9 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { UserThrottlerGuard } from './common/guards/user-throttler.guard';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
 import { DatabaseModule } from './database/database.module';
 import { UsersModule } from './modules/users/users.module';
 import { AuthModule } from './modules/auth/auth.module';
@@ -20,13 +21,25 @@ import { ReportsModule } from './modules/reports/reports.module';
       isGlobal: true,
       validate: validateEnv,
     }),
-    ThrottlerModule.forRoot([
-      {
-        ttl: 60_000,
-        limit: 100,
-        blockDuration: 60_000,
+    ThrottlerModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => {
+        const redisUrl = configService.get<string>('REDIS_URL');
+
+        return {
+          throttlers: [
+            {
+              ttl: 60_000,
+              limit: 100,
+              blockDuration: 60_000,
+            },
+          ],
+          ...(redisUrl
+            ? { storage: new ThrottlerStorageRedisService(redisUrl) }
+            : {}),
+        };
       },
-    ]),
+    }),
     DatabaseModule,
     UsersModule,
     AuthModule,

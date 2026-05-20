@@ -40,6 +40,7 @@ const requiredUrlEnvVars = [
 ] as const;
 
 const optionalUrlListEnvVars = ['CORS_ORIGIN'] as const;
+const optionalUrlEnvVars = ['REDIS_URL'] as const;
 
 export function validateEnv(config: RawEnv): ValidatedEnv {
   const validated = { ...config } as ValidatedEnv;
@@ -107,6 +108,16 @@ function validateUrls(config: RawEnv): void {
     for (const origin of value.split(',').map((item) => item.trim())) {
       assertValidUrl(origin, key);
     }
+  }
+
+  for (const key of optionalUrlEnvVars) {
+    const value = config[key];
+
+    if (!value) {
+      continue;
+    }
+
+    assertValidUrl(value, key);
   }
 }
 
