@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import cookieParser from 'cookie-parser';
 import { json, urlencoded } from 'express';
 import type { Request, Response } from 'express';
 import helmet from 'helmet';
@@ -29,6 +30,7 @@ async function bootstrap() {
       crossOriginResourcePolicy: { policy: 'cross-origin' },
     }),
   );
+  app.use(cookieParser());
   app.use(json({ limit: '100kb' }));
   app.use(urlencoded({ extended: true, limit: '100kb' }));
   app.enableCors({

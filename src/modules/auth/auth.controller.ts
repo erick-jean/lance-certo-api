@@ -35,6 +35,10 @@ import { AuthGuard } from './auth.guard';
 import { AuthenticatedRequest } from './interfaces/authenticated-request.interface';
 import { ResponseUserDto } from '../users/dto/response-user.dto';
 
+type RequestWithCookies = Request & {
+  cookies?: Record<string, string | undefined>;
+};
+
 @ApiTags('Auth')
 @ApiBadRequestResponse({ description: 'Dados da requisição inválidos.' })
 @ApiTooManyRequestsResponse({ description: 'Muitas requisições.' })
@@ -96,7 +100,7 @@ export class AuthController {
     description: 'Refresh token inválido ou ausente.',
   })
   async refresh(
-    @Req() request: Request,
+    @Req() request: RequestWithCookies,
     @Res({ passthrough: true }) response: Response,
   ): Promise<AuthResponseDto> {
     const refreshToken = this.getRefreshTokenFromCookie(request);
@@ -160,7 +164,7 @@ export class AuthController {
     description: 'Refresh token inválido ou ausente.',
   })
   async logout(
-    @Req() request: Request,
+    @Req() request: RequestWithCookies,
     @Res({ passthrough: true }) response: Response,
   ): Promise<MessageResponseDto> {
     const refreshToken = this.getRefreshTokenFromCookie(request);
@@ -171,7 +175,7 @@ export class AuthController {
     return logoutResult;
   }
 
-  private getRefreshTokenFromCookie(request: Request): string {
+  private getRefreshTokenFromCookie(request: RequestWithCookies): string {
     const refreshToken = this.getOptionalRefreshTokenFromCookie(request);
 
     if (!refreshToken) {
@@ -182,24 +186,13 @@ export class AuthController {
   }
 
   /**
-   * Parses the raw Cookie header and returns the configured refresh token
-   * cookie value when present.
+   * Returns the configured refresh token cookie parsed by cookie-parser.
    */
   private getOptionalRefreshTokenFromCookie(
-    request: Request,
+    request: RequestWithCookies,
   ): string | undefined {
     const cookieName = this.getRefreshTokenCookieName();
-    const cookies = request.headers.cookie?.split(';') ?? [];
-    const cookie = cookies.find((item) =>
-      item.trim().startsWith(`${cookieName}=`),
-    );
-
-    if (!cookie) {
-      return undefined;
-    }
-
-    const [, value] = cookie.split('=');
-    return value ? decodeURIComponent(value) : undefined;
+    return request.cookies?.[cookieName];
   }
 
   private setRefreshTokenCookie(
