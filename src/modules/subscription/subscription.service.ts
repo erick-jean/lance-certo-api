@@ -26,80 +26,6 @@ export class SubscriptionService {
     private readonly mercadoPagoService: MercadoPagoService,
   ) {}
 
-  async createCheckout(user: AuthenticatedUser, cardTokenId: string) {
-    const mpSubscription =
-      await this.mercadoPagoService.createPreapprovalSubscription({
-        userId: user.id,
-        payerEmail: user.email,
-        cardTokenId,
-      });
-
-    const internalStatus = this.mapMercadoPagoStatus(mpSubscription.status);
-    const isActive = internalStatus === 'ACTIVE';
-
-    const nextPaymentAt = mpSubscription.next_payment_date
-      ? new Date(mpSubscription.next_payment_date)
-      : null;
-
-    await this.prisma.$transaction([
-      this.prisma.subscription.upsert({
-        where: {
-          mercadoPagoPreapprovalId: mpSubscription.id,
-        },
-        create: {
-          userId: user.id,
-          plan: 'PREMIUM',
-          status: internalStatus,
-          mercadoPagoPreapprovalId: mpSubscription.id,
-          mercadoPagoStatus: mpSubscription.status,
-          mercadoPagoPayerId: mpSubscription.payer_id
-            ? String(mpSubscription.payer_id)
-            : null,
-          mercadoPagoCollectorId: mpSubscription.collector_id
-            ? String(mpSubscription.collector_id)
-            : null,
-          amount: mpSubscription.auto_recurring?.transaction_amount ?? 29.9,
-          currency: mpSubscription.auto_recurring?.currency_id ?? 'BRL',
-          reason: mpSubscription.reason,
-          externalReference: mpSubscription.external_reference,
-          startedAt: mpSubscription.auto_recurring?.start_date
-            ? new Date(mpSubscription.auto_recurring.start_date)
-            : null,
-          nextPaymentAt,
-          expiresAt: mpSubscription.auto_recurring?.end_date
-            ? new Date(mpSubscription.auto_recurring.end_date)
-            : null,
-          metadata: mpSubscription,
-        },
-        update: {
-          status: internalStatus,
-          mercadoPagoStatus: mpSubscription.status,
-          nextPaymentAt,
-          metadata: mpSubscription,
-        },
-      }),
-
-      this.prisma.user.update({
-        where: { id: user.id },
-        data: {
-          plan: 'PREMIUM',
-          planStatus: isActive ? 'ACTIVE' : 'PENDING',
-          planExpiresAt: isActive ? nextPaymentAt : null,
-        },
-      }),
-    ]);
-
-    return {
-      message: 'Assinatura criada com sucesso.',
-      subscription: {
-        id: mpSubscription.id,
-        status: internalStatus,
-        mercadoPagoStatus: mpSubscription.status,
-        nextPaymentAt,
-      },
-    };
-  }
-
   /**
    * Returns the user's current subscription state.
    *
@@ -143,26 +69,77 @@ export class SubscriptionService {
     };
   }
 
-  /**
-   * Starts a checkout flow for the authenticated user.
-   *
-   * This method returns a URL placeholder that can later be replaced by a real
-   * payment gateway session URL.
-   */
-  async checkout(userId: string): Promise<CheckoutResponseDto> {
-    await this.findUserSubscription(userId);
+  async createCheckout(userId: string, email: string, cardTokenId: string) {
+    const mpSubscription =
+      await this.mercadoPagoService.createPreapprovalSubscription({
+        userId: userId,
+        payerEmail: email,
+        cardTokenId,
+      });
 
-    const frontendUrl =
-      this.configService.get<string>('APP_FRONTEND_URL') ??
-      'http://localhost:4200';
-    const checkoutUrl = `${frontendUrl.replace(
-      /\/$/,
-      '',
-    )}/subscription/checkout?userId=${userId}`;
+    const internalStatus = this.mapMercadoPagoStatus(mpSubscription.status);
+    const isActive = internalStatus === 'ACTIVE';
+
+    const nextPaymentAt = mpSubscription.next_payment_date
+      ? new Date(mpSubscription.next_payment_date)
+      : null;
+
+    await this.prisma.$transaction([
+      this.prisma.subscription.upsert({
+        where: {
+          mercadoPagoPreapprovalId: mpSubscription.id,
+        },
+        create: {
+          userId: userId,
+          plan: 'PREMIUM',
+          status: internalStatus,
+          mercadoPagoPreapprovalId: mpSubscription.id,
+          mercadoPagoStatus: mpSubscription.status,
+          mercadoPagoPayerId: mpSubscription.payer_id
+            ? String(mpSubscription.payer_id)
+            : null,
+          mercadoPagoCollectorId: mpSubscription.collector_id
+            ? String(mpSubscription.collector_id)
+            : null,
+          amount: mpSubscription.auto_recurring?.transaction_amount ?? 29.9,
+          currency: mpSubscription.auto_recurring?.currency_id ?? 'BRL',
+          reason: mpSubscription.reason,
+          externalReference: mpSubscription.external_reference,
+          startedAt: mpSubscription.auto_recurring?.start_date
+            ? new Date(mpSubscription.auto_recurring.start_date)
+            : null,
+          nextPaymentAt,
+          expiresAt: mpSubscription.auto_recurring?.end_date
+            ? new Date(mpSubscription.auto_recurring.end_date)
+            : null,
+          metadata: mpSubscription,
+        },
+        update: {
+          status: internalStatus,
+          mercadoPagoStatus: mpSubscription.status,
+          nextPaymentAt,
+          metadata: mpSubscription,
+        },
+      }),
+
+      this.prisma.user.update({
+        where: { id: userId },
+        data: {
+          plan: 'PREMIUM',
+          planStatus: isActive ? 'ACTIVE' : 'PENDING',
+          planExpiresAt: isActive ? nextPaymentAt : null,
+        },
+      }),
+    ]);
 
     return {
-      message: 'Checkout iniciado. Conclua o pagamento para ativar o premium.',
-      checkoutUrl,
+      message: 'Assinatura criada com sucesso.',
+      subscription: {
+        id: mpSubscription.id,
+        status: internalStatus,
+        mercadoPagoStatus: mpSubscription.status,
+        nextPaymentAt,
+      },
     };
   }
 

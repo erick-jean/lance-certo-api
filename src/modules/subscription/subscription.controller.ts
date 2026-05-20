@@ -27,6 +27,7 @@ import { SubscriptionResponseDto } from './dto/subscription-response.dto';
 import { SubscriptionUsageResponseDto } from './dto/subscription-usage-response.dto';
 import { SubscriptionWebhookDto } from './dto/subscription-webhook.dto';
 import { SubscriptionService } from './subscription.service';
+import { CreateSubscriptionCheckoutDto } from '../mercado-pago/dto/create-subscription-checkout.dto';
 
 @ApiTags('Subscription / Assinatura')
 @Controller('subscription')
@@ -66,8 +67,15 @@ export class SubscriptionController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Inicia pagamento ou assinatura.' })
   @ApiOkResponse({ type: CheckoutResponseDto })
-  checkout(@Req() request: AuthenticatedRequest): Promise<CheckoutResponseDto> {
-    return this.subscriptionService.checkout(request.user.sub);
+  checkout(
+    @Req() request: AuthenticatedRequest,
+    @Body() dto: CreateSubscriptionCheckoutDto,
+  ) {
+    return this.subscriptionService.createCheckout(
+      request.user.sub,
+      request.user.email,
+      dto.cardTokenId,
+    );
   }
 
   @Post('cancel')
