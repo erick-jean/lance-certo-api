@@ -450,7 +450,27 @@ SUBSCRIPTION_WEBHOOK_SECRET="secret_local_de_desenvolvimento"
 PORT=3000
 ```
 
+Use o arquivo `.env.example` como base para criar o `.env` local. Ele deve
+conter apenas nomes de variáveis e exemplos sem segredos reais.
+
 > Nunca commite arquivos `.env` com dados reais.
+
+### Envio do projeto
+
+Ao enviar o projeto por zip ou repositório, não inclua arquivos gerados,
+dependências instaladas, uploads de usuários ou segredos locais.
+
+Não envie:
+
+- `node_modules/`
+- `dist/`
+- `coverage/`
+- `.env` ou qualquer `.env.*`
+- `uploads/`
+- `generated/prisma/`
+
+Envie o `.env.example`, pois ele documenta as variáveis necessárias sem expor
+credenciais.
 
 ---
 
