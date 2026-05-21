@@ -42,7 +42,9 @@ export class UsersController {
 
   @Get('me')
   @Throttle({ default: { limit: 60, ttl: 60_000, blockDuration: 60_000 } })
-  @ApiOperation({ summary: 'Busca os dados do usuário autenticado.' })
+  @ApiOperation({
+    summary: 'Busca os dados do usuário autenticado. Rota oficial de perfil.',
+  })
   @ApiOkResponse({ type: ResponseUserDto })
   findMe(@CurrentUser() user: JwtPayload): Promise<ResponseUserDto> {
     return this.usersService.findMe(user.sub);

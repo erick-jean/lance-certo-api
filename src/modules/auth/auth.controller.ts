@@ -1,7 +1,6 @@
 import {
   Body,
   Controller,
-  Get,
   HttpCode,
   HttpStatus,
   Post,
@@ -21,8 +20,6 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
-import { Authenticated } from 'src/common/decorators/authenticated.decorator';
-import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import type { CookieOptions, Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { AuthResponseDto } from './dto/auth-response.dto';
@@ -31,7 +28,6 @@ import { LoginDto } from './dto/login.dto';
 import { MessageResponseDto } from './dto/message-response.dto';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
-import { JwtPayload } from './interfaces/jwt-payload.interface';
 import { ResponseUserDto } from '../users/dto/response-user.dto';
 
 type RequestWithCookies = Request & {
@@ -121,15 +117,6 @@ export class AuthController {
   })
   resetPassword(@Body() dto: ResetPasswordDto): Promise<MessageResponseDto> {
     return this.authService.resetPassword(dto);
-  }
-
-  @Get('me')
-  @Throttle({ default: { limit: 60, ttl: 60_000, blockDuration: 60_000 } })
-  @Authenticated()
-  @ApiOperation({ summary: 'Retorna o usuário autenticado.' })
-  @ApiOkResponse({ type: ResponseUserDto })
-  me(@CurrentUser() user: JwtPayload): Promise<ResponseUserDto> {
-    return this.authService.me(user.sub);
   }
 
   @HttpCode(HttpStatus.OK)
