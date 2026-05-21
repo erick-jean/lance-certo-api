@@ -1,8 +1,5 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import {
-  isPremiumActive,
-  PLAN_LIMITS,
-} from 'src/common/plans/plan-limits';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { isPremiumActive, PLAN_LIMITS } from 'src/common/plans/plan-limits';
 import { PrismaService } from 'src/database/prisma.service';
 import { CheckoutResponseDto } from './dto/checkout-response.dto';
 import { SubscriptionResponseDto } from './dto/subscription-response.dto';
@@ -25,6 +22,8 @@ import { MercadoPagoWebhookDto } from './dto/mercado-pago-webhook.dto';
 
 @Injectable()
 export class SubscriptionService {
+  private readonly logger = new Logger(SubscriptionService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly mercadoPagoService: MercadoPagoService,
@@ -89,7 +88,24 @@ export class SubscriptionService {
   async applyMercadoPagoWebhookEvent(
     dto: MercadoPagoWebhookDto,
   ): Promise<MessageResponseDto> {
+    const eventContext = {
+      type: dto.type,
+      action: dto.action,
+      resourceId: dto.data.id,
+    };
+
+    this.logger.log(
+      `Webhook Mercado Pago recebido: ${JSON.stringify(eventContext)}`,
+    );
+
     if (dto.type !== MERCADO_PAGO_PREAPPROVAL_TOPIC) {
+      this.logger.warn(
+        `Webhook Mercado Pago ignorado: ${JSON.stringify({
+          ...eventContext,
+          result: 'ignored_unsupported_event',
+        })}`,
+      );
+
       return {
         message: `Evento Mercado Pago recebido sem processamento: ${dto.type}.`,
       };
@@ -99,11 +115,34 @@ export class SubscriptionService {
      * Mercado Pago webhooks are intentionally lightweight. The trusted source
      * for local persistence is the current preapproval fetched from their API.
      */
-    const mpSubscription = await this.mercadoPagoService.getPreapproval(
-      dto.data.id,
-    );
+    try {
+      const mpSubscription = await this.mercadoPagoService.getPreapproval(
+        dto.data.id,
+      );
 
-    await this.syncMercadoPagoPreapproval(mpSubscription);
+      await this.syncMercadoPagoPreapproval(mpSubscription);
+
+      this.logger.log(
+        `Webhook Mercado Pago processado: ${JSON.stringify({
+          ...eventContext,
+          mercadoPagoStatus: mpSubscription.status,
+          result: 'processed',
+        })}`,
+      );
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Erro desconhecido';
+
+      this.logger.error(
+        `Webhook Mercado Pago falhou: ${JSON.stringify({
+          ...eventContext,
+          result: 'failed',
+          error: errorMessage,
+        })}`,
+      );
+
+      throw error;
+    }
 
     return {
       message: 'Webhook Mercado Pago processado com sucesso.',

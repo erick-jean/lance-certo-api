@@ -9,6 +9,7 @@ import type { Request, Response } from 'express';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
+import { RequestLoggerInterceptor } from './common/interceptors/request-logger.interceptor';
 import { join } from 'path';
 
 async function bootstrap() {
@@ -41,6 +42,7 @@ async function bootstrap() {
   });
   app.enableShutdownHooks();
   app.useGlobalFilters(new HttpExceptionFilter(configService));
+  app.useGlobalInterceptors(new RequestLoggerInterceptor());
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
