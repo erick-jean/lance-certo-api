@@ -5,6 +5,7 @@ type ValidatedEnv = Record<string, unknown> & {
   NODE_ENV: NodeEnv;
   PORT: number;
   DATABASE_URL: string;
+  DIRECT_URL?: string;
   JWT_SECRET: string;
   JWT_EXPIRES_IN: string;
   JWT_REFRESH_EXPIRES_DAYS: number;
@@ -40,7 +41,7 @@ const requiredUrlEnvVars = [
 ] as const;
 
 const optionalUrlListEnvVars = ['CORS_ORIGIN'] as const;
-const optionalUrlEnvVars = ['REDIS_URL'] as const;
+const optionalUrlEnvVars = ['DIRECT_URL', 'REDIS_URL'] as const;
 
 export function validateEnv(config: RawEnv): ValidatedEnv {
   const validated = { ...config } as ValidatedEnv;
@@ -133,11 +134,11 @@ function validateDockerEnv(config: RawEnv, validated: ValidatedEnv): void {
 function validateEmailEnv(config: RawEnv, validated: ValidatedEnv): void {
   const hasSmtpConfig = Boolean(
     config.SMTP_HOST ||
-      config.SMTP_PORT ||
-      config.EMAIL_FROM ||
-      config.SMTP_SECURE ||
-      config.SMTP_USER ||
-      config.SMTP_PASSWORD,
+    config.SMTP_PORT ||
+    config.EMAIL_FROM ||
+    config.SMTP_SECURE ||
+    config.SMTP_USER ||
+    config.SMTP_PASSWORD,
   );
   const isProduction = validated.NODE_ENV === 'production';
 
@@ -192,10 +193,7 @@ function getRequiredString(config: RawEnv, key: string): string {
   return value;
 }
 
-function parseRequiredBoolean(
-  value: string | undefined,
-  key: string,
-): boolean {
+function parseRequiredBoolean(value: string | undefined, key: string): boolean {
   if (value !== 'true' && value !== 'false') {
     throw new Error(`${key} must be true or false`);
   }

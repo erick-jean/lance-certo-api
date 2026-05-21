@@ -10,7 +10,16 @@ export default defineConfig({
     seed: 'tsx src/database/seed.ts',
   },
   datasource: {
-    // url: process.env["DATABASE_URL"],
-    url: process.env['DIRECT_URL'],
+    url: getRequiredDirectUrl(),
   },
 });
+
+function getRequiredDirectUrl(): string {
+  const directUrl = process.env.DIRECT_URL;
+
+  if (!directUrl) {
+    throw new Error('DIRECT_URL is required for Prisma CLI commands');
+  }
+
+  return directUrl;
+}
