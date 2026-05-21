@@ -18,6 +18,7 @@ import {
 } from '../mercado-pago/mercado-pago.constants';
 import {
   Prisma,
+  SubscriptionPlan,
   SubscriptionPlanStatus,
 } from '../../../generated/prisma/client';
 import { MercadoPagoWebhookDto } from './dto/mercado-pago-webhook.dto';
@@ -44,7 +45,7 @@ export class SubscriptionService {
     const user = await this.findUserSubscription(userId);
     const normalizedUser = await this.normalizeExpiredSubscription(user);
     const premiumActive = isPremiumActive(normalizedUser);
-    const effectivePlan = premiumActive ? 'premium' : 'free';
+    const effectivePlan = this.resolveEffectivePlan(normalizedUser);
     const limits = PLAN_LIMITS[effectivePlan];
     const vehicles = await this.prisma.vehicle.count({
       where: { userId },
@@ -59,7 +60,7 @@ export class SubscriptionService {
       planStatus: normalizedUser.planStatus,
       planExpiresAt: normalizedUser.planExpiresAt,
       isPremiumActive: premiumActive,
-      effectivePlan,
+      effectivePlan: this.toPublicEffectivePlan(effectivePlan),
       limits,
       usage: {
         vehicles,
@@ -153,7 +154,10 @@ export class SubscriptionService {
       this.prisma.user.update({
         where: { id: userId },
         data: {
-          plan: internalStatus === 'NONE' ? 'FREE' : 'PREMIUM',
+          plan:
+            internalStatus === SubscriptionPlanStatus.NONE
+              ? SubscriptionPlan.FREE
+              : SubscriptionPlan.PREMIUM,
           planStatus: internalStatus,
           planExpiresAt: this.resolvePlanExpiresAt(
             internalStatus,
@@ -178,7 +182,7 @@ export class SubscriptionService {
       message: 'Assinatura criada com sucesso.',
       subscription: {
         id: mpSubscription.id,
-        plan: 'PREMIUM',
+        plan: SubscriptionPlan.PREMIUM,
         status: internalStatus,
         mercadoPagoStatus: mpSubscription.status,
         nextPaymentAt,
@@ -201,7 +205,7 @@ export class SubscriptionService {
 
     return {
       userId: params.userId,
-      plan: 'PREMIUM',
+      plan: SubscriptionPlan.PREMIUM,
       status: internalStatus,
       mercadoPagoPreapprovalId: mpSubscription.id,
       mercadoPagoStatus: mpSubscription.status,
@@ -216,7 +220,8 @@ export class SubscriptionService {
       startedAt: this.toNullableDate(mpSubscription.auto_recurring?.start_date),
       nextPaymentAt: params.nextPaymentAt,
       expiresAt: this.toNullableDate(mpSubscription.auto_recurring?.end_date),
-      cancelledAt: internalStatus === 'CANCELLED' ? new Date() : null,
+      cancelledAt:
+        internalStatus === SubscriptionPlanStatus.CANCELLED ? new Date() : null,
       metadata: params.metadata,
     };
   }
@@ -246,7 +251,7 @@ export class SubscriptionService {
     const user = await this.findUserSubscription(userId);
     const normalizedUser = await this.normalizeExpiredSubscription(user);
 
-    if (normalizedUser.plan !== 'PREMIUM') {
+    if (normalizedUser.plan !== SubscriptionPlan.PREMIUM) {
       return this.toSubscriptionResponse(normalizedUser);
     }
 
@@ -303,7 +308,11 @@ export class SubscriptionService {
           not: null,
         },
         status: {
-          in: ['ACTIVE', 'PENDING', 'PAUSED'],
+          in: [
+            SubscriptionPlanStatus.ACTIVE,
+            SubscriptionPlanStatus.PENDING,
+            SubscriptionPlanStatus.PAUSED,
+          ],
         },
       },
       orderBy: {
@@ -319,7 +328,13 @@ export class SubscriptionService {
     status: SubscriptionPlanStatus,
     nextPaymentAt: Date | null,
   ): Date | null {
-    if (['ACTIVE', 'CANCELLED', 'PAUSED'].includes(status)) {
+    const statusesWithAccessUntilNextPayment: SubscriptionPlanStatus[] = [
+      SubscriptionPlanStatus.ACTIVE,
+      SubscriptionPlanStatus.CANCELLED,
+      SubscriptionPlanStatus.PAUSED,
+    ];
+
+    if (statusesWithAccessUntilNextPayment.includes(status)) {
       return nextPaymentAt;
     }
 
@@ -368,8 +383,8 @@ export class SubscriptionService {
     return this.prisma.user.update({
       where: { id: user.id },
       data: {
-        plan: 'FREE',
-        planStatus: 'NONE',
+        plan: SubscriptionPlan.FREE,
+        planStatus: SubscriptionPlanStatus.NONE,
         planExpiresAt: null,
       },
       select: this.subscriptionSelect,
@@ -380,7 +395,7 @@ export class SubscriptionService {
     user: Awaited<ReturnType<SubscriptionService['findUserSubscription']>>,
   ): SubscriptionResponseDto {
     const premiumActive = isPremiumActive(user);
-    const effectivePlan = premiumActive ? 'premium' : 'free';
+    const effectivePlan = this.resolveEffectivePlan(user);
 
     return {
       plan: user.plan,
@@ -392,35 +407,51 @@ export class SubscriptionService {
   }
 
   private isSubscriptionAccessExpired(user: {
-    plan: string;
+    plan: SubscriptionPlan;
     planExpiresAt: Date | null;
   }): boolean {
     return (
-      user.plan === 'PREMIUM' &&
+      user.plan === SubscriptionPlan.PREMIUM &&
       user.planExpiresAt !== null &&
       user.planExpiresAt <= new Date()
     );
   }
 
+  private resolveEffectivePlan(user: {
+    plan: SubscriptionPlan;
+    planStatus: SubscriptionPlanStatus;
+    planExpiresAt: Date | null;
+  }): SubscriptionPlan {
+    return isPremiumActive(user)
+      ? SubscriptionPlan.PREMIUM
+      : SubscriptionPlan.FREE;
+  }
+
+  private toPublicEffectivePlan(
+    plan: SubscriptionPlan,
+  ): SubscriptionUsageResponseDto['effectivePlan'] {
+    return plan === SubscriptionPlan.PREMIUM ? 'premium' : 'free';
+  }
+
   private mapMercadoPagoStatus(status: string): SubscriptionPlanStatus {
     switch (status) {
       case MERCADO_PAGO_PREAPPROVAL_STATUS.AUTHORIZED:
-        return 'ACTIVE';
+        return SubscriptionPlanStatus.ACTIVE;
       case MERCADO_PAGO_PREAPPROVAL_STATUS.PENDING:
-        return 'PENDING';
+        return SubscriptionPlanStatus.PENDING;
       case MERCADO_PAGO_PREAPPROVAL_STATUS.PAUSED:
-        return 'PAUSED';
+        return SubscriptionPlanStatus.PAUSED;
       case MERCADO_PAGO_PREAPPROVAL_STATUS.CANCELLED:
       case MERCADO_PAGO_PREAPPROVAL_STATUS.CANCELED:
-        return 'CANCELLED';
+        return SubscriptionPlanStatus.CANCELLED;
       case MERCADO_PAGO_PREAPPROVAL_STATUS.REJECTED:
-        return 'REJECTED';
+        return SubscriptionPlanStatus.REJECTED;
       case MERCADO_PAGO_PREAPPROVAL_STATUS.EXPIRED:
-        return 'EXPIRED';
+        return SubscriptionPlanStatus.EXPIRED;
       case MERCADO_PAGO_PREAPPROVAL_STATUS.NONE:
-        return 'NONE';
+        return SubscriptionPlanStatus.NONE;
       default:
-        return 'PENDING';
+        return SubscriptionPlanStatus.PENDING;
     }
   }
 }

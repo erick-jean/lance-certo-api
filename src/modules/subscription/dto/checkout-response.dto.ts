@@ -11,20 +11,12 @@ export class CheckoutSubscriptionResponseDto {
   })
   id!: string;
 
-  @ApiProperty({ example: 'PREMIUM', enum: ['FREE', 'PREMIUM'] })
+  @ApiProperty({ example: 'PREMIUM', enum: SubscriptionPlan })
   plan!: SubscriptionPlan;
 
   @ApiProperty({
     example: 'ACTIVE',
-    enum: [
-      'NONE',
-      'PENDING',
-      'ACTIVE',
-      'PAUSED',
-      'CANCELLED',
-      'EXPIRED',
-      'REJECTED',
-    ],
+    enum: SubscriptionPlanStatus,
   })
   status!: SubscriptionPlanStatus;
 

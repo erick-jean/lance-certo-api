@@ -39,6 +39,7 @@ import { VehicleFinancialSummaryDto } from './dto/vehicle-financial-summary.dto'
 import { VehiclesService } from './vehicles.service';
 import { Throttle } from '@nestjs/throttler';
 import { VehicleOwnerGuard } from './guards/vehicle-owner/vehicle-owner.guard';
+import { SubscriptionPlan } from '../../../generated/prisma/enums';
 
 @ApiTags('Vehicles / Veículos')
 @ApiTooManyRequestsResponse({ description: 'Muitas requisições.' })
@@ -103,7 +104,7 @@ export class VehiclesController {
   @ApiForbiddenResponse({
     description: 'Plano premium necessário para acessar este recurso.',
   })
-  @RequirePlan('premium')
+  @RequirePlan(SubscriptionPlan.PREMIUM)
   @Patch(':vehicleId/purchase')
   @UseGuards(VehicleOwnerGuard, PlanGuard)
   markAsPurchased(
@@ -124,7 +125,7 @@ export class VehiclesController {
   @ApiForbiddenResponse({
     description: 'Plano premium necessário para acessar este recurso.',
   })
-  @RequirePlan('premium')
+  @RequirePlan(SubscriptionPlan.PREMIUM)
   @Patch(':vehicleId/sale')
   @UseGuards(VehicleOwnerGuard, PlanGuard)
   markAsSold(
@@ -145,7 +146,7 @@ export class VehiclesController {
   @ApiForbiddenResponse({
     description: 'Plano premium necessário para acessar este recurso.',
   })
-  @RequirePlan('premium')
+  @RequirePlan(SubscriptionPlan.PREMIUM)
   @Get(':vehicleId/financial-summary')
   @UseGuards(VehicleOwnerGuard, PlanGuard)
   getFinancialSummary(

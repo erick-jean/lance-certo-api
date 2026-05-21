@@ -19,7 +19,7 @@ import { UserRole } from 'src/common/enums/user-role.enum';
 import { normalizePlate } from 'src/common/utils/plate.util';
 import { PrismaService } from 'src/database/prisma.service';
 import { Prisma } from '../../../generated/prisma/client';
-import { VehicleStatus } from '../../../generated/prisma/enums';
+import { SubscriptionPlan, VehicleStatus } from '../../../generated/prisma/enums';
 import { CreateVehicleDto } from './dto/create-vehicle.dto';
 import { FindVehiclesQueryDto } from './dto/find-vehicles-query.dto';
 import { PaginatedVehicleResponseDto } from './dto/paginated-vehicles-response.dto';
@@ -399,7 +399,7 @@ export class VehiclesService {
       throw new NotFoundException('Usuário não encontrado.');
     }
 
-    if (resolveEffectivePlan(user) !== 'premium') {
+    if (resolveEffectivePlan(user) !== SubscriptionPlan.PREMIUM) {
       throw new ForbiddenException(
         'Plano premium necessário para acessar este recurso.',
       );
@@ -445,7 +445,7 @@ export class VehiclesService {
 
     if (
       user.role === UserRole.ADMIN ||
-      resolveEffectivePlan(user) === 'premium'
+      resolveEffectivePlan(user) === SubscriptionPlan.PREMIUM
     ) {
       return;
     }
@@ -453,7 +453,7 @@ export class VehiclesService {
     const currentVehiclesCount = await prisma.vehicle.count({
       where: { userId },
     });
-    const maxVehicles = PLAN_LIMITS.free.maxVehicles;
+    const maxVehicles = PLAN_LIMITS[SubscriptionPlan.FREE].maxVehicles;
 
     if (currentVehiclesCount >= maxVehicles) {
       throw new ForbiddenException(

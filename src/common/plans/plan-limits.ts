@@ -1,5 +1,10 @@
+import {
+  SubscriptionPlan,
+  SubscriptionPlanStatus,
+} from '../../../generated/prisma/enums';
+
 export const PLAN_LIMITS = {
-  free: {
+  [SubscriptionPlan.FREE]: {
     maxVehicles: 3,
     maxImagesPerVehicle: 10,
     canUseBasicEvaluation: true,
@@ -9,7 +14,7 @@ export const PLAN_LIMITS = {
     canUseReports: false,
     canUseFinancialDashboard: false,
   },
-  premium: {
+  [SubscriptionPlan.PREMIUM]: {
     maxVehicles: null,
     maxImagesPerVehicle: 10,
     canUseBasicEvaluation: true,
@@ -21,20 +26,26 @@ export const PLAN_LIMITS = {
   },
 } as const;
 
-export type PlanName = keyof typeof PLAN_LIMITS;
+export type PlanName = SubscriptionPlan;
 
 export type PlanLimits = (typeof PLAN_LIMITS)[PlanName];
 
 export function isPremiumActive(user: {
-  plan: string;
-  planStatus: string;
+  plan: SubscriptionPlan;
+  planStatus: SubscriptionPlanStatus;
   planExpiresAt?: Date | null;
 }): boolean {
-  if (user.plan !== 'PREMIUM') {
+  if (user.plan !== SubscriptionPlan.PREMIUM) {
     return false;
   }
 
-  if (!['ACTIVE', 'CANCELLED', 'PAUSED'].includes(user.planStatus)) {
+  const activePremiumStatuses: SubscriptionPlanStatus[] = [
+    SubscriptionPlanStatus.ACTIVE,
+    SubscriptionPlanStatus.CANCELLED,
+    SubscriptionPlanStatus.PAUSED,
+  ];
+
+  if (!activePremiumStatuses.includes(user.planStatus)) {
     return false;
   }
 
@@ -46,9 +57,9 @@ export function isPremiumActive(user: {
 }
 
 export function resolveEffectivePlan(user: {
-  plan: string;
-  planStatus: string;
+  plan: SubscriptionPlan;
+  planStatus: SubscriptionPlanStatus;
   planExpiresAt?: Date | null;
 }): PlanName {
-  return isPremiumActive(user) ? 'premium' : 'free';
+  return isPremiumActive(user) ? SubscriptionPlan.PREMIUM : SubscriptionPlan.FREE;
 }

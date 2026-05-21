@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { SubscriptionPlan } from '../../../../generated/prisma/enums';
 
 export class DashboardSummaryResponseDto {
   @ApiProperty({ example: 12 })
@@ -16,8 +17,8 @@ export class DashboardSummaryResponseDto {
   @ApiProperty({ example: 2 })
   soldVehicles!: number;
 
-  @ApiProperty({ example: 'free' })
-  plan!: string;
+  @ApiProperty({ example: SubscriptionPlan.FREE, enum: SubscriptionPlan })
+  plan!: SubscriptionPlan;
 
   @ApiProperty({ example: 3, nullable: true })
   vehicleLimit!: number | null;

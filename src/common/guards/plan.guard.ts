@@ -13,6 +13,7 @@ import { UserRole } from 'src/common/enums/user-role.enum';
 import { isPremiumActive } from 'src/common/plans/plan-limits';
 import { PrismaService } from 'src/database/prisma.service';
 import { AuthenticatedRequest } from 'src/modules/auth/interfaces/authenticated-request.interface';
+import { SubscriptionPlan } from '../../../generated/prisma/enums';
 
 @Injectable()
 export class PlanGuard implements CanActivate {
@@ -51,7 +52,7 @@ export class PlanGuard implements CanActivate {
       throw new ForbiddenException('Usuário não encontrado.');
     }
 
-    if (requiredPlan === 'premium' && !isPremiumActive(user)) {
+    if (requiredPlan === SubscriptionPlan.PREMIUM && !isPremiumActive(user)) {
       throw new ForbiddenException(
         'Plano premium necessário para acessar este recurso.',
       );

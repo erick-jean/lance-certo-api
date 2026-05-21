@@ -8,6 +8,7 @@ import { UserRole } from 'src/common/enums/user-role.enum';
 import { calculateVehicleFinancialSummary } from 'src/common/finance/vehicle-finance.util';
 import { resolveEffectivePlan } from 'src/common/plans/plan-limits';
 import { PrismaService } from 'src/database/prisma.service';
+import { SubscriptionPlan } from '../../../generated/prisma/enums';
 import { ResponseEvaluationChecklistItemDto } from '../evaluations/dto/response-evaluation-checklist-item.dto';
 import { ResponseEvaluationExpenseDto } from '../evaluations/dto/response-evaluation-expense.dto';
 import { ResponseVehicleEvaluationDto } from '../evaluations/dto/response-vehicle-evaluation.dto';
@@ -97,7 +98,7 @@ export class ReportsService {
       throw new NotFoundException('Usuário não encontrado.');
     }
 
-    if (resolveEffectivePlan(user) !== 'premium') {
+    if (resolveEffectivePlan(user) !== SubscriptionPlan.PREMIUM) {
       throw new ForbiddenException(
         'Plano premium necessário para acessar este recurso.',
       );

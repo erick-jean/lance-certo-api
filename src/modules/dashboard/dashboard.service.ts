@@ -10,7 +10,7 @@ import {
 import { UserRole } from 'src/common/enums/user-role.enum';
 import { roundMoney, toNumber } from 'src/common/finance/vehicle-finance.util';
 import { PrismaService } from 'src/database/prisma.service';
-import { VehicleStatus } from '../../../generated/prisma/enums';
+import { SubscriptionPlan, VehicleStatus } from '../../../generated/prisma/enums';
 import { DashboardFinancialResponseDto } from './dto/dashboard-financial-response.dto';
 import { DashboardSummaryResponseDto } from './dto/dashboard-summary-response.dto';
 
@@ -23,7 +23,9 @@ export class DashboardService {
   ): Promise<DashboardSummaryResponseDto> {
     const user = await this.findUserPlanOrThrow(userId);
     const effectivePlan =
-      user.role === UserRole.ADMIN ? 'premium' : resolveEffectivePlan(user);
+      user.role === UserRole.ADMIN
+        ? SubscriptionPlan.PREMIUM
+        : resolveEffectivePlan(user);
     const limits = PLAN_LIMITS[effectivePlan];
 
     const [
@@ -72,7 +74,7 @@ export class DashboardService {
 
     if (
       user.role !== UserRole.ADMIN &&
-      resolveEffectivePlan(user) !== 'premium'
+      resolveEffectivePlan(user) !== SubscriptionPlan.PREMIUM
     ) {
       throw new ForbiddenException(
         'Plano premium necessário para acessar este recurso.',

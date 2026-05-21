@@ -13,6 +13,7 @@ import { JwtPayload } from '../auth/interfaces/jwt-payload.interface';
 import { DashboardService } from './dashboard.service';
 import { DashboardFinancialResponseDto } from './dto/dashboard-financial-response.dto';
 import { DashboardSummaryResponseDto } from './dto/dashboard-summary-response.dto';
+import { SubscriptionPlan } from '../../../generated/prisma/enums';
 
 @ApiTags('Dashboard')
 @Authenticated()
@@ -34,7 +35,7 @@ export class DashboardController {
   @ApiForbiddenResponse({
     description: 'Plano premium necessário para acessar este recurso.',
   })
-  @RequirePlan('premium')
+  @RequirePlan(SubscriptionPlan.PREMIUM)
   @UseGuards(PlanGuard)
   @Get('financial')
   getFinancial(

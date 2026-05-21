@@ -19,15 +19,7 @@ export class SubscriptionUsageResponseDto {
 
   @ApiProperty({
     example: 'NONE',
-    enum: [
-      'NONE',
-      'PENDING',
-      'ACTIVE',
-      'PAUSED',
-      'CANCELLED',
-      'EXPIRED',
-      'REJECTED',
-    ],
+    enum: SubscriptionPlanStatus,
   })
   planStatus!: SubscriptionPlanStatus;
 

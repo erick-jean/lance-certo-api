@@ -11,6 +11,8 @@ import {
   EvaluationRiskLevel,
   ExpenseCategory,
   ExpenseSource,
+  SubscriptionPlan,
+  SubscriptionPlanStatus,
 } from 'generated/prisma/enums';
 import { Prisma } from 'generated/prisma/client';
 import { ownerScope } from 'src/common/access/owner-scope.util';
@@ -51,8 +53,8 @@ type ChecklistTemplateItemSnapshotSource = {
 
 type UserPlanSource = {
   role: UserRole;
-  plan: string;
-  planStatus: string;
+  plan: SubscriptionPlan;
+  planStatus: SubscriptionPlanStatus;
   planExpiresAt: Date | null;
 };
 
@@ -126,7 +128,7 @@ export class VehicleEvaluationsService {
       }
 
       const availableTemplateItems =
-        effectivePlan === 'premium'
+        effectivePlan === SubscriptionPlan.PREMIUM
           ? template.items
           : template.items.filter((item) => !item.isPremiumOnly);
 
@@ -453,14 +455,16 @@ export class VehicleEvaluationsService {
   }
 
   private resolveFeaturePlan(user: UserPlanSource): PlanName {
-    return user.role === UserRole.ADMIN ? 'premium' : resolveEffectivePlan(user);
+    return user.role === UserRole.ADMIN
+      ? SubscriptionPlan.PREMIUM
+      : resolveEffectivePlan(user);
   }
 
   private ensurePremiumFeature(
     user: UserPlanSource,
     forbiddenMessage: string,
   ): void {
-    if (this.resolveFeaturePlan(user) !== 'premium') {
+    if (this.resolveFeaturePlan(user) !== SubscriptionPlan.PREMIUM) {
       throw new ForbiddenException(forbiddenMessage);
     }
   }
@@ -469,7 +473,7 @@ export class VehicleEvaluationsService {
     effectivePlan: PlanName,
     dto: CreateVehicleEvaluationDto,
   ) {
-    if (effectivePlan === 'premium') {
+    if (effectivePlan === SubscriptionPlan.PREMIUM) {
       return {
         desiredProfitMarginPercent: dto.desiredProfitMarginPercent,
         safetyMarginPercent: dto.safetyMarginPercent,

@@ -36,6 +36,7 @@ import { UpdateEvaluationChecklistItemDto } from './dto/update-evaluation-checkl
 import { UpdateEvaluationExpenseDto } from './dto/update-evaluation-expense.dto';
 import { UpdateVehicleEvaluationDto } from './dto/update-vehicle-evaluation.dto';
 import { VehicleEvaluationsService } from './vehicle-evaluations.service';
+import { SubscriptionPlan } from '../../../generated/prisma/enums';
 
 @ApiTags('Vehicle Evaluation / Avaliação do veículo')
 @ApiTooManyRequestsResponse({ description: 'Muitas requisições.' })
@@ -152,7 +153,7 @@ export class VehicleEvaluationsController {
     description: 'Plano premium necessário para acessar este recurso.',
   })
   @Get(':vehicleId/evaluation/expenses')
-  @RequirePlan('premium')
+  @RequirePlan(SubscriptionPlan.PREMIUM)
   @UseGuards(PlanGuard)
   @Throttle({ default: { limit: 60, ttl: 60_000, blockDuration: 60_000 } })
   findExpensesByVehicleId(
@@ -172,7 +173,7 @@ export class VehicleEvaluationsController {
     description: 'Plano premium necessário para acessar este recurso.',
   })
   @Post(':vehicleId/evaluation/expenses')
-  @RequirePlan('premium')
+  @RequirePlan(SubscriptionPlan.PREMIUM)
   @UseGuards(PlanGuard)
   @Throttle({ default: { limit: 20, ttl: 60_000, blockDuration: 120_000 } })
   createExpense(
@@ -194,7 +195,7 @@ export class VehicleEvaluationsController {
     description: 'Plano premium necessário para acessar este recurso.',
   })
   @Patch(':vehicleId/evaluation/expenses/:expenseId')
-  @RequirePlan('premium')
+  @RequirePlan(SubscriptionPlan.PREMIUM)
   @UseGuards(PlanGuard)
   @Throttle({ default: { limit: 30, ttl: 60_000, blockDuration: 120_000 } })
   updateExpense(
@@ -218,7 +219,7 @@ export class VehicleEvaluationsController {
     description: 'Plano premium necessário para acessar este recurso.',
   })
   @Delete(':vehicleId/evaluation/expenses/:expenseId')
-  @RequirePlan('premium')
+  @RequirePlan(SubscriptionPlan.PREMIUM)
   @UseGuards(PlanGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   @Throttle({ default: { limit: 20, ttl: 60_000, blockDuration: 120_000 } })

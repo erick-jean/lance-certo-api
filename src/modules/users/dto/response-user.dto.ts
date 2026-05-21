@@ -33,20 +33,12 @@ export class ResponseUserDto {
   @ApiProperty({ example: UserRole.USER, enum: UserRole })
   role!: UserRole;
 
-  @ApiProperty({ example: 'FREE', enum: ['FREE', 'PREMIUM'] })
+  @ApiProperty({ example: 'FREE', enum: SubscriptionPlan })
   plan!: SubscriptionPlan;
 
   @ApiProperty({
     example: 'NONE',
-    enum: [
-      'NONE',
-      'PENDING',
-      'ACTIVE',
-      'PAUSED',
-      'CANCELLED',
-      'EXPIRED',
-      'REJECTED',
-    ],
+    enum: SubscriptionPlanStatus,
   })
   planStatus!: SubscriptionPlanStatus;
 

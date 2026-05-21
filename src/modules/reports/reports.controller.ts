@@ -19,6 +19,7 @@ import { JwtPayload } from '../auth/interfaces/jwt-payload.interface';
 import { VehicleOwnerGuard } from '../vehicles/guards/vehicle-owner/vehicle-owner.guard';
 import { VehicleReportResponseDto } from './dto/vehicle-report-response.dto';
 import { ReportsService } from './reports.service';
+import { SubscriptionPlan } from '../../../generated/prisma/enums';
 
 @ApiTags('Reports / Relatórios')
 @Controller('reports')
@@ -30,7 +31,7 @@ export class ReportsController {
   @ApiForbiddenResponse({
     description: 'Plano premium necessário para acessar este recurso.',
   })
-  @RequirePlan('premium')
+  @RequirePlan(SubscriptionPlan.PREMIUM)
   @Authenticated()
   @UseGuards(VehicleOwnerGuard, PlanGuard)
   @Get('vehicles/:vehicleId')
