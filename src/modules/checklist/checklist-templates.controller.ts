@@ -1,20 +1,16 @@
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Patch,
-  Param,
+  Controller,
   Delete,
-  ParseUUIDPipe,
-  HttpStatus,
+  Get,
   HttpCode,
+  HttpStatus,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
   UseGuards,
 } from '@nestjs/common';
-import { ChecklistService } from './checklist-templates.service';
-import { CreateChecklistTemplateDto } from './dto/create-checklist-template.dto';
-import { UpdateChecklistDto } from './dto/update-checklist.dto';
-import { ResponseChecklistTemplateDto } from './dto/response-checklist-template.dto';
 import {
   ApiCreatedResponse,
   ApiForbiddenResponse,
@@ -28,28 +24,27 @@ import {
 import { Throttle } from '@nestjs/throttler';
 import { Authenticated } from 'src/common/decorators/authenticated.decorator';
 import { AdminGuard } from 'src/common/guards/admin.guard';
+import { ChecklistService } from './checklist-templates.service';
 import { CreateChecklistTemplateItemDto } from './dto/create-checklist-template-item.dto';
+import { CreateChecklistTemplateDto } from './dto/create-checklist-template.dto';
 import { ResponseChecklistTemplateItemDto } from './dto/response-checklist-template-item.dto';
+import { ResponseChecklistTemplateDto } from './dto/response-checklist-template.dto';
 import { UpdateChecklistTemplateItemDto } from './dto/update-checklist-template-item.dto';
+import { UpdateChecklistDto } from './dto/update-checklist.dto';
 
 @ApiTags('Checklist Templates')
 @ApiForbiddenResponse({ description: 'Acesso de administrador obrigatório.' })
 @ApiTooManyRequestsResponse({ description: 'Muitas requisições.' })
-/**
- * Checklist templates and template items are administrative reference data.
- * Every route requires a valid JWT and admin role because changes or reads here
- * expose the global checklist rules used by vehicle evaluations.
- */
 @Authenticated()
 @UseGuards(AdminGuard)
-@Controller()
-export class ChecklistController {
+@Controller('checklist-templates')
+export class ChecklistTemplatesController {
   constructor(private readonly checklistService: ChecklistService) {}
 
   @ApiOperation({ summary: 'Cria template de checklist.' })
   @ApiCreatedResponse({ type: ResponseChecklistTemplateDto })
   @Throttle({ default: { limit: 20, ttl: 60_000, blockDuration: 120_000 } })
-  @Post('checklist-templates')
+  @Post()
   createChecklistTemplate(
     @Body() createChecklistTemplateDto: CreateChecklistTemplateDto,
   ): Promise<ResponseChecklistTemplateDto> {
@@ -61,7 +56,7 @@ export class ChecklistController {
   @ApiOperation({ summary: 'Busca todos os templates de checklist.' })
   @ApiOkResponse({ type: ResponseChecklistTemplateDto, isArray: true })
   @Throttle({ default: { limit: 60, ttl: 60_000, blockDuration: 60_000 } })
-  @Get('checklist-templates')
+  @Get()
   findAllChecklistTemplate(): Promise<ResponseChecklistTemplateDto[]> {
     return this.checklistService.listChecklistTemplates();
   }
@@ -70,7 +65,7 @@ export class ChecklistController {
   @ApiOkResponse({ type: ResponseChecklistTemplateDto })
   @ApiNotFoundResponse({ description: 'Template de checklist não encontrado.' })
   @Throttle({ default: { limit: 60, ttl: 60_000, blockDuration: 60_000 } })
-  @Get('checklist-templates/:id')
+  @Get(':id')
   findOneChecklistTemplate(
     @Param('id', new ParseUUIDPipe()) id: string,
   ): Promise<ResponseChecklistTemplateDto> {
@@ -81,7 +76,7 @@ export class ChecklistController {
   @ApiOkResponse({ type: ResponseChecklistTemplateDto })
   @ApiNotFoundResponse({ description: 'Template de checklist não encontrado.' })
   @Throttle({ default: { limit: 20, ttl: 60_000, blockDuration: 120_000 } })
-  @Patch('checklist-templates/:id')
+  @Patch(':id')
   updateChecklistTemplate(
     @Param('id', new ParseUUIDPipe()) id: string,
     @Body() updateChecklistDto: UpdateChecklistDto,
@@ -99,18 +94,28 @@ export class ChecklistController {
   @ApiNotFoundResponse({ description: 'Template de checklist não encontrado.' })
   @Throttle({ default: { limit: 10, ttl: 60_000, blockDuration: 300_000 } })
   @HttpCode(HttpStatus.NO_CONTENT)
-  @Delete('checklist-templates/:id')
+  @Delete(':id')
   removeChecklistTemplate(
     @Param('id', new ParseUUIDPipe()) id: string,
   ): Promise<void> {
     return this.checklistService.deleteChecklistTemplate(id);
   }
+}
+
+@ApiTags('Checklist Template Items')
+@ApiForbiddenResponse({ description: 'Acesso de administrador obrigatório.' })
+@ApiTooManyRequestsResponse({ description: 'Muitas requisições.' })
+@Authenticated()
+@UseGuards(AdminGuard)
+@Controller('checklist-templates/:templateId/items')
+export class ChecklistTemplateItemsController {
+  constructor(private readonly checklistService: ChecklistService) {}
 
   @ApiOperation({ summary: 'Cria item de checklist.' })
   @Throttle({ default: { limit: 20, ttl: 60_000, blockDuration: 120_000 } })
   @ApiCreatedResponse({ type: ResponseChecklistTemplateItemDto })
   @ApiNotFoundResponse({ description: 'Template de checklist não encontrado.' })
-  @Post('checklist-templates/:templateId/items')
+  @Post()
   createItemChecklist(
     @Param('templateId', new ParseUUIDPipe()) templateId: string,
     @Body() createChecklistTemplateItemDto: CreateChecklistTemplateItemDto,
@@ -127,7 +132,7 @@ export class ChecklistController {
   @ApiOkResponse({ type: ResponseChecklistTemplateItemDto, isArray: true })
   @ApiNotFoundResponse({ description: 'Template de checklist não encontrado.' })
   @Throttle({ default: { limit: 60, ttl: 60_000, blockDuration: 60_000 } })
-  @Get('checklist-templates/:templateId/items')
+  @Get()
   findAllItemChecklist(
     @Param('templateId', new ParseUUIDPipe()) templateId: string,
   ): Promise<ResponseChecklistTemplateItemDto[]> {
@@ -140,8 +145,9 @@ export class ChecklistController {
     description: 'Item do template de checklist não encontrado.',
   })
   @Throttle({ default: { limit: 60, ttl: 60_000, blockDuration: 60_000 } })
-  @Get('checklist-template-items/:itemId')
+  @Get(':itemId')
   findOneItemChecklist(
+    @Param('templateId', new ParseUUIDPipe()) _templateId: string,
     @Param('itemId', new ParseUUIDPipe()) itemId: string,
   ): Promise<ResponseChecklistTemplateItemDto> {
     return this.checklistService.findChecklistTemplateItemById(itemId);
@@ -153,8 +159,9 @@ export class ChecklistController {
     description: 'Item do template de checklist não encontrado.',
   })
   @Throttle({ default: { limit: 20, ttl: 60_000, blockDuration: 120_000 } })
-  @Patch('checklist-template-items/:itemId')
+  @Patch(':itemId')
   updateItemChecklist(
+    @Param('templateId', new ParseUUIDPipe()) _templateId: string,
     @Param('itemId', new ParseUUIDPipe()) itemId: string,
     @Body() updateChecklistTemplateItemDto: UpdateChecklistTemplateItemDto,
   ): Promise<ResponseChecklistTemplateItemDto> {
@@ -173,11 +180,11 @@ export class ChecklistController {
   })
   @Throttle({ default: { limit: 10, ttl: 60_000, blockDuration: 300_000 } })
   @HttpCode(HttpStatus.NO_CONTENT)
-  @Delete('checklist-template-items/:itemId')
+  @Delete(':itemId')
   removeItemChecklist(
+    @Param('templateId', new ParseUUIDPipe()) _templateId: string,
     @Param('itemId', new ParseUUIDPipe()) itemId: string,
   ): Promise<void> {
     return this.checklistService.deleteChecklistTemplateItem(itemId);
   }
-
 }

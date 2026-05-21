@@ -925,9 +925,11 @@ concentrada no modulo de storage.
 | GET | `/checklist-templates/:templateId` | Busca template |
 | PATCH | `/checklist-templates/:templateId` | Atualiza template |
 | DELETE | `/checklist-templates/:templateId` | Remove template |
+| GET | `/checklist-templates/:templateId/items` | Lista itens do template |
 | POST | `/checklist-templates/:templateId/items` | Adiciona item ao template |
-| PATCH | `/checklist-template-items/:itemId` | Atualiza item |
-| DELETE | `/checklist-template-items/:itemId` | Remove item |
+| GET | `/checklist-templates/:templateId/items/:itemId` | Busca item |
+| PATCH | `/checklist-templates/:templateId/items/:itemId` | Atualiza item |
+| DELETE | `/checklist-templates/:templateId/items/:itemId` | Remove item |
 
 ---
 
