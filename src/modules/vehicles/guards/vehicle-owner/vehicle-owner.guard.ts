@@ -7,6 +7,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 
+import { UserRole } from 'src/common/enums/user-role.enum';
 import { PrismaService } from 'src/database/prisma.service';
 import { AuthenticatedRequest } from '../../../auth/interfaces/authenticated-request.interface';
 
@@ -49,7 +50,7 @@ export class VehicleOwnerGuard implements CanActivate {
     }
 
     const isOwner = vehicle.userId === userId;
-    const isAdmin = userRole === 'admin';
+    const isAdmin = userRole === UserRole.ADMIN;
 
     if (!isOwner && !isAdmin) {
       throw new ForbiddenException(

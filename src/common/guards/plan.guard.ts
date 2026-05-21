@@ -9,6 +9,7 @@ import {
   REQUIRED_PLAN_KEY,
   RequiredPlan,
 } from 'src/common/decorators/require-plan.decorator';
+import { UserRole } from 'src/common/enums/user-role.enum';
 import { isPremiumActive } from 'src/common/plans/plan-limits';
 import { PrismaService } from 'src/database/prisma.service';
 import { AuthenticatedRequest } from 'src/modules/auth/interfaces/authenticated-request.interface';
@@ -32,7 +33,7 @@ export class PlanGuard implements CanActivate {
 
     const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
 
-    if (request.user.role === 'admin') {
+    if (request.user.role === UserRole.ADMIN) {
       return true;
     }
 

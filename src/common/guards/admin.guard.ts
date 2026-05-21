@@ -4,6 +4,7 @@ import {
   ForbiddenException,
   Injectable,
 } from '@nestjs/common';
+import { UserRole } from 'src/common/enums/user-role.enum';
 import { AuthenticatedRequest } from 'src/modules/auth/interfaces/authenticated-request.interface';
 
 @Injectable()
@@ -15,7 +16,7 @@ export class AdminGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
 
-    if (request.user.role !== 'admin') {
+    if (request.user.role !== UserRole.ADMIN) {
       throw new ForbiddenException('Acesso administrativo necessário.');
     }
 

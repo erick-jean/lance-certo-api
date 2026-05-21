@@ -8,6 +8,7 @@ import {
   Prisma,
   PrismaClient,
   TransmissionType,
+  UserRole,
   VehicleDamageType,
   VehicleStatus,
   VehicleType,
@@ -28,19 +29,19 @@ const seedUsers = [
     name: 'Admin',
     email: 'admin@email.com',
     password: '123456',
-    role: 'admin',
+    role: UserRole.ADMIN,
   },
   {
     name: 'Erick Prado',
     email: 'erickprado@email.com',
     password: '123456',
-    role: 'user',
+    role: UserRole.USER,
   },
 ] satisfies Array<{
   name: string;
   email: string;
   password: string;
-  role: 'admin' | 'user';
+  role: UserRole;
 }>;
 
 const seedVehicles = [

@@ -7,6 +7,7 @@ import {
 import { randomUUID } from 'crypto';
 import sharp from 'sharp';
 import { ownerScope } from 'src/common/access/owner-scope.util';
+import { UserRole } from 'src/common/enums/user-role.enum';
 import { PrismaService } from 'src/database/prisma.service';
 import { StorageService } from 'src/modules/storage/storage.service';
 import { VehicleImageResponseDto } from './dto/response-vehicle-image.dto';
@@ -33,7 +34,7 @@ export class VehicleImagesService {
     userId: string,
     vehicleId: string,
     files: Express.Multer.File[],
-    userRole?: string,
+    userRole?: UserRole,
   ): Promise<VehicleImageResponseDto[]> {
     const vehicle = await this.prisma.vehicle.findFirst({
       where: {
@@ -107,7 +108,7 @@ export class VehicleImagesService {
   async listUserVehicleImages(
     userId: string,
     vehicleId: string,
-    userRole?: string,
+    userRole?: UserRole,
   ): Promise<VehicleImageResponseDto[]> {
     const vehicle = await this.prisma.vehicle.findFirst({
       where: {
@@ -134,7 +135,7 @@ export class VehicleImagesService {
     userId: string,
     vehicleId: string,
     imageId: string,
-    userRole?: string,
+    userRole?: UserRole,
   ): Promise<void> {
     const image = await this.prisma.vehicleImage.findFirst({
       where: {

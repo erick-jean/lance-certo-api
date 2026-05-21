@@ -14,6 +14,7 @@ import {
 } from 'generated/prisma/enums';
 import { Prisma } from 'generated/prisma/client';
 import { ownerScope } from 'src/common/access/owner-scope.util';
+import { UserRole } from 'src/common/enums/user-role.enum';
 import { PlanName, resolveEffectivePlan } from 'src/common/plans/plan-limits';
 import { PrismaService } from 'src/database/prisma.service';
 import { CreateEvaluationExpenseDto } from './dto/create-evaluation-expense.dto';
@@ -49,7 +50,7 @@ type ChecklistTemplateItemSnapshotSource = {
 };
 
 type UserPlanSource = {
-  role: string;
+  role: UserRole;
   plan: string;
   planStatus: string;
   planExpiresAt: Date | null;
@@ -79,7 +80,7 @@ export class VehicleEvaluationsService {
     userId: string,
     vehicleId: string,
     dto: CreateVehicleEvaluationDto,
-    userRole?: string,
+    userRole?: UserRole,
   ): Promise<ResponseVehicleEvaluationDto> {
     return this.prisma.$transaction(async (tx) => {
       const userPlan = await this.findUserPlanOrThrow(tx, userId);
@@ -166,7 +167,7 @@ export class VehicleEvaluationsService {
   async findEvaluationForVehicle(
     userId: string,
     vehicleId: string,
-    userRole?: string,
+    userRole?: UserRole,
   ): Promise<ResponseVehicleEvaluationDto> {
     const evaluation = await this.prisma.vehicleEvaluation.findFirst({
       where: {
@@ -193,7 +194,7 @@ export class VehicleEvaluationsService {
     userId: string,
     vehicleId: string,
     dto: UpdateVehicleEvaluationDto,
-    userRole?: string,
+    userRole?: UserRole,
   ): Promise<ResponseVehicleEvaluationDto> {
     return this.prisma.$transaction(async (tx) => {
       const userPlan = await this.findUserPlanOrThrow(tx, userId);
@@ -227,7 +228,7 @@ export class VehicleEvaluationsService {
   async deleteEvaluationForVehicle(
     userId: string,
     vehicleId: string,
-    userRole?: string,
+    userRole?: UserRole,
   ): Promise<void> {
     const evaluation = await this.findEvaluationForUserVehicleOrThrow(
       this.prisma,
@@ -250,7 +251,7 @@ export class VehicleEvaluationsService {
   async listChecklistForVehicle(
     userId: string,
     vehicleId: string,
-    userRole?: string,
+    userRole?: UserRole,
   ): Promise<ResponseEvaluationChecklistItemDto[]> {
     const evaluation = await this.findEvaluationForUserVehicleOrThrow(
       this.prisma,
@@ -274,7 +275,7 @@ export class VehicleEvaluationsService {
     vehicleId: string,
     checklistItemId: string,
     dto: UpdateEvaluationChecklistItemDto,
-    userRole?: string,
+    userRole?: UserRole,
   ): Promise<ResponseEvaluationChecklistItemDto> {
     return this.prisma.$transaction(async (tx) => {
       const checklistItem = await this.findChecklistItemForUserVehicleOrThrow(
@@ -306,7 +307,7 @@ export class VehicleEvaluationsService {
   async listEvaluationExpenses(
     userId: string,
     vehicleId: string,
-    userRole?: string,
+    userRole?: UserRole,
   ): Promise<ResponseEvaluationExpenseDto[]> {
     const userPlan = await this.findUserPlanOrThrow(this.prisma, userId);
     this.ensurePremiumFeature(userPlan, PREMIUM_EXPENSES_REQUIRED_MESSAGE);
@@ -332,7 +333,7 @@ export class VehicleEvaluationsService {
     userId: string,
     vehicleId: string,
     dto: CreateEvaluationExpenseDto,
-    userRole?: string,
+    userRole?: UserRole,
   ): Promise<ResponseEvaluationExpenseDto> {
     return this.prisma.$transaction(async (tx) => {
       const userPlan = await this.findUserPlanOrThrow(tx, userId);
@@ -371,7 +372,7 @@ export class VehicleEvaluationsService {
     vehicleId: string,
     expenseId: string,
     dto: UpdateEvaluationExpenseDto,
-    userRole?: string,
+    userRole?: UserRole,
   ): Promise<ResponseEvaluationExpenseDto> {
     return this.prisma.$transaction(async (tx) => {
       const userPlan = await this.findUserPlanOrThrow(tx, userId);
@@ -405,7 +406,7 @@ export class VehicleEvaluationsService {
     userId: string,
     vehicleId: string,
     expenseId: string,
-    userRole?: string,
+    userRole?: UserRole,
   ): Promise<void> {
     await this.prisma.$transaction(async (tx) => {
       const userPlan = await this.findUserPlanOrThrow(tx, userId);
@@ -452,7 +453,7 @@ export class VehicleEvaluationsService {
   }
 
   private resolveFeaturePlan(user: UserPlanSource): PlanName {
-    return user.role === 'admin' ? 'premium' : resolveEffectivePlan(user);
+    return user.role === UserRole.ADMIN ? 'premium' : resolveEffectivePlan(user);
   }
 
   private ensurePremiumFeature(
@@ -485,7 +486,7 @@ export class VehicleEvaluationsService {
     tx: EvaluationPrismaClient,
     userId: string,
     vehicleId: string,
-    userRole?: string,
+    userRole?: UserRole,
   ) {
     const vehicle = await tx.vehicle.findFirst({
       where: {
@@ -505,7 +506,7 @@ export class VehicleEvaluationsService {
     tx: EvaluationPrismaClient,
     userId: string,
     vehicleId: string,
-    userRole?: string,
+    userRole?: UserRole,
   ) {
     const evaluation = await tx.vehicleEvaluation.findFirst({
       where: {
@@ -529,7 +530,7 @@ export class VehicleEvaluationsService {
     userId: string,
     vehicleId: string,
     checklistItemId: string,
-    userRole?: string,
+    userRole?: UserRole,
   ) {
     const checklistItem = await tx.evaluationChecklistItem.findFirst({
       where: {
@@ -553,7 +554,7 @@ export class VehicleEvaluationsService {
     userId: string,
     vehicleId: string,
     expenseId: string,
-    userRole?: string,
+    userRole?: UserRole,
   ) {
     const expense = await tx.evaluationExpense.findFirst({
       where: {

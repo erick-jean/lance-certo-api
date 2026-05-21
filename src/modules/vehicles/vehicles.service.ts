@@ -15,6 +15,7 @@ import {
   PLAN_LIMITS,
   resolveEffectivePlan,
 } from 'src/common/plans/plan-limits';
+import { UserRole } from 'src/common/enums/user-role.enum';
 import { normalizePlate } from 'src/common/utils/plate.util';
 import { PrismaService } from 'src/database/prisma.service';
 import { Prisma } from '../../../generated/prisma/client';
@@ -89,7 +90,7 @@ export class VehiclesService {
   async createVehicleForUser(
     userId: string,
     createVehicleDto: CreateVehicleDto,
-    userRole?: string,
+    userRole?: UserRole,
   ): Promise<ResponseVehicleDto> {
     const vehicle = await this.runSerializableTransaction(async (tx) => {
       await this.ensurePremiumForFinancialVehicleData(
@@ -151,7 +152,7 @@ export class VehiclesService {
   async findVehicleForUser(
     userId: string,
     vehicleId: string,
-    userRole?: string,
+    userRole?: UserRole,
   ): Promise<ResponseVehicleDto> {
     const vehicle = await this.findVehicleForUserOrAdminOrThrow(
       userId,
@@ -166,7 +167,7 @@ export class VehiclesService {
     userId: string,
     vehicleId: string,
     updateVehicleDto: UpdateVehicleDto,
-    userRole?: string,
+    userRole?: UserRole,
   ): Promise<ResponseVehicleDto> {
     await this.ensurePremiumForFinancialVehicleData(
       this.prisma,
@@ -202,7 +203,7 @@ export class VehiclesService {
   async deleteVehicleForUser(
     userId: string,
     vehicleId: string,
-    userRole?: string,
+    userRole?: UserRole,
   ): Promise<void> {
     /**
      * Image files live outside the database, so filenames are loaded before
@@ -243,7 +244,7 @@ export class VehiclesService {
     userId: string,
     vehicleId: string,
     dto: PurchaseVehicleDto,
-    userRole?: string,
+    userRole?: UserRole,
   ): Promise<ResponseVehicleDto> {
     await this.ensurePremiumAccess(this.prisma, userId, userRole);
     const vehicle = await this.findVehicleForUserOrAdminOrThrow(
@@ -288,7 +289,7 @@ export class VehiclesService {
     userId: string,
     vehicleId: string,
     dto: SellVehicleDto,
-    userRole?: string,
+    userRole?: UserRole,
   ): Promise<ResponseVehicleDto> {
     await this.ensurePremiumAccess(this.prisma, userId, userRole);
     const vehicle = await this.findVehicleForUserOrAdminOrThrow(
@@ -334,7 +335,7 @@ export class VehiclesService {
   async getVehicleFinancialSummary(
     userId: string,
     vehicleId: string,
-    userRole?: string,
+    userRole?: UserRole,
   ): Promise<VehicleFinancialSummaryDto> {
     await this.ensurePremiumAccess(this.prisma, userId, userRole);
 
@@ -363,7 +364,7 @@ export class VehiclesService {
   private async findVehicleForUserOrAdminOrThrow(
     userId: string,
     vehicleId: string,
-    userRole?: string,
+    userRole?: UserRole,
   ) {
     const vehicle = await this.prisma.vehicle.findFirst({
       where: this.buildVehicleOwnerWhere(userId, vehicleId, userRole),
@@ -379,9 +380,9 @@ export class VehiclesService {
   private async ensurePremiumAccess(
     prisma: Pick<PrismaService, 'user'>,
     userId: string,
-    userRole?: string,
+    userRole?: UserRole,
   ): Promise<void> {
-    if (userRole === 'admin') {
+    if (userRole === UserRole.ADMIN) {
       return;
     }
 
@@ -409,7 +410,7 @@ export class VehiclesService {
     prisma: Pick<PrismaService, 'user'>,
     userId: string,
     dto: CreateVehicleDto | UpdateVehicleDto,
-    userRole?: string,
+    userRole?: UserRole,
   ): Promise<void> {
     const hasFinancialData =
       dto.purchasePrice !== undefined ||
@@ -442,7 +443,10 @@ export class VehiclesService {
       throw new NotFoundException('Usuário não encontrado.');
     }
 
-    if (user.role === 'admin' || resolveEffectivePlan(user) === 'premium') {
+    if (
+      user.role === UserRole.ADMIN ||
+      resolveEffectivePlan(user) === 'premium'
+    ) {
       return;
     }
 
@@ -461,7 +465,7 @@ export class VehiclesService {
   private buildVehicleOwnerWhere(
     userId: string,
     vehicleId: string,
-    userRole?: string,
+    userRole?: UserRole,
   ): Prisma.VehicleWhereInput {
     return {
       id: vehicleId,

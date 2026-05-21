@@ -8,6 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { createHash, randomBytes } from 'crypto';
 import { isUniqueConstraintError } from 'src/common/errors/prisma-error.util';
+import { UserRole } from 'src/common/enums/user-role.enum';
 import { HashService } from 'src/common/hash/hash.service';
 import { PrismaService } from 'src/database/prisma.service';
 import { Prisma } from '../../../generated/prisma/client';
@@ -52,7 +53,7 @@ export class AuthService {
           name: registerDto.name,
           email,
           password,
-          role: 'user',
+          role: UserRole.USER,
           plan: 'FREE',
           planStatus: 'NONE',
         },

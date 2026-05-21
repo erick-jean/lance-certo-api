@@ -10,7 +10,7 @@ type ResponseUserInput = {
   id: string;
   name: string;
   email: string;
-  role: string;
+  role: UserRole;
   plan: SubscriptionPlan;
   planStatus: SubscriptionPlanStatus;
   planExpiresAt: Date | null;
@@ -31,7 +31,7 @@ export class ResponseUserDto {
   email!: string;
 
   @ApiProperty({ example: UserRole.USER, enum: UserRole })
-  role!: string;
+  role!: UserRole;
 
   @ApiProperty({ example: 'FREE', enum: ['FREE', 'PREMIUM'] })
   plan!: SubscriptionPlan;

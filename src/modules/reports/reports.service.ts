@@ -4,6 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { ownerScope } from 'src/common/access/owner-scope.util';
+import { UserRole } from 'src/common/enums/user-role.enum';
 import { calculateVehicleFinancialSummary } from 'src/common/finance/vehicle-finance.util';
 import { resolveEffectivePlan } from 'src/common/plans/plan-limits';
 import { PrismaService } from 'src/database/prisma.service';
@@ -21,7 +22,7 @@ export class ReportsService {
   async getVehicleReport(
     userId: string,
     vehicleId: string,
-    userRole?: string,
+    userRole?: UserRole,
   ): Promise<VehicleReportResponseDto> {
     await this.ensurePremiumAccess(userId, userRole);
 
@@ -77,9 +78,9 @@ export class ReportsService {
 
   private async ensurePremiumAccess(
     userId: string,
-    userRole?: string,
+    userRole?: UserRole,
   ): Promise<void> {
-    if (userRole === 'admin') {
+    if (userRole === UserRole.ADMIN) {
       return;
     }
 

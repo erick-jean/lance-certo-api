@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
+import { UserRole } from 'src/common/enums/user-role.enum';
 import { PrismaService } from 'src/database/prisma.service';
 import { AuthenticatedRequest } from './interfaces/authenticated-request.interface';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
@@ -80,7 +81,7 @@ export class AuthGuard implements CanActivate {
       typeof candidate.email === 'string' &&
       candidate.email.length > 0 &&
       typeof candidate.role === 'string' &&
-      candidate.role.length > 0
+      Object.values(UserRole).includes(candidate.role as UserRole)
     );
   }
 }

@@ -17,6 +17,9 @@ const trimString = (value: unknown): unknown =>
 const normalizeEmail = (value: unknown): unknown =>
   typeof value === 'string' ? value.trim().toLowerCase() : value;
 
+const normalizeRole = (value: unknown): unknown =>
+  typeof value === 'string' ? value.trim().toUpperCase() : value;
+
 export class UpdateUserDto {
   @ApiPropertyOptional({ example: 'John Doe' })
   @IsOptional()
@@ -35,6 +38,7 @@ export class UpdateUserDto {
 
   @ApiPropertyOptional({ enum: UserRole, example: UserRole.USER })
   @IsOptional()
+  @Transform(({ value }: { value: unknown }) => normalizeRole(value))
   @IsEnum(UserRole)
   role?: UserRole;
 
