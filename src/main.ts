@@ -8,6 +8,7 @@ import { json, urlencoded } from 'express';
 import type { Request, Response } from 'express';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
+import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { join } from 'path';
 
 async function bootstrap() {
@@ -39,6 +40,7 @@ async function bootstrap() {
     credentials: true,
   });
   app.enableShutdownHooks();
+  app.useGlobalFilters(new HttpExceptionFilter(configService));
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
