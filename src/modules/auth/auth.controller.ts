@@ -30,10 +30,6 @@ import { RegisterUserDto } from './dto/register-user.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { ResponseUserDto } from '../users/dto/response-user.dto';
 
-type RequestWithCookies = Request & {
-  cookies?: Record<string, string | undefined>;
-};
-
 @ApiTags('Auth')
 @ApiBadRequestResponse({ description: 'Dados da requisição inválidos.' })
 @ApiTooManyRequestsResponse({ description: 'Muitas requisições.' })
@@ -85,7 +81,7 @@ export class AuthController {
     description: 'Refresh token inválido ou ausente.',
   })
   async refresh(
-    @Req() request: RequestWithCookies,
+    @Req() request: Request,
     @Res({ passthrough: true }) response: Response,
   ): Promise<AuthResponseDto> {
     const refreshToken = this.getRefreshTokenFromCookie(request);
@@ -130,7 +126,7 @@ export class AuthController {
     description: 'Refresh token inválido ou ausente.',
   })
   async logout(
-    @Req() request: RequestWithCookies,
+    @Req() request: Request,
     @Res({ passthrough: true }) response: Response,
   ): Promise<MessageResponseDto> {
     const refreshToken = this.getRefreshTokenFromCookie(request);
@@ -141,7 +137,7 @@ export class AuthController {
     return logoutResult;
   }
 
-  private getRefreshTokenFromCookie(request: RequestWithCookies): string {
+  private getRefreshTokenFromCookie(request: Request): string {
     const refreshToken = this.getOptionalRefreshTokenFromCookie(request);
 
     if (!refreshToken) {
@@ -152,10 +148,20 @@ export class AuthController {
   }
 
   private getOptionalRefreshTokenFromCookie(
-    request: RequestWithCookies,
+    request: Request,
   ): string | undefined {
     const cookieName = this.getRefreshTokenCookieName();
-    return request.cookies?.[cookieName];
+    const cookies = request.headers.cookie?.split(';') ?? [];
+    const cookie = cookies.find((item) =>
+      item.trim().startsWith(`${cookieName}=`),
+    );
+
+    if (!cookie) {
+      return undefined;
+    }
+
+    const [, value] = cookie.split('=');
+    return value ? decodeURIComponent(value) : undefined;
   }
 
   private setRefreshTokenCookie(
@@ -177,9 +183,7 @@ export class AuthController {
   }
 
   private getRefreshTokenCookieName(): string {
-    return this.configService.getOrThrow<string>(
-      'REFRESH_TOKEN_COOKIE_NAME',
-    );
+    return this.configService.getOrThrow<string>('REFRESH_TOKEN_COOKIE_NAME');
   }
 
   private getRefreshTokenCookieOptions(): CookieOptions {

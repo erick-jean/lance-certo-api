@@ -14,6 +14,7 @@ import { ChecklistModule } from './modules/checklist/checklist.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { VehicleEvaluationsModule } from './modules/evaluations/vehicle-evaluations.module';
 import { ReportsModule } from './modules/reports/reports.module';
+import { FipeModule } from './modules/fipe/fipe.module';
 
 @Module({
   imports: [
@@ -49,6 +50,7 @@ import { ReportsModule } from './modules/reports/reports.module';
     ChecklistModule,
     DashboardModule,
     ReportsModule,
+    FipeModule,
   ],
   providers: [
     {

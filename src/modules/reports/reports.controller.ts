@@ -39,10 +39,6 @@ export class ReportsController {
     @CurrentUser() user: JwtPayload,
     @Param('vehicleId', new ParseUUIDPipe()) vehicleId: string,
   ): Promise<VehicleReportResponseDto> {
-    return this.reportsService.getVehicleReport(
-      user.sub,
-      vehicleId,
-      user.role,
-    );
+    return this.reportsService.getVehicleReport(user.sub, vehicleId, user.role);
   }
 }

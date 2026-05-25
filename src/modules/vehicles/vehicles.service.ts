@@ -19,7 +19,10 @@ import { UserRole } from 'src/common/enums/user-role.enum';
 import { normalizePlate } from 'src/common/utils/plate.util';
 import { PrismaService } from 'src/database/prisma.service';
 import { Prisma } from '../../../generated/prisma/client';
-import { SubscriptionPlan, VehicleStatus } from '../../../generated/prisma/enums';
+import {
+  SubscriptionPlan,
+  VehicleStatus,
+} from '../../../generated/prisma/enums';
 import { CreateVehicleDto } from './dto/create-vehicle.dto';
 import { FindVehiclesQueryDto } from './dto/find-vehicles-query.dto';
 import { PaginatedVehicleResponseDto } from './dto/paginated-vehicles-response.dto';

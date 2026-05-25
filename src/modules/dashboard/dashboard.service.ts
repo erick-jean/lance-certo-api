@@ -10,7 +10,10 @@ import {
 import { UserRole } from 'src/common/enums/user-role.enum';
 import { roundMoney, toNumber } from 'src/common/finance/vehicle-finance.util';
 import { PrismaService } from 'src/database/prisma.service';
-import { SubscriptionPlan, VehicleStatus } from '../../../generated/prisma/enums';
+import {
+  SubscriptionPlan,
+  VehicleStatus,
+} from '../../../generated/prisma/enums';
 import { DashboardFinancialResponseDto } from './dto/dashboard-financial-response.dto';
 import { DashboardSummaryResponseDto } from './dto/dashboard-summary-response.dto';
 

@@ -165,7 +165,9 @@ export class VehicleImagesService {
   async removeFiles(filenames: string[]): Promise<void> {
     await Promise.allSettled(
       filenames.map((filename) =>
-        this.storageService.deleteFile(this.getVehicleImageStorageKey(filename)),
+        this.storageService.deleteFile(
+          this.getVehicleImageStorageKey(filename),
+        ),
       ),
     );
   }

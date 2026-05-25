@@ -61,5 +61,7 @@ export function resolveEffectivePlan(user: {
   planStatus: SubscriptionPlanStatus;
   planExpiresAt?: Date | null;
 }): PlanName {
-  return isPremiumActive(user) ? SubscriptionPlan.PREMIUM : SubscriptionPlan.FREE;
+  return isPremiumActive(user)
+    ? SubscriptionPlan.PREMIUM
+    : SubscriptionPlan.FREE;
 }

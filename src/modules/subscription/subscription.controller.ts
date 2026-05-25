@@ -8,12 +8,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import {
-  ApiBody,
-  ApiOkResponse,
-  ApiOperation,
-  ApiTags,
-} from '@nestjs/swagger';
+import { ApiBody, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { Authenticated } from 'src/common/decorators/authenticated.decorator';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
@@ -80,9 +75,7 @@ export class SubscriptionController {
   @Authenticated()
   @ApiOperation({ summary: 'Cancela assinatura.' })
   @ApiOkResponse({ type: SubscriptionResponseDto })
-  cancel(
-    @CurrentUser() user: JwtPayload,
-  ): Promise<SubscriptionResponseDto> {
+  cancel(@CurrentUser() user: JwtPayload): Promise<SubscriptionResponseDto> {
     return this.subscriptionService.cancel(user.sub);
   }
 

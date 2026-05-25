@@ -361,15 +361,12 @@ export class AuthService {
   }
 
   private getRefreshTokenExpiresDays(): number {
-    return this.configService.getOrThrow<number>(
-      'JWT_REFRESH_EXPIRES_DAYS',
-    );
+    return this.configService.getOrThrow<number>('JWT_REFRESH_EXPIRES_DAYS');
   }
 
   private buildPasswordResetLink(token: string): string {
-    const frontendUrl = this.configService.getOrThrow<string>(
-      'APP_FRONTEND_URL',
-    );
+    const frontendUrl =
+      this.configService.getOrThrow<string>('APP_FRONTEND_URL');
 
     return `${frontendUrl.replace(/\/$/, '')}/reset-password?token=${token}`;
   }

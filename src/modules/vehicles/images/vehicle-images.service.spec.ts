@@ -20,10 +20,7 @@ describe('VehicleImagesService', () => {
       deleteFile: jest.fn(),
       getPublicUrl: jest.fn((key: string) => `/uploads/${key}`),
     };
-    const service = new VehicleImagesService(
-      prisma as never,
-      storageService as never,
-    );
+    const service = new VehicleImagesService(prisma as never, storageService);
 
     return { service, storageService };
   };
