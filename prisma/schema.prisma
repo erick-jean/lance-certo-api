@@ -208,15 +208,15 @@ enum TransmissionType {
   MANUAL
   AUTOMATIC
   CVT
-  AUTOMATED // remover
+  AUTOMATED
 }
 
 enum AuctionType {
   JUDICIAL
   EXTRAJUDICIAL
   BANK
-  INSURANCE // Insurance company
-  DEALERSHIP // Dealership
+  INSURANCE
+  DEALERSHIP
   OTHER
 }
 
@@ -229,19 +229,16 @@ enum VehicleStatus {
 
 enum VehicleDamageType {
   NONE
-  LOW_DAMAGE // Minor damage
-  MEDIUM_DAMAGE // Moderate damage
-  HIGH_DAMAGE // Severe damage
-  FLOOD // Flood damage
+  LOW_DAMAGE
+  MEDIUM_DAMAGE
+  HIGH_DAMAGE
+  FLOOD
   OTHER
 }
 
 enum VehicleType {
   CAR
   MOTORCYCLE
-  // TRUCK remover
-  // VAN   remover
-  // BUS   remover
 }
 
 model VehicleImage {
