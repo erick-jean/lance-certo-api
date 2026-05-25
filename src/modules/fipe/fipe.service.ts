@@ -1,8 +1,4 @@
-import {
-  BadGatewayException,
-  Injectable,
-  InternalServerErrorException,
-} from '@nestjs/common';
+import { BadGatewayException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ResponseBrandsFipeApiDto } from './dto/response-brands-fipe-api.dto';
 import { ResponseFipeInfoApiDto } from './dto/response-fipe-info-api.dto';
@@ -15,26 +11,29 @@ import { VehicleType } from './enums/vehicle-type.enum';
 export class FipeService {
   private readonly baseUrl: string;
   private readonly token?: string;
+  private readonly timeoutMs: number;
 
   constructor(private readonly configService: ConfigService) {
     this.baseUrl =
       this.configService.get<string>('FIPE_BASE_URL') ??
       'https://fipe.parallelum.com.br/api/v2';
     this.token = this.configService.get<string>('FIPE_TOKEN');
+    this.timeoutMs = Number(
+      this.configService.get<string>('FIPE_TIMEOUT_MS') ?? 5000,
+    );
   }
 
   async getReferences(): Promise<ResponseFipeReferenceDto[]> {
-    return this.requestFipe<ResponseFipeReferenceDto[]>('/references');
+    return this.request<ResponseFipeReferenceDto[]>('/references');
   }
 
   async getBrandsVehicles(
     vehicleType: VehicleType,
     reference?: number,
   ): Promise<ResponseBrandsFipeApiDto[]> {
-    return this.requestFipe<ResponseBrandsFipeApiDto[]>(
-      `/${vehicleType}/brands`,
-      { reference },
-    );
+    return this.request<ResponseBrandsFipeApiDto[]>(`/${vehicleType}/brands`, {
+      reference,
+    });
   }
 
   async getModelsVehicles(
@@ -42,7 +41,7 @@ export class FipeService {
     brandId: number,
     reference?: number,
   ): Promise<ResponseModelsFipeApiDto[]> {
-    return this.requestFipe<ResponseModelsFipeApiDto[]>(
+    return this.request<ResponseModelsFipeApiDto[]>(
       `/${vehicleType}/brands/${brandId}/models`,
       { reference },
     );
@@ -54,7 +53,7 @@ export class FipeService {
     modelId: number,
     reference?: number,
   ): Promise<ResponseYearsFipeApiDto[]> {
-    return this.requestFipe<ResponseYearsFipeApiDto[]>(
+    return this.request<ResponseYearsFipeApiDto[]>(
       `/${vehicleType}/brands/${brandId}/models/${modelId}/years`,
       { reference },
     );
@@ -67,27 +66,39 @@ export class FipeService {
     yearId: string,
     reference?: number,
   ): Promise<ResponseFipeInfoApiDto> {
-    return this.requestFipe<ResponseFipeInfoApiDto>(
+    return this.request<ResponseFipeInfoApiDto>(
       `/${vehicleType}/brands/${brandId}/models/${modelId}/years/${yearId}`,
       { reference },
     );
   }
 
-  private async requestFipe<T>(
+  private async request<T>(
     path: string,
-    params?: Record<string, string | number | undefined>,
+    query?: Record<string, string | number | undefined>,
   ): Promise<T> {
-    const url = new URL(`${this.baseUrl}${path}`);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), this.timeoutMs);
+    const normalizedBaseUrl = this.baseUrl.replace(/\/+$/, '');
+    const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+    const url = new URL(`${normalizedBaseUrl}${normalizedPath}`);
 
-    for (const [key, value] of Object.entries(params ?? {})) {
-      if (value !== undefined) {
+    for (const [key, value] of Object.entries(query ?? {})) {
+      if (value !== undefined && value !== null) {
         url.searchParams.set(key, String(value));
       }
     }
 
     try {
+      /*
+       * The FIPE API is an external dependency, so the timeout prevents one slow
+       * upstream call from holding the request open indefinitely. Headers stay
+       * centralized here so the token is never duplicated or accidentally logged.
+       * Keeping the integration behind this method also makes all public methods
+       * share the same error handling and request rules.
+       */
       const response = await fetch(url.toString(), {
         method: 'GET',
+        signal: controller.signal,
         headers: {
           Accept: 'application/json',
           ...(this.token ? { 'X-Subscription-Token': this.token } : {}),
@@ -96,7 +107,7 @@ export class FipeService {
 
       if (!response.ok) {
         throw new BadGatewayException(
-          `Erro ao consultar FIPE. Status: ${response.status}`,
+          'Nao foi possivel consultar a FIPE no momento',
         );
       }
 
@@ -106,7 +117,17 @@ export class FipeService {
         throw error;
       }
 
-      throw new InternalServerErrorException('Erro interno ao consultar FIPE');
+      if (controller.signal.aborted) {
+        throw new BadGatewayException(
+          'Tempo limite excedido ao consultar a FIPE',
+        );
+      }
+
+      throw new BadGatewayException(
+        'Nao foi possivel consultar a FIPE no momento',
+      );
+    } finally {
+      clearTimeout(timeout);
     }
   }
 }
