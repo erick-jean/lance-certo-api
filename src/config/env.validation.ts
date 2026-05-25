@@ -140,12 +140,16 @@ function validateFipeEnv(config: RawEnv, validated: ValidatedEnv): void {
 
   if (baseUrl) {
     validated.FIPE_BASE_URL = baseUrl;
+  } else {
+    delete validated.FIPE_BASE_URL;
   }
 
   const token = config.FIPE_TOKEN?.trim();
 
   if (token) {
     validated.FIPE_TOKEN = token;
+  } else {
+    delete validated.FIPE_TOKEN;
   }
 
   /*
@@ -153,8 +157,8 @@ function validateFipeEnv(config: RawEnv, validated: ValidatedEnv): void {
    * production it must stay pinned to the official FIPE provider to avoid
    * turning this integration into an SSRF vector.
    */
-  if (validated.NODE_ENV === 'production' && baseUrl) {
-    const url = new URL(baseUrl);
+  if (validated.NODE_ENV === 'production' && validated.FIPE_BASE_URL) {
+    const url = new URL(validated.FIPE_BASE_URL);
 
     if (url.hostname !== 'fipe.parallelum.com.br') {
       throw new Error(

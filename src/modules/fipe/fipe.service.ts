@@ -29,13 +29,22 @@ export class FipeService {
   private readonly cache = new Map<string, CacheEntry<unknown>>();
 
   constructor(private readonly configService: ConfigService) {
-    this.baseUrl =
-      this.configService.get<string>('FIPE_BASE_URL') ??
-      'https://fipe.parallelum.com.br/api/v2';
-    this.token = this.configService.get<string>('FIPE_TOKEN');
-    this.timeoutMs = Number(
-      this.configService.get<string>('FIPE_TIMEOUT_MS') ?? 5000,
+    const configuredBaseUrl =
+      this.configService.get<string>('FIPE_BASE_URL')?.trim();
+    const configuredToken = this.configService
+      .get<string>('FIPE_TOKEN')
+      ?.trim();
+    const configuredTimeout = Number(
+      this.configService.get<number | string>('FIPE_TIMEOUT_MS') ?? 5000,
     );
+
+    this.baseUrl =
+      configuredBaseUrl || 'https://fipe.parallelum.com.br/api/v2';
+    this.token = configuredToken || undefined;
+    this.timeoutMs =
+      Number.isFinite(configuredTimeout) && configuredTimeout > 0
+        ? configuredTimeout
+        : 5000;
   }
 
   async getReferences(): Promise<ResponseFipeReferenceDto[]> {
