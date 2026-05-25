@@ -104,24 +104,27 @@ describe('AuthService', () => {
       id: 'reset-token-1',
       userId: 'user-1',
     });
-    prisma.$transaction.mockImplementation((callback) => callback(tx));
+    prisma.$transaction.mockImplementation(
+      (callback: (transaction: typeof tx) => unknown) => callback(tx),
+    );
 
     await service.resetPassword({
       token: 'reset-token',
       password: 'new-password',
     });
 
-    expect(tx.refreshToken.updateMany).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: {
-          userId: 'user-1',
-          revokedAt: null,
-        },
-        data: {
-          revokedAt: expect.any(Date),
-        },
-      }),
-    );
+    const [updateManyArgs] = tx.refreshToken.updateMany.mock.calls[0] as [
+      {
+        data: { revokedAt: unknown };
+        where: { revokedAt: null; userId: string };
+      },
+    ];
+
+    expect(updateManyArgs.where).toEqual({
+      userId: 'user-1',
+      revokedAt: null,
+    });
+    expect(updateManyArgs.data.revokedAt).toBeInstanceOf(Date);
   });
 
   it('rejeita reset de senha com token inválido', async () => {

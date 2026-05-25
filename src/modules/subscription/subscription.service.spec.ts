@@ -69,28 +69,41 @@ describe('SubscriptionService', () => {
     expect(mercadoPagoService.getPreapproval).toHaveBeenCalledWith(
       'preapproval-1',
     );
-    expect(prisma.subscription.upsert).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: {
-          mercadoPagoPreapprovalId: 'preapproval-1',
-        },
-        create: expect.objectContaining({
-          userId: 'user-1',
-          plan: SubscriptionPlan.PREMIUM,
-          status: SubscriptionPlanStatus.ACTIVE,
-          mercadoPagoStatus: 'authorized',
-          metadata: expect.objectContaining({
-            id: 'preapproval-1',
-            status: 'authorized',
-            external_reference: 'user-1',
-          }),
-        }),
-        update: expect.objectContaining({
-          status: SubscriptionPlanStatus.ACTIVE,
-          mercadoPagoStatus: 'authorized',
-        }),
-      }),
-    );
+    const [upsertArgs] = prisma.subscription.upsert.mock.calls[0] as [
+      {
+        create: {
+          mercadoPagoStatus: string;
+          metadata: Record<string, unknown>;
+          plan: SubscriptionPlan;
+          status: SubscriptionPlanStatus;
+          userId: string;
+        };
+        update: {
+          mercadoPagoStatus: string;
+          status: SubscriptionPlanStatus;
+        };
+        where: { mercadoPagoPreapprovalId: string };
+      },
+    ];
+
+    expect(upsertArgs.where).toEqual({
+      mercadoPagoPreapprovalId: 'preapproval-1',
+    });
+    expect(upsertArgs.create).toMatchObject({
+      userId: 'user-1',
+      plan: SubscriptionPlan.PREMIUM,
+      status: SubscriptionPlanStatus.ACTIVE,
+      mercadoPagoStatus: 'authorized',
+    });
+    expect(upsertArgs.create.metadata).toMatchObject({
+      id: 'preapproval-1',
+      status: 'authorized',
+      external_reference: 'user-1',
+    });
+    expect(upsertArgs.update).toMatchObject({
+      status: SubscriptionPlanStatus.ACTIVE,
+      mercadoPagoStatus: 'authorized',
+    });
     expect(prisma.user.update).toHaveBeenCalledWith({
       where: { id: 'user-1' },
       data: {

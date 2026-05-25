@@ -66,7 +66,9 @@ describe('VehiclesService', () => {
       },
     };
 
-    prisma.$transaction.mockImplementation((callback) => callback(tx));
+    prisma.$transaction.mockImplementation(
+      (callback: (transaction: typeof tx) => unknown) => callback(tx),
+    );
 
     await expect(
       service.createVehicleForUser('user-1', {
