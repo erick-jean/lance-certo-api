@@ -27,7 +27,7 @@ export class RequestLoggerInterceptor implements NestInterceptor {
       tap(() => {
         this.logRequest({
           method: request.method,
-          path: request.originalUrl,
+          path: this.getSafeRequestPath(request),
           statusCode: response.statusCode,
           durationMs: Date.now() - startedAt,
         });
@@ -38,7 +38,7 @@ export class RequestLoggerInterceptor implements NestInterceptor {
 
         this.logRequest({
           method: request.method,
-          path: request.originalUrl,
+          path: this.getSafeRequestPath(request),
           statusCode,
           durationMs: Date.now() - startedAt,
         });
@@ -67,5 +67,9 @@ export class RequestLoggerInterceptor implements NestInterceptor {
     }
 
     this.logger.log(message);
+  }
+
+  private getSafeRequestPath(request: Request): string {
+    return request.originalUrl.split('?')[0];
   }
 }

@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { randomUUID } from 'crypto';
+import { extname } from 'path';
 import sharp from 'sharp';
 import { ownerScope } from 'src/common/access/owner-scope.util';
 import { UserRole } from 'src/common/enums/user-role.enum';
@@ -18,9 +19,9 @@ const MAX_IMAGE_WIDTH = 6000;
 const MAX_IMAGE_HEIGHT = 6000;
 const OPTIMIZED_IMAGE_WIDTH = 1920;
 const vehicleImageExtensionsByMimeType = {
-  'image/jpeg': '.jpg',
-  'image/png': '.png',
-  'image/webp': '.webp',
+  'image/jpeg': ['.jpg', '.jpeg'],
+  'image/png': ['.png'],
+  'image/webp': ['.webp'],
 } as const;
 
 @Injectable()
@@ -190,6 +191,14 @@ export class VehicleImagesService {
       );
     }
 
+    if (
+      !this.hasAllowedVehicleImageExtension(file.originalname, file.mimetype)
+    ) {
+      throw new BadRequestException(
+        'Somente imagens JPEG, PNG e WEBP sao permitidas.',
+      );
+    }
+
     /**
      * MIME type alone is client-controlled, so the file signature is validated
      * before persisting the upload.
@@ -280,6 +289,17 @@ export class VehicleImagesService {
       buffer.length > 12 &&
       buffer.subarray(0, 4).toString('ascii') === 'RIFF' &&
       buffer.subarray(8, 12).toString('ascii') === 'WEBP'
+    );
+  }
+
+  private hasAllowedVehicleImageExtension(
+    filename: string,
+    mimetype: keyof typeof vehicleImageExtensionsByMimeType,
+  ): boolean {
+    const extension = extname(filename).toLowerCase();
+
+    return vehicleImageExtensionsByMimeType[mimetype].includes(
+      extension as never,
     );
   }
 }

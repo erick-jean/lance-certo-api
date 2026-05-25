@@ -27,6 +27,7 @@ import {
 } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { memoryStorage } from 'multer';
+import { extname } from 'path';
 import { Authenticated } from 'src/common/decorators/authenticated.decorator';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { JwtPayload } from '../../auth/interfaces/jwt-payload.interface';
@@ -84,8 +85,13 @@ export class VehicleImagesController {
       storage: memoryStorage(),
       fileFilter: (_req, file, callback) => {
         const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+        const allowedExtensions = ['.jpg', '.jpeg', '.png', '.webp'];
+        const extension = extname(file.originalname).toLowerCase();
 
-        if (!allowedTypes.includes(file.mimetype)) {
+        if (
+          !allowedTypes.includes(file.mimetype) ||
+          !allowedExtensions.includes(extension)
+        ) {
           return callback(
             new BadRequestException(
               'Somente imagens JPEG, PNG e WEBP são permitidas.',

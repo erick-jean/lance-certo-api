@@ -56,4 +56,21 @@ describe('VehicleImagesService', () => {
 
     expect(storageService.uploadFile).not.toHaveBeenCalled();
   });
+  it('rejeita imagem com extensao incompatível', async () => {
+    const { service, storageService } = makeService();
+    const jpegWithInvalidExtension = {
+      buffer: Buffer.from([0xff, 0xd8, 0xff, 0xdb]),
+      mimetype: 'image/jpeg',
+      originalname: 'image.txt',
+      size: 4,
+    } as Express.Multer.File;
+
+    await expect(
+      service.addImagesToUserVehicle('user-1', 'vehicle-1', [
+        jpegWithInvalidExtension,
+      ]),
+    ).rejects.toBeInstanceOf(BadRequestException);
+
+    expect(storageService.uploadFile).not.toHaveBeenCalled();
+  });
 });

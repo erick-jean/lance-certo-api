@@ -114,7 +114,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       statusCode: params.statusCode,
       message: params.message,
       error: params.error,
-      path: params.request.originalUrl,
+      path: this.getSafeRequestPath(params.request),
       method: params.request.method,
       timestamp: params.timestamp,
     };
@@ -128,5 +128,9 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
   private getHttpErrorName(statusCode: number, fallback: string): string {
     return HttpStatus[statusCode] ?? fallback;
+  }
+
+  private getSafeRequestPath(request: Request): string {
+    return request.originalUrl.split('?')[0];
   }
 }

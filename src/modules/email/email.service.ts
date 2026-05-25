@@ -19,7 +19,7 @@ export class EmailService {
     const transporter = this.createTransporter();
 
     if (!transporter) {
-      this.handleMissingSmtpConfig(email, resetLink);
+      this.handleMissingSmtpConfig(email);
       return;
     }
 
@@ -73,7 +73,7 @@ export class EmailService {
     });
   }
 
-  private handleMissingSmtpConfig(email: string, resetLink: string): void {
+  private handleMissingSmtpConfig(email: string): void {
     if (this.configService.getOrThrow<string>('NODE_ENV') === 'production') {
       this.logger.error(
         'SMTP nao configurado em producao. Link de reset nao sera exibido em logs.',
@@ -85,7 +85,7 @@ export class EmailService {
     }
 
     this.logger.warn(
-      `SMTP nao configurado. Link de reset para ${email}: ${resetLink}`,
+      `SMTP nao configurado. E-mail de reset nao enviado para ${email}. Token omitido dos logs.`,
     );
   }
 

@@ -215,14 +215,30 @@ export class MercadoPagoService {
 
   private resolveMercadoPagoError(error: unknown): unknown {
     if (error instanceof AxiosError) {
-      return error.response?.data ?? error.message;
+      return {
+        status: error.response?.status,
+        message: this.resolveExternalErrorMessage(error.response?.data),
+      };
     }
 
     if (error instanceof Error) {
       return error.message;
     }
 
-    return error;
+    return 'Erro desconhecido ao consultar provedor externo.';
+  }
+
+  private resolveExternalErrorMessage(payload: unknown): string {
+    if (!payload || typeof payload !== 'object') {
+      return 'Erro retornado pelo provedor externo.';
+    }
+
+    const candidate = payload as Record<string, unknown>;
+    const message = candidate.message ?? candidate.error_description;
+
+    return typeof message === 'string'
+      ? message
+      : 'Erro retornado pelo provedor externo.';
   }
 
   private getWebhookUrl(): string {
