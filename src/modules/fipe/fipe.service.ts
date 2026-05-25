@@ -6,8 +6,8 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { ResponseBrandsFipeApiDto } from './dto/response-brands-fipe-api.dto';
 import { ResponseFipeInfoApiDto } from './dto/response-fipe-info-api.dto';
+import { ResponseFipeReferenceDto } from './dto/response-fipe-reference.dto';
 import { ResponseModelsFipeApiDto } from './dto/response-models-fipe-api.dto';
-import { ResponseReferenceFipeApiDto } from './dto/response-reference-fipe-api.dto';
 import { ResponseYearsFipeApiDto } from './dto/response-years-fipe-api.dto';
 import { VehicleType } from './enums/vehicle-type.enum';
 
@@ -23,8 +23,8 @@ export class FipeService {
     this.token = this.configService.get<string>('FIPE_TOKEN');
   }
 
-  async getReferences(): Promise<ResponseReferenceFipeApiDto[]> {
-    return this.requestFipe<ResponseReferenceFipeApiDto[]>('/references');
+  async getReferences(): Promise<ResponseFipeReferenceDto[]> {
+    return this.requestFipe<ResponseFipeReferenceDto[]>('/references');
   }
 
   async getBrandsVehicles(

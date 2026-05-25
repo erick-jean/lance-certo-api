@@ -18,8 +18,8 @@ import { Throttle } from '@nestjs/throttler';
 import { Authenticated } from '../../common/decorators/authenticated.decorator';
 import { ResponseBrandsFipeApiDto } from './dto/response-brands-fipe-api.dto';
 import { ResponseFipeInfoApiDto } from './dto/response-fipe-info-api.dto';
+import { ResponseFipeReferenceDto } from './dto/response-fipe-reference.dto';
 import { ResponseModelsFipeApiDto } from './dto/response-models-fipe-api.dto';
-import { ResponseReferenceFipeApiDto } from './dto/response-reference-fipe-api.dto';
 import { ResponseYearsFipeApiDto } from './dto/response-years-fipe-api.dto';
 import { VehicleType } from './enums/vehicle-type.enum';
 import { FipeService } from './fipe.service';
@@ -34,8 +34,8 @@ export class FipeController {
 
   @Get('references')
   @ApiOperation({ summary: 'Buscar referencias da tabela FIPE' })
-  @ApiOkResponse({ type: ResponseReferenceFipeApiDto, isArray: true })
-  getReferences(): Promise<ResponseReferenceFipeApiDto[]> {
+  @ApiOkResponse({ type: ResponseFipeReferenceDto, isArray: true })
+  getReferences(): Promise<ResponseFipeReferenceDto[]> {
     return this.fipeService.getReferences();
   }
 

@@ -1,8 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 export class ResponseModelsFipeApiDto {
-  @ApiProperty({ description: 'Código do modelo', example: 59 })
-  code!: number;
+  @ApiProperty({ description: 'Codigo do modelo', example: '5940' })
+  code!: string;
 
   @ApiProperty({
     description: 'Nome do modelo',
