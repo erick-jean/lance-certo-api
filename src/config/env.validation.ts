@@ -17,6 +17,9 @@ type ValidatedEnv = Record<string, unknown> & {
   MERCADO_PAGO_PREMIUM_PLAN_ID: string;
   MERCADO_PAGO_WEBHOOK_SECRET: string;
   MERCADO_PAGO_WEBHOOK_URL: string;
+  FIPE_BASE_URL?: string;
+  FIPE_TOKEN?: string;
+  FIPE_TIMEOUT_MS: number;
   POSTGRES_PORT?: number;
   SMTP_PORT?: number;
   SMTP_SECURE?: boolean;
@@ -41,7 +44,11 @@ const requiredUrlEnvVars = [
 ] as const;
 
 const optionalUrlListEnvVars = ['CORS_ORIGIN'] as const;
-const optionalUrlEnvVars = ['DIRECT_URL', 'REDIS_URL'] as const;
+const optionalUrlEnvVars = [
+  'DIRECT_URL',
+  'REDIS_URL',
+  'FIPE_BASE_URL',
+] as const;
 
 export function validateEnv(config: RawEnv): ValidatedEnv {
   const validated = { ...config } as ValidatedEnv;
@@ -64,10 +71,16 @@ export function validateEnv(config: RawEnv): ValidatedEnv {
     config.SWAGGER_ENABLED,
     'SWAGGER_ENABLED',
   );
+  validated.FIPE_TIMEOUT_MS = parseOptionalPositiveInteger(
+    config.FIPE_TIMEOUT_MS,
+    'FIPE_TIMEOUT_MS',
+    5000,
+  );
 
   validateJwt(config);
   validateSwaggerEnv(validated);
   validateUrls(config);
+  validateFipeEnv(config, validated);
   validateDockerEnv(config, validated);
   validateEmailEnv(config, validated);
 
@@ -119,6 +132,35 @@ function validateUrls(config: RawEnv): void {
     }
 
     assertValidUrl(value, key);
+  }
+}
+
+function validateFipeEnv(config: RawEnv, validated: ValidatedEnv): void {
+  const baseUrl = config.FIPE_BASE_URL?.trim();
+
+  if (baseUrl) {
+    validated.FIPE_BASE_URL = baseUrl;
+  }
+
+  const token = config.FIPE_TOKEN?.trim();
+
+  if (token) {
+    validated.FIPE_TOKEN = token;
+  }
+
+  /*
+   * FIPE_BASE_URL controls the external host contacted by the backend. In
+   * production it must stay pinned to the official FIPE provider to avoid
+   * turning this integration into an SSRF vector.
+   */
+  if (validated.NODE_ENV === 'production' && baseUrl) {
+    const url = new URL(baseUrl);
+
+    if (url.hostname !== 'fipe.parallelum.com.br') {
+      throw new Error(
+        'FIPE_BASE_URL must point to fipe.parallelum.com.br in production',
+      );
+    }
   }
 }
 
