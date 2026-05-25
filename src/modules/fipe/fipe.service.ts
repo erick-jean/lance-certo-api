@@ -101,8 +101,6 @@ export class FipeService {
     query?: Record<string, string | number | undefined>,
     ttlMs?: number,
   ): Promise<T> {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), this.timeoutMs);
     const normalizedBaseUrl = this.baseUrl.replace(/\/+$/, '');
     const normalizedPath = path.startsWith('/') ? path : `/${path}`;
     const url = new URL(`${normalizedBaseUrl}${normalizedPath}`);
@@ -119,6 +117,9 @@ export class FipeService {
     if (cached !== undefined) {
       return cached;
     }
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), this.timeoutMs);
 
     try {
       /*
