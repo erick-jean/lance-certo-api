@@ -7,11 +7,26 @@ import { ResponseModelsFipeApiDto } from './dto/response-models-fipe-api.dto';
 import { ResponseYearsFipeApiDto } from './dto/response-years-fipe-api.dto';
 import { VehicleType } from './enums/vehicle-type.enum';
 
+type CacheEntry<T> = {
+  expiresAt: number;
+  value: T;
+};
+
 @Injectable()
 export class FipeService {
+  private static readonly ONE_HOUR_MS = 60 * 60 * 1000;
+  private static readonly CACHE_TTL_MS = {
+    references: 12 * FipeService.ONE_HOUR_MS,
+    brands: 24 * FipeService.ONE_HOUR_MS,
+    models: 24 * FipeService.ONE_HOUR_MS,
+    years: 24 * FipeService.ONE_HOUR_MS,
+    info: 6 * FipeService.ONE_HOUR_MS,
+  } as const;
+
   private readonly baseUrl: string;
   private readonly token?: string;
   private readonly timeoutMs: number;
+  private readonly cache = new Map<string, CacheEntry<unknown>>();
 
   constructor(private readonly configService: ConfigService) {
     this.baseUrl =
@@ -24,16 +39,22 @@ export class FipeService {
   }
 
   async getReferences(): Promise<ResponseFipeReferenceDto[]> {
-    return this.request<ResponseFipeReferenceDto[]>('/references');
+    return this.request<ResponseFipeReferenceDto[]>(
+      '/references',
+      undefined,
+      FipeService.CACHE_TTL_MS.references,
+    );
   }
 
   async getBrandsVehicles(
     vehicleType: VehicleType,
     reference?: number,
   ): Promise<ResponseBrandsFipeApiDto[]> {
-    return this.request<ResponseBrandsFipeApiDto[]>(`/${vehicleType}/brands`, {
-      reference,
-    });
+    return this.request<ResponseBrandsFipeApiDto[]>(
+      `/${vehicleType}/brands`,
+      { reference },
+      FipeService.CACHE_TTL_MS.brands,
+    );
   }
 
   async getModelsVehicles(
@@ -44,6 +65,7 @@ export class FipeService {
     return this.request<ResponseModelsFipeApiDto[]>(
       `/${vehicleType}/brands/${brandId}/models`,
       { reference },
+      FipeService.CACHE_TTL_MS.models,
     );
   }
 
@@ -56,6 +78,7 @@ export class FipeService {
     return this.request<ResponseYearsFipeApiDto[]>(
       `/${vehicleType}/brands/${brandId}/models/${modelId}/years`,
       { reference },
+      FipeService.CACHE_TTL_MS.years,
     );
   }
 
@@ -69,12 +92,14 @@ export class FipeService {
     return this.request<ResponseFipeInfoApiDto>(
       `/${vehicleType}/brands/${brandId}/models/${modelId}/years/${yearId}`,
       { reference },
+      FipeService.CACHE_TTL_MS.info,
     );
   }
 
   private async request<T>(
     path: string,
     query?: Record<string, string | number | undefined>,
+    ttlMs?: number,
   ): Promise<T> {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), this.timeoutMs);
@@ -88,6 +113,13 @@ export class FipeService {
       }
     }
 
+    const cacheKey = this.getCacheKey(normalizedPath, query);
+    const cached = ttlMs ? this.getCachedValue<T>(cacheKey) : undefined;
+
+    if (cached !== undefined) {
+      return cached;
+    }
+
     try {
       /*
        * The FIPE API is an external dependency, so the timeout prevents one slow
@@ -95,6 +127,7 @@ export class FipeService {
        * centralized here so the token is never duplicated or accidentally logged.
        * Keeping the integration behind this method also makes all public methods
        * share the same error handling and request rules.
+       * Successful responses are cached to protect the daily FIPE API quota.
        */
       const response = await fetch(url.toString(), {
         method: 'GET',
@@ -111,7 +144,16 @@ export class FipeService {
         );
       }
 
-      return (await response.json()) as T;
+      const data = (await response.json()) as T;
+
+      if (ttlMs) {
+        this.cache.set(cacheKey, {
+          expiresAt: Date.now() + ttlMs,
+          value: data,
+        });
+      }
+
+      return data;
     } catch (error) {
       if (error instanceof BadGatewayException) {
         throw error;
@@ -129,5 +171,33 @@ export class FipeService {
     } finally {
       clearTimeout(timeout);
     }
+  }
+
+  private getCacheKey(
+    path: string,
+    query?: Record<string, string | number | undefined>,
+  ): string {
+    const params = Object.entries(query ?? {})
+      .filter(([, value]) => value !== undefined && value !== null)
+      .sort(([leftKey], [rightKey]) => leftKey.localeCompare(rightKey))
+      .map(([key, value]) => `${key}=${String(value)}`)
+      .join('&');
+
+    return params ? `${path}?${params}` : path;
+  }
+
+  private getCachedValue<T>(key: string): T | undefined {
+    const entry = this.cache.get(key);
+
+    if (!entry) {
+      return undefined;
+    }
+
+    if (entry.expiresAt <= Date.now()) {
+      this.cache.delete(key);
+      return undefined;
+    }
+
+    return entry.value as T;
   }
 }
