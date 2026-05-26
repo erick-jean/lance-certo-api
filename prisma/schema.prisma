@@ -136,7 +136,6 @@ model Vehicle {
   plate   String? @db.VarChar(10)
   brand   String? @db.VarChar(100)
   model   String? @db.VarChar(100)
-  version String? @db.VarChar(150)
 
   yearManufacture Int?
   yearModel       Int?

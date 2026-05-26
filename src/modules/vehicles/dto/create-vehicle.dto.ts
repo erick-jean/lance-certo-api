@@ -52,13 +52,6 @@ export class CreateVehicleDto {
   @MaxLength(100)
   model?: string | null;
 
-  @ApiPropertyOptional({ example: 'Touring 1.5 Turbo' })
-  @IsOptional()
-  @Transform(({ value }: { value: unknown }) => trimString(value))
-  @IsString()
-  @MaxLength(150)
-  version?: string | null;
-
   @ApiPropertyOptional({ example: 2021 })
   @IsOptional()
   @Type(() => Number)

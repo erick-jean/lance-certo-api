@@ -16,7 +16,6 @@ type ResponseVehicleInput = {
   plate?: string | null;
   brand?: string | null;
   model?: string | null;
-  version?: string | null;
   yearManufacture?: number | null;
   yearModel?: number | null;
   color?: string | null;
@@ -62,9 +61,6 @@ export class ResponseVehicleDto {
 
   @ApiProperty({ example: 'Civic' })
   model?: string | null;
-
-  @ApiProperty({ example: 'Touring 1.5 Turbo' })
-  version?: string | null;
 
   @ApiProperty({ example: 2021 })
   yearManufacture?: number | null;
