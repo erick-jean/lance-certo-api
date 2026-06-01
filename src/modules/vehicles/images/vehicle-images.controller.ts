@@ -43,10 +43,10 @@ import { VehicleImagesService } from './vehicle-images.service';
 export class VehicleImagesController {
   constructor(private readonly vehicleImagesService: VehicleImagesService) {}
 
+  @Get()
   @ApiOperation({ summary: 'Lista imagens do veículo.' })
   @ApiOkResponse({ type: VehicleImageResponseDto, isArray: true })
   @ApiNotFoundResponse({ description: 'Veículo não encontrado.' })
-  @Get()
   @Throttle({ default: { limit: 60, ttl: 60_000, blockDuration: 60_000 } })
   findAll(
     @CurrentUser() user: JwtPayload,
