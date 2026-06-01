@@ -12,7 +12,6 @@ import { UserRole } from 'src/common/enums/user-role.enum';
 import { PrismaService } from 'src/database/prisma.service';
 import { StorageService } from 'src/modules/storage/storage.service';
 import { VehicleImageResponseDto } from './dto/response-vehicle-image.dto';
-import { SupabaseService } from 'src/common/config/supabase';
 
 const VEHICLE_IMAGE_STORAGE_PREFIX = 'vehicles';
 const MAX_VEHICLE_IMAGES = 10;
@@ -30,7 +29,6 @@ export class VehicleImagesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly storageService: StorageService,
-    private readonly supabaseService: SupabaseService,
   ) {}
 
   async addImagesToUserVehicle(
@@ -67,45 +65,6 @@ export class VehicleImagesService {
       files.map((file) => this.prepareVehicleImage(file)),
     );
     const uploadedKeys: string[] = [];
-
-    try {
-      /**
-       * Files are uploaded before database records; any failure rolls back the
-       * storage side effects tracked in uploadedKeys.
-       */
-      for (const imageFile of imageFiles) {
-        await this.storageService.uploadFile({
-          key: imageFile.storageKey,
-          buffer: imageFile.buffer,
-          contentType: imageFile.mimetype,
-        });
-        uploadedKeys.push(imageFile.storageKey);
-      }
-
-      const images = await this.prisma.vehicleImage.createManyAndReturn({
-        data: imageFiles.map((file) => ({
-          vehicleId,
-          url: file.url,
-          filename: file.filename,
-          mimetype: file.mimetype,
-          size: file.size,
-        })),
-      });
-
-      return images.map((image) => new VehicleImageResponseDto(image));
-    } catch (error) {
-      await Promise.allSettled(
-        uploadedKeys.map((key) => this.storageService.deleteFile(key)),
-      );
-
-      if (error instanceof BadRequestException) {
-        throw error;
-      }
-
-      throw new InternalServerErrorException(
-        'Não foi possível salvar imagens.',
-      );
-    }
 
     try {
       /**

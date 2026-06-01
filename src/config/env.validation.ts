@@ -23,6 +23,10 @@ type ValidatedEnv = Record<string, unknown> & {
   POSTGRES_PORT?: number;
   SMTP_PORT?: number;
   SMTP_SECURE?: boolean;
+  STORAGE_PROVIDER?: string;
+  SUPABASE_URL?: string;
+  SUPABASE_SERVICE_ROLE_KEY?: string;
+  SUPABASE_STORAGE_BUCKET?: string;
 };
 
 const requiredStringEnvVars = [
@@ -83,6 +87,7 @@ export function validateEnv(config: RawEnv): ValidatedEnv {
   validateFipeEnv(config, validated);
   validateDockerEnv(config, validated);
   validateEmailEnv(config, validated);
+  validateStorageEnv(config, validated);
 
   return validated;
 }
@@ -214,6 +219,29 @@ function validateEmailEnv(config: RawEnv, validated: ValidatedEnv): void {
 
   if (Boolean(config.SMTP_USER) !== Boolean(config.SMTP_PASSWORD)) {
     throw new Error('SMTP_USER and SMTP_PASSWORD must be provided together');
+  }
+}
+
+function validateStorageEnv(config: RawEnv, validated: ValidatedEnv): void {
+  const provider = config.STORAGE_PROVIDER?.trim() ?? 'local';
+
+  if (provider !== 'local' && provider !== 'supabase') {
+    throw new Error("STORAGE_PROVIDER must be 'local' or 'supabase'");
+  }
+
+  validated.STORAGE_PROVIDER = provider;
+
+  if (provider === 'supabase') {
+    validated.SUPABASE_URL = getRequiredString(config, 'SUPABASE_URL');
+    assertValidUrl(validated.SUPABASE_URL as string, 'SUPABASE_URL');
+    validated.SUPABASE_SERVICE_ROLE_KEY = getRequiredString(
+      config,
+      'SUPABASE_SERVICE_ROLE_KEY',
+    );
+    validated.SUPABASE_STORAGE_BUCKET = getRequiredString(
+      config,
+      'SUPABASE_STORAGE_BUCKET',
+    );
   }
 }
 
