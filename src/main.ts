@@ -10,19 +10,9 @@ import helmet from 'helmet';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { RequestLoggerInterceptor } from './common/interceptors/request-logger.interceptor';
-import { join } from 'path';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
-
-  /**
-   * Local public upload serving supports development/MVP vehicle images.
-   * Production can replace LocalStorageService with S3/R2/Supabase/Azure and
-   * stop serving files from this process.
-   */
-  app.useStaticAssets(join(process.cwd(), 'uploads'), {
-    prefix: '/uploads',
-  });
 
   const configService = app.get(ConfigService);
 

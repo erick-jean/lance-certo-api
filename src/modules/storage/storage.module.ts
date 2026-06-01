@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { LocalStorageService } from './local-storage.service';
+import { ConfigModule } from '@nestjs/config';
 import { SupabaseStorageService } from './supabase-storage.service';
 import { StorageService } from './storage.service';
 
@@ -9,16 +8,7 @@ import { StorageService } from './storage.service';
   providers: [
     {
       provide: StorageService,
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService): StorageService => {
-        const provider = configService.get<string>('STORAGE_PROVIDER', 'local');
-
-        if (provider === 'supabase') {
-          return new SupabaseStorageService(configService);
-        }
-
-        return new LocalStorageService();
-      },
+      useClass: SupabaseStorageService,
     },
   ],
   exports: [StorageService],
