@@ -111,25 +111,25 @@ export class VehicleImagesService {
     vehicleId: string,
     userRole?: UserRole,
   ): Promise<VehicleImageResponseDto[]> {
-    // Verifica existência e acesso separadamente para mensagens de erro mais precisas
-    const vehicle = await this.prisma.vehicleImage.findFirst({
+    const vehicle = await this.prisma.vehicle.findFirst({
       where: {
         id: vehicleId,
         ...ownerScope(userId, userRole),
       },
-      select: { id: true }, // só verifica existência, sem carregar imagens ainda
+      select: {
+        images: {
+          orderBy: {
+            createdAt: 'desc',
+          },
+        },
+      },
     });
 
     if (!vehicle) {
       throw new NotFoundException('Veículo não encontrado.');
     }
 
-    const images = await this.prisma.vehicleImage.findMany({
-      where: { vehicleId },
-      orderBy: { createdAt: 'desc' },
-    });
-
-    return images.map((image) => new VehicleImageResponseDto(image));
+    return vehicle.images.map((image) => new VehicleImageResponseDto(image));
   }
 
   async deleteUserVehicleImage(

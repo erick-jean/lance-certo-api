@@ -37,8 +37,8 @@ import { VehicleImagesService } from './vehicle-images.service';
 
 @ApiTags('Vehicle Images / Imagens do veículo')
 @ApiTooManyRequestsResponse({ description: 'Muitas requisições.' })
-@Authenticated()
 @UseGuards(VehicleOwnerGuard)
+@Authenticated()
 @Controller('vehicles/:vehicleId/images')
 export class VehicleImagesController {
   constructor(private readonly vehicleImagesService: VehicleImagesService) {}
