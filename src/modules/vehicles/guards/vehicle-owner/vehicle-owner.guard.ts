@@ -5,6 +5,7 @@ import {
   ForbiddenException,
   Injectable,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 
 import { UserRole } from 'src/common/enums/user-role.enum';
@@ -23,6 +24,10 @@ export class VehicleOwnerGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<VehicleOwnerRequest>();
+
+    if (!request.user?.sub) {
+      throw new UnauthorizedException();
+    }
 
     const userId = request.user.sub;
     const userRole = request.user.role;

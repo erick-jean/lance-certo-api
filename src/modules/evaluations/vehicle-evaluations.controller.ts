@@ -12,6 +12,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import {
+  ApiBearerAuth,
   ApiCreatedResponse,
   ApiForbiddenResponse,
   ApiNoContentResponse,
@@ -19,11 +20,12 @@ import {
   ApiOperation,
   ApiTags,
   ApiTooManyRequestsResponse,
+  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
-import { Authenticated } from 'src/common/decorators/authenticated.decorator';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { RequirePlan } from 'src/common/decorators/require-plan.decorator';
+import { AuthGuard } from '../auth/auth.guard';
 import { PlanGuard } from 'src/common/guards/plan.guard';
 import { JwtPayload } from '../auth/interfaces/jwt-payload.interface';
 import { VehicleOwnerGuard } from '../vehicles/guards/vehicle-owner/vehicle-owner.guard';
@@ -40,8 +42,9 @@ import { SubscriptionPlan } from '../../../generated/prisma/enums';
 
 @ApiTags('Vehicle Evaluation / Avaliação do veículo')
 @ApiTooManyRequestsResponse({ description: 'Muitas requisições.' })
-@Authenticated()
-@UseGuards(VehicleOwnerGuard)
+@ApiBearerAuth()
+@ApiUnauthorizedResponse({ description: 'Não autorizado.' })
+@UseGuards(AuthGuard, VehicleOwnerGuard)
 @Controller('vehicles')
 export class VehicleEvaluationsController {
   constructor(

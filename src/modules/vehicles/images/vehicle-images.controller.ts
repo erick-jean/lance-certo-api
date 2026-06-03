@@ -16,6 +16,7 @@ import { FilesInterceptor } from '@nestjs/platform-express';
 import {
   ApiBadRequestResponse,
   ApiBody,
+  ApiBearerAuth,
   ApiConsumes,
   ApiCreatedResponse,
   ApiNoContentResponse,
@@ -24,12 +25,13 @@ import {
   ApiOperation,
   ApiTags,
   ApiTooManyRequestsResponse,
+  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { memoryStorage } from 'multer';
 import { extname } from 'path';
-import { Authenticated } from 'src/common/decorators/authenticated.decorator';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
+import { AuthGuard } from '../../auth/auth.guard';
 import { JwtPayload } from '../../auth/interfaces/jwt-payload.interface';
 import { VehicleOwnerGuard } from '../guards/vehicle-owner/vehicle-owner.guard';
 import { VehicleImageResponseDto } from './dto/response-vehicle-image.dto';
@@ -37,8 +39,9 @@ import { VehicleImagesService } from './vehicle-images.service';
 
 @ApiTags('Vehicle Images / Imagens do veículo')
 @ApiTooManyRequestsResponse({ description: 'Muitas requisições.' })
-@UseGuards(VehicleOwnerGuard)
-@Authenticated()
+@ApiBearerAuth()
+@ApiUnauthorizedResponse({ description: 'Não autorizado.' })
+@UseGuards(AuthGuard, VehicleOwnerGuard)
 @Controller('vehicles/:vehicleId/images')
 export class VehicleImagesController {
   constructor(private readonly vehicleImagesService: VehicleImagesService) {}
